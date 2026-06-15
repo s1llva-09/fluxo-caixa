@@ -80,8 +80,9 @@ function irPara(nome) {
   // Desenha a tela escolhida dentro de #view
   const render = telas[nome];
   if (render) render($("#view"));
-  // Fecha o menu no celular
+  // Fecha o menu no celular e volta ao topo
   $("#app-shell").classList.remove("nav-open");
+  window.scrollTo({ top: 0, behavior: "instant" });
 }
 
 // ---- liga os botões da interface -------------------------------------------

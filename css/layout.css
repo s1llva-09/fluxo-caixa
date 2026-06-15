@@ -5,8 +5,9 @@
 /* Shell: topbar fixa + corpo rolável --------------------------------------- */
 .app-shell {
   min-height: 100vh;
-  display: grid;
-  grid-template-rows: var(--topbar-h) 1fr;
+  min-height: 100dvh; /* iOS Safari: exclui o chrome do browser */
+  display: flex;
+  flex-direction: column;
 }
 
 /* Topbar ------------------------------------------------------------------- */
@@ -98,6 +99,7 @@
 
 /* Corpo: sidebar + conteúdo ------------------------------------------------ */
 .body-grid {
+  flex: 1; /* ocupa o espaço restante abaixo da topbar */
   display: grid;
   grid-template-columns: var(--sidebar-w, 220px) 1fr;
   align-items: start;
