@@ -1,0 +1,110 @@
+/* ============================================================================
+   base.css — Fundação do visual
+   ========================================================================== */
+
+:root {
+  /* Superfícies */
+  --c-bg: #f2f1ed;
+  --c-surface: #ffffff;
+  --c-ink: #111816;
+  --c-muted: #6a7870;
+  --c-border: #e3e0d7;
+
+  /* Cores financeiras */
+  --c-entrada: #0b7860;
+  --c-entrada-soft: #ddf0ea;
+  --c-saida: #bf3530;
+  --c-saida-soft: #fae9e8;
+
+  /* Marca / primária */
+  --c-primary: #0b7860;
+  --c-primary-ink: #085e4a;
+  --c-danger: #bf3530;
+
+  /* Sidebar escura */
+  --c-sidebar: #121e1a;
+  --c-sidebar-item-hover: rgba(255, 255, 255, 0.07);
+  --c-sidebar-item-active: rgba(11, 120, 96, 0.22);
+  --c-sidebar-accent: #0b7860;
+  --c-sidebar-text: rgba(255, 255, 255, 0.52);
+  --c-sidebar-text-hover: rgba(255, 255, 255, 0.82);
+  --c-sidebar-text-active: #ffffff;
+
+  /* Tipografia */
+  --font-display: "Sora", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  /* Espaçamento e formas */
+  --radius: 14px;
+  --radius-sm: 9px;
+  --radius-xs: 6px;
+  --gap: 20px;
+  --topbar-h: 58px;
+
+  /* Sombras em camadas */
+  --shadow-xs: 0 1px 2px rgba(17, 30, 24, 0.06);
+  --shadow: 0 1px 3px rgba(17, 30, 24, 0.07),
+            0 8px 24px -6px rgba(17, 30, 24, 0.10);
+  --shadow-lg: 0 4px 8px rgba(17, 30, 24, 0.08),
+               0 20px 48px -8px rgba(17, 30, 24, 0.16);
+}
+
+/* Reset básico ---------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--c-bg);
+  color: var(--c-ink);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+select {
+  font-family: inherit;
+  font-size: 15px;
+}
+
+/* Números financeiros sempre alinhados */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.c-entrada { color: var(--c-entrada); }
+.c-saida   { color: var(--c-saida); }
+.ta-right  { text-align: right; }
+
+/* Respeita quem prefere menos animação */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

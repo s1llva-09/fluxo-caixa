@@ -1,0 +1,54 @@
+# ── Sistema operacional ───────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# ── Editores ──────────────────────────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.sublime-workspace
+
+# ── Node (caso adicione ferramentas futuramente) ──────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ── Variáveis de ambiente e segredos ─────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+secrets.json
+
+# ── Build / dist ──────────────────────────────────────────────────────────────
+dist/
+build/
+out/
+.cache/
+.parcel-cache/
+.vite/
+
+# ── Logs e temporários ────────────────────────────────────────────────────────
+*.log
+logs/
+tmp/
+temp/

@@ -1,0 +1,12 @@
+/* ============================================================================
+   index.css — Ponto de entrada do CSS
+   ----------------------------------------------------------------------------
+   Este é o ÚNICO css que o index.html precisa linkar. Ele importa os outros
+   na ordem certa. A ordem importa: base primeiro (variáveis), depois layout,
+   componentes e, por fim, telas específicas.
+   ========================================================================== */
+
+@import "./base.css";
+@import "./layout.css";
+@import "./components.css";
+@import "./pages.css";

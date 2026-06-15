@@ -1,0 +1,63 @@
+/* ============================================================================
+   pages.css — Estilos específicos de telas
+   ========================================================================== */
+
+/* Tela de entrada (login / cadastro / criar empresa) ----------------------- */
+.auth {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(ellipse 900px 600px at 60% -10%, rgba(11, 120, 96, 0.12), transparent),
+    radial-gradient(ellipse 600px 400px at 5%  90%, rgba(11, 120, 96, 0.07), transparent),
+    var(--c-bg);
+}
+
+.auth__card {
+  width: 100%;
+  max-width: 390px;
+  padding: 40px 36px;
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(227, 224, 215, 0.8);
+}
+
+.auth__title {
+  font-size: 22px;
+  text-align: center;
+  letter-spacing: -0.3px;
+}
+
+.auth__sub {
+  color: var(--c-muted);
+  text-align: center;
+  margin: 8px 0 26px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Marca dentro do card de login */
+.auth .brand--lg {
+  margin-bottom: 20px;
+  flex-direction: column;
+  gap: 12px;
+}
+.auth .brand--lg .brand__name {
+  font-size: 20px;
+  letter-spacing: -0.3px;
+}
+
+/* Divider entre botão principal e link de alternância */
+.auth__card .btn--ghost {
+  color: var(--c-muted);
+  font-size: 14px;
+  font-weight: 500;
+  border-color: transparent;
+  margin-top: 4px;
+}
+.auth__card .btn--ghost:hover {
+  background: var(--c-bg);
+  color: var(--c-ink);
+  border-color: var(--c-border);
+}
