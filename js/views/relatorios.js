@@ -103,7 +103,9 @@ async function montar() {
       )
     )
   );
-  box.append(tabela);
+  const wrap = el("div", { class: "tabela-wrap" });
+  wrap.append(tabela);
+  box.append(wrap);
 }
 
 // Gera um arquivo CSV e dispara o download (abre no Excel/Google Sheets).

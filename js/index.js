@@ -30,22 +30,25 @@ const telas = {
 // ---- decide o que mostrar na tela ------------------------------------------
 
 async function iniciar() {
-  state.user = await getUser();
+  try {
+    state.user = await getUser();
 
-  // Sem usuário logado -> tela de login
-  if (!state.user) {
+    if (!state.user) {
+      mostrarAuth();
+      return;
+    }
+
+    state.company = await getMinhaEmpresa();
+    if (!state.company) {
+      mostrarOnboarding();
+      return;
+    }
+
+    mostrarApp();
+  } catch (err) {
+    console.error("Erro ao iniciar:", err);
     mostrarAuth();
-    return;
   }
-
-  // Logado: busca a empresa. Se não tiver, mostra o onboarding.
-  state.company = await getMinhaEmpresa();
-  if (!state.company) {
-    mostrarOnboarding();
-    return;
-  }
-
-  mostrarApp();
 }
 
 function mostrarAuth() {
@@ -85,16 +88,23 @@ function irPara(nome) {
 
 function ligarEventos() {
   // Navegação (cada botão tem data-tela="dashboard", etc.)
-  $$(".nav__item").forEach((btn) =>
-    btn.addEventListener("click", () => irPara(btn.dataset.tela))
-  );
+  $$(".nav__item").forEach((btn) => {
+    if (!btn.dataset.tela) return;
+    btn.addEventListener("click", () => irPara(btn.dataset.tela));
+  });
 
   // Sair
-  $("#btn-sair").addEventListener("click", async () => {
-    await signOut();
-    state.company = null;
-    state.categorias = [];
-    mostrarAuth();
+  const btnSair = $("#btn-sair");
+  btnSair.addEventListener("click", async () => {
+    btnSair.disabled = true;
+    try {
+      await signOut();
+      state.company    = null;
+      state.categorias = [];
+      mostrarAuth();
+    } catch {
+      btnSair.disabled = false;
+    }
   });
 
   // Abrir/fechar menu no celular

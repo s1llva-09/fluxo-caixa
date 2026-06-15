@@ -16,7 +16,6 @@ import { formatBRL, formatDate, parseToCents, todayISO } from "../money.js";
 const filtros = { ...mesAtual(), kind: "", categoryId: "" };
 
 export async function renderLancamentos(root) {
-  // Garante que temos as categorias em cache (pro formulário e filtro)
   if (state.categorias.length === 0) {
     state.categorias = await listarCategorias(state.company.id);
   }
@@ -29,10 +28,10 @@ export async function renderLancamentos(root) {
         el("p", { class: "page-sub" }, "Tudo que entra e sai do caixa")
       ),
       el("button",
-        { class: "btn btn--primary", onclick: () => abrirFormulario(root) },
+        { class: "btn btn--primary", onclick: () => abrirFormulario() },
         "+ Novo lançamento")
     ),
-    barraFiltros(root),
+    barraFiltros(),
     el("div", { id: "lista-lancamentos", class: "card" },
       el("div", { class: "loading" }, "Carregando..."))
   );
@@ -42,8 +41,8 @@ export async function renderLancamentos(root) {
 
 // ---- filtros ---------------------------------------------------------------
 
-function barraFiltros(root) {
-  const de = el("input", { type: "date", class: "input", value: filtros.de });
+function barraFiltros() {
+  const de  = el("input", { type: "date", class: "input", value: filtros.de });
   const ate = el("input", { type: "date", class: "input", value: filtros.ate });
 
   const tipo = el("select", { class: "input" },
@@ -59,12 +58,12 @@ function barraFiltros(root) {
   );
   cat.value = filtros.categoryId;
 
-  function aplicar() {
-    filtros.de = de.value;
-    filtros.ate = ate.value;
-    filtros.kind = tipo.value;
+  async function aplicar() {
+    filtros.de         = de.value;
+    filtros.ate        = ate.value;
+    filtros.kind       = tipo.value;
     filtros.categoryId = cat.value;
-    carregarLista();
+    await carregarLista();
   }
 
   [de, ate, tipo, cat].forEach((e) => e.addEventListener("change", aplicar));
@@ -77,15 +76,21 @@ function barraFiltros(root) {
 async function carregarLista() {
   const box = $("#lista-lancamentos");
   if (!box) return;
-  box.innerHTML = `<div class="loading">Carregando...</div>`;
+
+  const sentinel = el("div", { class: "loading" }, "Carregando...");
+  box.innerHTML = "";
+  box.append(sentinel);
 
   const itens = await listarLancamentos({
-    companyId: state.company.id,
-    de: filtros.de,
-    ate: filtros.ate,
-    kind: filtros.kind || undefined,
+    companyId:  state.company.id,
+    de:         filtros.de,
+    ate:        filtros.ate,
+    kind:       filtros.kind || undefined,
     categoryId: filtros.categoryId || undefined,
   });
+
+  // Se o usuário navegou para outra tela durante o fetch, descarta.
+  if (!document.body.contains(sentinel)) return;
 
   if (itens.length === 0) {
     box.innerHTML = "";
@@ -109,7 +114,7 @@ async function carregarLista() {
           el("span", { class: "tx__desc" },
             (t.description || "(sem descrição)"),
             t.is_reversed ? el("span", { class: "badge badge--muted" }, "estornado") : null,
-            t.reverses_id ? el("span", { class: "badge badge--muted" }, "estorno") : null
+            t.reverses_id  ? el("span", { class: "badge badge--muted" }, "estorno")   : null
           ),
           el("span", { class: "tx__meta" },
             `${formatDate(t.occurred_on)}${t.categories?.name ? " · " + t.categories.name : ""}`)
@@ -128,21 +133,31 @@ async function carregarLista() {
 
 // ---- novo lançamento (modal) -----------------------------------------------
 
-function abrirFormulario(root) {
+function abrirFormulario() {
   let kind = "entrada";
 
   const btnEntrada = el("button", { class: "seg seg--on", type: "button" }, "Entrada");
-  const btnSaida = el("button", { class: "seg", type: "button" }, "Saída");
-  btnEntrada.onclick = () => { kind = "entrada"; btnEntrada.classList.add("seg--on"); btnSaida.classList.remove("seg--on"); };
-  btnSaida.onclick = () => { kind = "saida"; btnSaida.classList.add("seg--on"); btnEntrada.classList.remove("seg--on"); };
+  const btnSaida   = el("button", { class: "seg",        type: "button" }, "Saída");
+  btnEntrada.onclick = () => {
+    kind = "entrada";
+    btnEntrada.classList.add("seg--on");
+    btnSaida.classList.remove("seg--on");
+  };
+  btnSaida.onclick = () => {
+    kind = "saida";
+    btnSaida.classList.add("seg--on");
+    btnEntrada.classList.remove("seg--on");
+  };
 
   const valor = el("input", { class: "input", placeholder: "0,00", inputmode: "decimal" });
-  const data = el("input", { type: "date", class: "input", value: todayISO() });
-  const desc = el("input", { class: "input", placeholder: "Ex.: Venda de peça" });
-  const cat = el("select", { class: "input" },
+  const data  = el("input", { type: "date", class: "input", value: todayISO() });
+  const desc  = el("input", { class: "input", placeholder: "Ex.: Venda de peça" });
+  const cat   = el("select", { class: "input" },
     el("option", { value: "" }, "Sem categoria"),
     ...state.categorias.map((c) => el("option", { value: c.id }, c.name))
   );
+
+  const btnSalvar = el("button", { class: "btn btn--primary" }, "Salvar");
 
   async function salvar() {
     const cents = parseToCents(valor.value);
@@ -150,63 +165,77 @@ function abrirFormulario(root) {
       toast("Digite um valor válido", "erro");
       return;
     }
+    btnSalvar.disabled    = true;
+    btnSalvar.textContent = "Salvando...";
     try {
       await criarLancamento({
-        companyId: state.company.id,
+        companyId:   state.company.id,
         kind,
         amountCents: cents,
         description: desc.value.trim(),
-        categoryId: cat.value || null,
-        occurredOn: data.value || todayISO(),
+        categoryId:  cat.value || null,
+        occurredOn:  data.value || todayISO(),
       });
       closeModal();
       toast("Lançamento salvo!", "ok");
-      carregarLista();
+      await carregarLista();
     } catch (err) {
       toast("Erro ao salvar", "erro");
       console.error(err);
+      btnSalvar.disabled    = false;
+      btnSalvar.textContent = "Salvar";
     }
   }
 
-  const form = el("div", { class: "form" },
-    el("div", { class: "seg-group" }, btnEntrada, btnSaida),
-    el("label", { class: "field" }, el("span", { class: "field__label" }, "Valor (R$)"), valor),
-    el("label", { class: "field" }, el("span", { class: "field__label" }, "Data"), data),
-    el("label", { class: "field" }, el("span", { class: "field__label" }, "Descrição"), desc),
-    el("label", { class: "field" }, el("span", { class: "field__label" }, "Categoria"), cat),
-    el("div", { class: "form__actions" },
-      el("button", { class: "btn btn--ghost", onclick: closeModal }, "Cancelar"),
-      el("button", { class: "btn btn--primary", onclick: salvar }, "Salvar")
+  btnSalvar.addEventListener("click", salvar);
+
+  openModal("Novo lançamento",
+    el("div", { class: "form" },
+      el("div", { class: "seg-group" }, btnEntrada, btnSaida),
+      el("label", { class: "field" }, el("span", { class: "field__label" }, "Valor (R$)"), valor),
+      el("label", { class: "field" }, el("span", { class: "field__label" }, "Data"), data),
+      el("label", { class: "field" }, el("span", { class: "field__label" }, "Descrição"), desc),
+      el("label", { class: "field" }, el("span", { class: "field__label" }, "Categoria"), cat),
+      el("div", { class: "form__actions" },
+        el("button", { class: "btn btn--ghost", onclick: closeModal }, "Cancelar"),
+        btnSalvar
+      )
     )
   );
-
-  openModal("Novo lançamento", form);
 }
 
 // ---- estorno ---------------------------------------------------------------
 
 function confirmarEstorno(t) {
-  const corpo = el("div", { class: "form" },
-    el("p", {},
-      "Isso cria um lançamento contrário pra anular este, sem apagar o histórico. Confirmar?"),
-    el("div", { class: "tx-preview" },
-      `${t.kind === "entrada" ? "Entrada" : "Saída"} de ${formatBRL(t.amount_cents)} — ${t.description || "(sem descrição)"}`),
-    el("div", { class: "form__actions" },
-      el("button", { class: "btn btn--ghost", onclick: closeModal }, "Cancelar"),
-      el("button", {
-        class: "btn btn--danger",
-        onclick: async () => {
-          try {
-            await estornarLancamento(t.id);
-            closeModal();
-            toast("Lançamento estornado", "ok");
-            carregarLista();
-          } catch (err) {
-            toast(err.message || "Erro ao estornar", "erro");
-          }
-        },
-      }, "Estornar")
+  const btnEstornar = el("button", { class: "btn btn--danger" }, "Estornar");
+
+  async function estornar() {
+    btnEstornar.disabled    = true;
+    btnEstornar.textContent = "Estornando...";
+    try {
+      await estornarLancamento(t.id);
+      closeModal();
+      toast("Lançamento estornado", "ok");
+      await carregarLista();
+    } catch (err) {
+      toast(err.message || "Erro ao estornar", "erro");
+      btnEstornar.disabled    = false;
+      btnEstornar.textContent = "Estornar";
+    }
+  }
+
+  btnEstornar.addEventListener("click", estornar);
+
+  openModal("Estornar lançamento",
+    el("div", { class: "form" },
+      el("p", {},
+        "Isso cria um lançamento contrário para anular este, sem apagar o histórico. Confirmar?"),
+      el("div", { class: "tx-preview" },
+        `${t.kind === "entrada" ? "Entrada" : "Saída"} de ${formatBRL(t.amount_cents)} — ${t.description || "(sem descrição)"}`),
+      el("div", { class: "form__actions" },
+        el("button", { class: "btn btn--ghost", onclick: closeModal }, "Cancelar"),
+        btnEstornar
+      )
     )
   );
-  openModal("Estornar lançamento", corpo);
 }

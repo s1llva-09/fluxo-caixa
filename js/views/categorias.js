@@ -1,11 +1,8 @@
 // ============================================================================
 //  views/categorias.js — Gerenciar categorias
 // ============================================================================
-//  Categorias ajudam a organizar os lançamentos (Vendas, Aluguel, etc).
-//  Diferente dos lançamentos, categoria PODE ser editada/apagada.
-// ============================================================================
 
-import { el, $, toast } from "../ui.js";
+import { el, $, toast, openModal, closeModal } from "../ui.js";
 import { state } from "../state.js";
 import { listarCategorias, criarCategoria, apagarCategoria } from "../api.js";
 
@@ -30,33 +27,40 @@ function formularioNova() {
     el("option", { value: "entrada" }, "Só entrada"),
     el("option", { value: "saida" }, "Só saída")
   );
+  const btn = el("button", { class: "btn btn--primary" }, "Adicionar");
 
   async function adicionar() {
     if (!nome.value.trim()) {
       toast("Digite o nome", "erro");
       return;
     }
+    btn.disabled    = true;
+    btn.textContent = "Adicionando...";
     try {
       await criarCategoria(state.company.id, nome.value.trim(), tipo.value || null);
-      nome.value = "";
-      state.categorias = []; // limpa o cache pra recarregar nas outras telas
+      nome.value      = "";
+      state.categorias = [];
       toast("Categoria criada", "ok");
-      carregar();
+      await carregar();
     } catch (err) {
       toast("Erro ao criar", "erro");
       console.error(err);
+    } finally {
+      btn.disabled    = false;
+      btn.textContent = "Adicionar";
     }
   }
 
-  return el("section", { class: "card form-inline" },
-    nome, tipo,
-    el("button", { class: "btn btn--primary", onclick: adicionar }, "Adicionar")
-  );
+  btn.addEventListener("click", adicionar);
+  nome.addEventListener("keydown", (e) => { if (e.key === "Enter") adicionar(); });
+
+  return el("section", { class: "card form-inline" }, nome, tipo, btn);
 }
 
 async function carregar() {
   const box = $("#lista-categorias");
   if (!box) return;
+
   const cats = await listarCategorias(state.company.id);
   state.categorias = cats;
 
@@ -76,19 +80,43 @@ async function carregar() {
         el("span", { class: "badge" }, rotuloTipo),
         el("button", {
           class: "btn btn--tiny btn--ghost",
-          onclick: async () => {
-            try {
-              await apagarCategoria(c.id);
-              state.categorias = [];
-              carregar();
-            } catch {
-              toast("Não foi possível apagar", "erro");
-            }
-          },
+          onclick: () => confirmarApagar(c),
         }, "Apagar")
       )
     );
   }
   box.innerHTML = "";
   box.append(lista);
+}
+
+function confirmarApagar(c) {
+  const btnApagar = el("button", { class: "btn btn--danger" }, "Apagar");
+
+  async function apagar() {
+    btnApagar.disabled    = true;
+    btnApagar.textContent = "Apagando...";
+    try {
+      await apagarCategoria(c.id);
+      state.categorias = [];
+      closeModal();
+      await carregar();
+    } catch {
+      toast("Não foi possível apagar", "erro");
+      btnApagar.disabled    = false;
+      btnApagar.textContent = "Apagar";
+    }
+  }
+
+  btnApagar.addEventListener("click", apagar);
+
+  openModal("Apagar categoria",
+    el("div", {},
+      el("p", { style: "margin:0 0 24px;color:var(--c-text-2,#6a7870);line-height:1.6;" },
+        `Tem certeza que deseja apagar "${c.name}"? Os lançamentos vinculados não serão afetados.`),
+      el("div", { class: "form__actions" },
+        el("button", { class: "btn btn--ghost", onclick: closeModal }, "Cancelar"),
+        btnApagar
+      )
+    )
+  );
 }

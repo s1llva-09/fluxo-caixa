@@ -14,7 +14,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 0 24px;
+  padding: 0 20px 0 24px;
   height: var(--topbar-h);
   background: var(--c-surface);
   border-bottom: 1px solid var(--c-border);
@@ -26,14 +26,14 @@
 
 .topbar__empresa {
   margin-left: auto;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   color: var(--c-muted);
   background: var(--c-bg);
   padding: 4px 14px;
   border-radius: 999px;
   border: 1px solid var(--c-border);
-  max-width: 220px;
+  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -44,12 +44,11 @@
   display: none;
   background: none;
   border: none;
-  font-size: 20px;
-  line-height: 1;
   color: var(--c-muted);
-  padding: 6px 8px;
+  padding: 7px;
   border-radius: var(--radius-xs);
   transition: background 0.14s, color 0.14s;
+  line-height: 0;
 }
 .btn-menu:hover { background: var(--c-bg); color: var(--c-ink); }
 
@@ -100,13 +99,14 @@
 /* Corpo: sidebar + conteúdo ------------------------------------------------ */
 .body-grid {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: var(--sidebar-w, 220px) 1fr;
+  align-items: start;
 }
 
 /* Sidebar ------------------------------------------------------------------ */
 .nav {
   background: var(--c-sidebar);
-  padding: 16px 10px;
+  padding: 14px 10px 20px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -128,11 +128,12 @@
   background: none;
   border-radius: var(--radius-xs);
   color: var(--c-sidebar-text);
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 500;
   text-align: left;
   transition: background 0.14s, color 0.14s;
   position: relative;
+  letter-spacing: 0.01em;
 }
 .nav__item:hover {
   background: var(--c-sidebar-item-hover);
@@ -149,7 +150,7 @@
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  height: 60%;
+  height: 58%;
   width: 3px;
   background: var(--c-sidebar-accent);
   border-radius: 0 3px 3px 0;
@@ -173,9 +174,14 @@
 
 /* Área de conteúdo --------------------------------------------------------- */
 .content {
-  padding: 30px 32px;
-  max-width: 960px;
+  padding: 32px 40px;
+  max-width: 1024px;
   width: 100%;
+}
+
+/* ---- Responsivo: tablet -------------------------------------------------- */
+@media (max-width: 1040px) {
+  .content { padding: 26px 28px; }
 }
 
 /* ---- Responsivo: no mobile o menu vira uma gaveta lateral ---------------- */
@@ -188,23 +194,28 @@
     top: 0;
     left: 0;
     bottom: 0;
-    width: 230px;
+    width: 240px;
     height: 100%;
+    padding-top: 20px;
     transform: translateX(-100%);
     transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 30;
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.3);
   }
 
-  /* Quando o app tem nav-open, o menu desliza pra dentro */
+  /* Marca dentro da gaveta mobile */
+  .nav::before {
+    content: none;
+  }
+
   .app-shell.nav-open .nav { transform: translateX(0); }
 
-  /* Overlay escuro atrás do menu no mobile */
+  /* Overlay escuro atrás do menu */
   .app-shell.nav-open::before {
     content: "";
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.45);
+    background: rgba(0, 0, 0, 0.48);
     z-index: 25;
     animation: fade-in 0.2s ease;
   }
@@ -215,4 +226,11 @@
   }
 
   .content { padding: 20px 16px; }
+
+  .topbar__empresa { max-width: 140px; }
+}
+
+@media (max-width: 400px) {
+  .brand__name { display: none; }
+  .topbar__empresa { max-width: 160px; font-size: 12px; }
 }
