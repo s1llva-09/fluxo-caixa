@@ -2,7 +2,7 @@
 //  views/auth.js — Telas de entrada: login, cadastro e criar empresa
 // ============================================================================
 
-import { el, $, toast } from "../ui.js";
+import { el, $, toast, senhaInput } from "../ui.js";
 import { signIn, signUp } from "../auth.js";
 import { criarEmpresa } from "../api.js";
 
@@ -22,9 +22,7 @@ export function renderAuth(root, onSuccess) {
       autocomplete: "email",
       autofocus: "",
     });
-    const senha = el("input", {
-      type: "password",
-      class: "input",
+    const { wrap: senhaWrap, input: senha } = senhaInput({
       placeholder: modo === "login" ? "Sua senha" : "Mínimo 6 caracteres",
       autocomplete: modo === "login" ? "current-password" : "new-password",
     });
@@ -88,7 +86,7 @@ export function renderAuth(root, onSuccess) {
       el("label", { class: "field" },
         el("span", { class: "field__label" }, "Email"), email),
       el("label", { class: "field" },
-        el("span", { class: "field__label" }, "Senha"), senha),
+        el("span", { class: "field__label" }, "Senha"), senhaWrap),
       btnSubmit,
       el("button", {
         type: "button",
@@ -109,11 +107,14 @@ export function renderAuth(root, onSuccess) {
         { class: "auth__card card" },
         el("div", { class: "brand brand--lg" },
           el("span", { class: "brand__mark", "aria-hidden": "true",
-            html: `<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="8.5" stroke="white" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/><polygon points="10,5 6.5,9.5 8.5,9.5 8.5,15 11.5,15 11.5,9.5 13.5,9.5" fill="white"/></svg>` }),
+            html: `<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><text x="10" y="10" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="800" fill="white" font-family="system-ui,-apple-system,sans-serif">$</text></svg>` }),
           el("span", { class: "brand__name" }, "Fluxo de Caixa")
         ),
         el("p", { class: "auth__sub" },
-          "Saiba o que entra e o que sai do seu caixa."),
+          modo === "login"
+            ? "Bem-vindo de volta. Acesse sua conta."
+            : "Crie sua conta e comece a controlar seu caixa."),
+        el("h2", { class: "auth__title", style: "margin-bottom:22px" }, titulo),
         form
       )
     );
@@ -163,8 +164,13 @@ export function renderOnboarding(root, onDone) {
       el(
         "div",
         { class: "auth__card card" },
-        el("h1", { class: "auth__title" }, "Vamos começar"),
-        el("p", { class: "auth__sub" }, "Como se chama o seu negócio?"),
+        el("div", { class: "brand brand--lg", style: "margin-bottom:20px" },
+          el("span", { class: "brand__mark", "aria-hidden": "true",
+            html: `<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><text x="10" y="10" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="800" fill="white" font-family="system-ui,-apple-system,sans-serif">$</text></svg>` }),
+          el("span", { class: "brand__name" }, "Fluxo de Caixa")
+        ),
+        el("h1", { class: "auth__title" }, "Quase pronto"),
+        el("p", { class: "auth__sub" }, "Qual é o nome do seu negócio?"),
         el("label", { class: "field" },
           el("span", { class: "field__label" }, "Nome da empresa"), nome),
         btnCriar

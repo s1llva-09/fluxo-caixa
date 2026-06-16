@@ -122,13 +122,17 @@ function ligarEventos() {
     }
   });
 
-  // Fechar o modal (clicando no X ou fora dele)
+  // Fechar o modal (X, clique fora ou Escape)
   $("#modal-close")?.addEventListener("click", () =>
     $("#modal-overlay").classList.remove("is-open")
   );
   $("#modal-overlay")?.addEventListener("click", (e) => {
     if (e.target.id === "modal-overlay")
       $("#modal-overlay").classList.remove("is-open");
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape")
+      $("#modal-overlay")?.classList.remove("is-open");
   });
 }
 

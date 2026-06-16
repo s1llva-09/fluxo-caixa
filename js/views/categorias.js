@@ -2,7 +2,7 @@
 //  views/categorias.js — Gerenciar categorias
 // ============================================================================
 
-import { el, $, toast, openModal, closeModal } from "../ui.js";
+import { el, $, toast, openModal, closeModal, emptyState, ICONS } from "../ui.js";
 import { state } from "../state.js";
 import { listarCategorias, criarCategoria, apagarCategoria } from "../api.js";
 
@@ -66,18 +66,22 @@ async function carregar() {
 
   if (cats.length === 0) {
     box.innerHTML = "";
-    box.append(el("p", { class: "empty" }, "Nenhuma categoria ainda."));
+    box.append(emptyState("Nenhuma categoria ainda.\nCrie uma acima para organizar seus lançamentos.", ICONS.categorias));
     return;
   }
 
   const lista = el("ul", { class: "cat-list" });
   for (const c of cats) {
-    const rotuloTipo =
-      c.kind === "entrada" ? "Entrada" : c.kind === "saida" ? "Saída" : "Ambos";
+    const [rotuloTipo, badgeClass] =
+      c.kind === "entrada"
+        ? ["Entrada", "badge"]
+        : c.kind === "saida"
+        ? ["Saída", "badge badge--saida"]
+        : ["Ambos", "badge badge--muted"];
     lista.append(
       el("li", { class: "cat" },
         el("span", { class: "cat__name" }, c.name),
-        el("span", { class: "badge" }, rotuloTipo),
+        el("span", { class: badgeClass }, rotuloTipo),
         el("button", {
           class: "btn btn--tiny btn--ghost",
           onclick: () => confirmarApagar(c),

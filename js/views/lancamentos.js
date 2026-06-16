@@ -2,7 +2,7 @@
 //  views/lancamentos.js — Lista, cadastro e estorno de lançamentos
 // ============================================================================
 
-import { el, $, toast, openModal, closeModal } from "../ui.js";
+import { el, $, toast, openModal, closeModal, emptyState, ICONS } from "../ui.js";
 import { state, mesAtual } from "../state.js";
 import {
   listarLancamentos,
@@ -94,7 +94,7 @@ async function carregarLista() {
 
   if (itens.length === 0) {
     box.innerHTML = "";
-    box.append(el("p", { class: "empty" }, "Nenhum lançamento neste filtro."));
+    box.append(emptyState("Nenhum lançamento neste período.", ICONS.lancamentos));
     return;
   }
 
@@ -150,6 +150,15 @@ function abrirFormulario() {
   };
 
   const valor = el("input", { class: "input", placeholder: "0,00", inputmode: "decimal" });
+  valor.addEventListener("blur", () => {
+    const cents = parseToCents(valor.value);
+    if (cents > 0) {
+      valor.value = (cents / 100).toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+  });
   const data  = el("input", { type: "date", class: "input", value: todayISO() });
   const desc  = el("input", { class: "input", placeholder: "Ex.: Venda de peça" });
   const cat   = el("select", { class: "input" },

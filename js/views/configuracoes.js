@@ -2,7 +2,7 @@
 //  views/configuracoes.js — Configurações da empresa e da conta
 // ============================================================================
 
-import { el, $, toast } from "../ui.js";
+import { el, $, toast, senhaInput } from "../ui.js";
 import { state } from "../state.js";
 import { atualizarEmpresa } from "../api.js";
 import { updateEmail, updatePassword } from "../auth.js";
@@ -115,15 +115,11 @@ function secaoEmail() {
 // ── Seção: Senha ─────────────────────────────────────────────────────────────
 
 function secaoSenha() {
-  const novaSenha = el("input", {
-    class: "input",
-    type: "password",
+  const { wrap: novaSenhaWrap, input: novaSenha } = senhaInput({
     placeholder: "Mínimo 6 caracteres",
     autocomplete: "new-password",
   });
-  const confirmar = el("input", {
-    class: "input",
-    type: "password",
+  const { wrap: confirmarWrap, input: confirmar } = senhaInput({
     placeholder: "Repita a nova senha",
     autocomplete: "new-password",
   });
@@ -154,11 +150,11 @@ function secaoSenha() {
   return secao("Senha",
     el("label", { class: "field" },
       el("span", { class: "field__label" }, "Nova senha"),
-      novaSenha
+      novaSenhaWrap
     ),
     el("label", { class: "field" },
       el("span", { class: "field__label" }, "Confirmar nova senha"),
-      confirmar
+      confirmarWrap
     ),
     el("div", { class: "form__actions" }, btn)
   );

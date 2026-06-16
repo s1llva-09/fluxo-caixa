@@ -5,7 +5,7 @@
 //  período escolhido, e deixa exportar tudo pra uma planilha (CSV).
 // ============================================================================
 
-import { el, $ } from "../ui.js";
+import { el, $, emptyState, ICONS } from "../ui.js";
 import { state, mesAtual } from "../state.js";
 import { listarLancamentos } from "../api.js";
 import { formatBRL, formatDate } from "../money.js";
@@ -71,7 +71,7 @@ async function montar() {
 
   box.innerHTML = "";
   if (itens.length === 0) {
-    box.append(el("p", { class: "empty" }, "Nenhum lançamento neste período."));
+    box.append(emptyState("Nenhum lançamento neste período.", ICONS.relatorio));
     return;
   }
 

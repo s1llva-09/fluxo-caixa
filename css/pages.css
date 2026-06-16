@@ -2,44 +2,82 @@
    pages.css — Estilos específicos de telas
    ========================================================================== */
 
-/* Tela de entrada (login / cadastro / criar empresa) ----------------------- */
+/* Tela de entrada: fundo escuro dramático com card flutuante --------------- */
 .auth {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background:
-    radial-gradient(ellipse 900px 600px at 60% -10%, rgba(11, 120, 96, 0.13), transparent),
-    radial-gradient(ellipse 600px 400px at 5%  90%, rgba(11, 120, 96, 0.08), transparent),
-    var(--c-bg);
+  background: var(--c-sidebar);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Orbe verde: atmosfera de marca no fundo escuro */
+.auth::before {
+  content: "";
+  position: absolute;
+  width: 640px;
+  height: 640px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(7, 206, 138, 0.13) 0%, transparent 68%);
+  top: -160px;
+  right: -120px;
+  pointer-events: none;
+}
+.auth::after {
+  content: "";
+  position: absolute;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(7, 206, 138, 0.07) 0%, transparent 70%);
+  bottom: -100px;
+  left: -100px;
+  pointer-events: none;
 }
 
 .auth__card {
   width: 100%;
-  max-width: 390px;
-  padding: 42px 38px;
-  box-shadow: var(--shadow-lg);
-  border-color: rgba(227, 224, 215, 0.8);
+  max-width: 396px;
+  padding: 48px 44px;
+  background: var(--c-surface);
+  border-radius: 20px;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.45),
+              0 4px 16px rgba(0, 0, 0, 0.20),
+              0 0 0 1px rgba(255, 255, 255, 0.06);
+  position: relative;
+  z-index: 1;
+  animation: card-appear 0.4s cubic-bezier(0.34, 1.1, 0.64, 1);
+}
+@keyframes card-appear {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* Título: DM Serif Display para a tela de auth */
 .auth__title {
-  font-size: 22px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 400;
   text-align: center;
   letter-spacing: -0.3px;
+  color: var(--c-ink);
 }
 
 .auth__sub {
   color: var(--c-muted);
   text-align: center;
-  margin: 8px 0 26px;
+  margin: 8px 0 28px;
   font-size: 14px;
   line-height: 1.6;
 }
 
 /* Marca dentro do card de login */
 .auth .brand--lg {
-  margin-bottom: 22px;
+  margin-bottom: 24px;
   flex-direction: column;
   gap: 12px;
 }
@@ -48,7 +86,7 @@
   letter-spacing: -0.3px;
 }
 
-/* Divider entre botão principal e link de alternância */
+/* Botão ghost como link de alternância */
 .auth__card .btn--ghost {
   color: var(--c-muted);
   font-size: 14px;
@@ -62,8 +100,14 @@
   border-color: var(--c-border);
 }
 
-/* Mobile: reduz padding para caber bem em telas pequenas */
+/* Mobile */
 @media (max-width: 440px) {
-  .auth { padding: 16px; align-items: flex-start; padding-top: 48px; }
-  .auth__card { padding: 32px 24px; }
+  .auth {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: 40px;
+  }
+  .auth__card {
+    padding: 36px 26px;
+  }
 }

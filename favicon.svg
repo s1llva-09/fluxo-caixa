@@ -1,13 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <defs>
     <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0b7860"/>
-      <stop offset="100%" stop-color="#13a882"/>
+      <stop offset="0%" stop-color="#07CE8A"/>
+      <stop offset="100%" stop-color="#05B278"/>
     </linearGradient>
   </defs>
   <rect width="32" height="32" rx="7.5" fill="url(#g)"/>
-  <!-- Anel de moeda -->
-  <circle cx="16" cy="16" r="11" stroke="white" stroke-width="2.2" fill="rgba(255,255,255,0.12)"/>
-  <!-- Seta para cima dentro da moeda -->
-  <polygon points="16,9 11,15 13.5,15 13.5,23 18.5,23 18.5,15 21,15" fill="white"/>
+  <text x="16" y="16" text-anchor="middle" dominant-baseline="central"
+    font-size="20" font-weight="800" fill="white"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,sans-serif">$</text>
 </svg>
