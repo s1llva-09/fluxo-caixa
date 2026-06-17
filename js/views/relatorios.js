@@ -5,7 +5,7 @@
 //  período escolhido, e deixa exportar tudo pra uma planilha (CSV).
 // ============================================================================
 
-import { el, $, emptyState, ICONS } from "../ui.js";
+import { el, $, emptyState, errorState, ICONS, skeletonList } from "../ui.js";
 import { state, mesAtual } from "../state.js";
 import { listarLancamentos } from "../api.js";
 import { formatBRL, formatDate } from "../money.js";
@@ -21,13 +21,15 @@ export async function renderRelatorios(root) {
     el("header", { class: "page-head page-head--row" },
       el("div", {},
         el("h1", { class: "page-title" }, "Relatórios"),
-        el("p", { class: "page-sub" }, "Resumo por categoria")
+        el("p", { class: "page-sub" }, "Entradas e saídas agrupadas por categoria")
       ),
-      el("button", { class: "btn btn--ghost", onclick: exportar }, "Exportar CSV")
+      el("button", { class: "btn btn--ghost", onclick: exportar, "data-tip": "Baixar planilha com os lançamentos do período" }, "↓ Exportar planilha")
     ),
-    el("section", { class: "filtros" }, de, ate),
-    el("div", { id: "rel-conteudo", class: "card" },
-      el("div", { class: "loading" }, "Carregando..."))
+    el("section", { class: "filtros filtros--relatorio" },
+      el("label", { class: "filtro-grupo" }, el("span", { class: "filtro-grupo__label" }, "De"), de),
+      el("label", { class: "filtro-grupo" }, el("span", { class: "filtro-grupo__label" }, "Até"), ate)
+    ),
+    el("div", { id: "rel-conteudo", class: "card" }, skeletonList(4))
   );
 
   async function atualizar() {
@@ -47,13 +49,22 @@ let itensCache = [];
 async function montar() {
   const box = $("#rel-conteudo");
   if (!box) return;
-  box.innerHTML = `<div class="loading">Carregando...</div>`;
+  box.innerHTML = "";
+  box.append(skeletonList(4));
 
-  const itens = await listarLancamentos({
-    companyId: state.company.id,
-    de: periodo.de,
-    ate: periodo.ate,
-  });
+  let itens;
+  try {
+    itens = await listarLancamentos({
+      companyId: state.company.id,
+      de: periodo.de,
+      ate: periodo.ate,
+    });
+  } catch (err) {
+    console.error(err);
+    box.innerHTML = "";
+    box.append(errorState("Não foi possível carregar o relatório.", montar));
+    return;
+  }
   itensCache = itens;
 
   // Agrupa por categoria, somando entradas e saídas
@@ -71,7 +82,7 @@ async function montar() {
 
   box.innerHTML = "";
   if (itens.length === 0) {
-    box.append(emptyState("Nenhum lançamento neste período.", ICONS.relatorio));
+    box.append(emptyState("Nenhum lançamento encontrado para o período selecionado. Tente ampliar as datas.", ICONS.relatorio));
     return;
   }
 
@@ -105,7 +116,46 @@ async function montar() {
   );
   const wrap = el("div", { class: "tabela-wrap" });
   wrap.append(tabela);
-  box.append(wrap);
+
+  const lista = el("ul", { class: "rel-lista" },
+    ...linhas.map(([nome, v]) => {
+      const saldo = v.entrada - v.saida;
+      return el("li", { class: "rel-item" },
+        el("div", { class: "rel-item__top" },
+          el("span", { class: "rel-item__nome" }, nome),
+          el("span", { class: `rel-item__saldo num ${saldo >= 0 ? "c-entrada" : "c-saida"}` }, formatBRL(saldo))
+        ),
+        el("div", { class: "rel-item__sub" },
+          el("span", { class: "rel-item__col" },
+            el("span", { class: "rel-item__label" }, "Entrada"),
+            el("span", { class: "num c-entrada" }, formatBRL(v.entrada))
+          ),
+          el("span", { class: "rel-item__col" },
+            el("span", { class: "rel-item__label" }, "Saída"),
+            el("span", { class: "num c-saida" }, formatBRL(v.saida))
+          )
+        )
+      );
+    }),
+    el("li", { class: "rel-item rel-item--total" },
+      el("div", { class: "rel-item__top" },
+        el("span", { class: "rel-item__nome" }, "Total"),
+        el("span", { class: `rel-item__saldo num ${(totalEntrada - totalSaida) >= 0 ? "c-entrada" : "c-saida"}` }, formatBRL(totalEntrada - totalSaida))
+      ),
+      el("div", { class: "rel-item__sub" },
+        el("span", { class: "rel-item__col" },
+          el("span", { class: "rel-item__label" }, "Entrada"),
+          el("span", { class: "num c-entrada" }, formatBRL(totalEntrada))
+        ),
+        el("span", { class: "rel-item__col" },
+          el("span", { class: "rel-item__label" }, "Saída"),
+          el("span", { class: "num c-saida" }, formatBRL(totalSaida))
+        )
+      )
+    )
+  );
+
+  box.append(wrap, lista);
 }
 
 // Gera um arquivo CSV e dispara o download (abre no Excel/Google Sheets).

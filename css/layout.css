@@ -2,12 +2,20 @@
    layout.css — Estrutura da página
    ========================================================================== */
 
-/* Shell: topbar fixa + corpo rolável --------------------------------------- */
+/* Impede scroll horizontal global.
+   Usamos `clip` em vez de `hidden`: `hidden` transformaria estes elementos em
+   containers de scroll e quebraria o `position: sticky` da .nav (o menu lateral
+   passaria a rolar junto com a página). `clip` corta o overflow sem criar
+   contexto de rolagem, então o sticky continua funcionando. */
+html { overflow-x: clip; }
+
+/* Shell -------------------------------------------------------------------- */
 .app-shell {
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  overflow-x: clip;
 }
 
 /* Topbar ------------------------------------------------------------------- */
@@ -15,33 +23,37 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 0 24px 0 28px;
+  padding: 0 28px 0 24px;
   height: var(--topbar-h);
-  background: var(--c-surface);
+  background: var(--c-topbar-bg);
+  backdrop-filter: saturate(180%) blur(16px);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
   border-bottom: 1px solid var(--c-border);
   position: sticky;
   top: 0;
   z-index: 20;
-  box-shadow: 0 1px 0 var(--c-border), 0 2px 12px rgba(12, 20, 16, 0.04);
 }
 
 .topbar__empresa {
   margin-left: auto;
   font-size: 12px;
   font-weight: 600;
-  color: var(--c-muted);
-  background: var(--c-bg);
-  padding: 5px 14px;
-  border-radius: 999px;
+  color: var(--c-ink-2);
+  background: var(--c-surface);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
   border: 1px solid var(--c-border);
-  max-width: 200px;
+  box-shadow: var(--shadow-xs);
+  max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  letter-spacing: 0.1px;
+  letter-spacing: -0.01em;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
+.topbar__empresa:hover { border-color: var(--c-border-strong); box-shadow: var(--shadow-sm); }
 
-/* Botão do menu (só no mobile) */
+/* Botão do menu (só no mobile) ------------------------------------------- */
 .btn-menu {
   display: none;
   background: none;
@@ -53,8 +65,9 @@
   line-height: 0;
 }
 .btn-menu:hover { background: var(--c-bg); color: var(--c-ink); }
+.btn-menu:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
 
-/* Marca (logo) ------------------------------------------------------------- */
+/* Marca -------------------------------------------------------------------- */
 .brand {
   display: flex;
   align-items: center;
@@ -65,80 +78,95 @@
 }
 
 .brand__mark {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #07CE8A 0%, #05B278 100%);
+  background: linear-gradient(145deg, #10B981 0%, #059669 100%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 10px rgba(7, 206, 138, 0.40);
-  padding: 6px;
+  box-shadow: 0 1px 2px rgba(5, 150, 105, 0.30),
+              0 2px 8px rgba(5, 150, 105, 0.18);
+  padding: 7px;
 }
-.brand__mark svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
+.brand__mark svg { width: 100%; height: 100%; display: block; }
 
 .brand__name {
   font-size: 15.5px;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.4px;
   color: var(--c-ink);
   font-weight: 700;
 }
 
 .brand--lg { justify-content: center; }
 .brand--lg .brand__mark {
-  width: 54px;
-  height: 54px;
-  border-radius: 16px;
-  padding: 13px;
-  box-shadow: 0 4px 20px rgba(7, 206, 138, 0.45);
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 4px 16px rgba(5, 150, 105, 0.32),
+              0 2px 6px rgba(5, 150, 105, 0.20);
 }
-.brand--lg .brand__name { font-size: 22px; }
+.brand--lg .brand__name { font-size: 22px; letter-spacing: -0.5px; }
 
-/* Corpo: sidebar + conteúdo ------------------------------------------------ */
+/* Grid: sidebar + conteúdo ------------------------------------------------- */
 .body-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: var(--sidebar-w, 224px) 1fr;
+  grid-template-columns: var(--sidebar-w) 1fr;
   align-items: start;
+  position: relative;
+}
+
+/* Fundo escuro que preenche toda a altura da coluna do sidebar,
+   independente de quanto a página cresce */
+.body-grid::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-w);
+  background: var(--c-sidebar);
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* Sidebar ------------------------------------------------------------------ */
 .nav {
   background: var(--c-sidebar);
-  padding: 16px 10px 24px;
+  padding: 16px 14px 24px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   position: sticky;
   top: var(--topbar-h);
   height: calc(100vh - var(--topbar-h));
+  height: calc(100dvh - var(--topbar-h));
   overflow-y: auto;
   scrollbar-width: none;
+  border-right: 1px solid var(--c-sidebar-border);
 }
 .nav::-webkit-scrollbar { display: none; }
 
 .nav__item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
   width: 100%;
-  padding: 10px 13px;
+  padding: 9px 12px;
   border: none;
   background: none;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-sm);
   color: var(--c-sidebar-text);
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 500;
   font-family: var(--font-body);
   text-align: left;
-  transition: background 0.14s, color 0.14s;
+  transition: background 0.15s, color 0.15s;
   position: relative;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.006em;
 }
 .nav__item:hover {
   background: var(--c-sidebar-item-hover);
@@ -155,58 +183,66 @@
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  height: 56%;
+  height: 50%;
   width: 3px;
   background: var(--c-sidebar-accent);
   border-radius: 0 3px 3px 0;
-  box-shadow: 0 0 10px 2px rgba(7, 206, 138, 0.45);
+  box-shadow: 0 0 12px 2px var(--c-sidebar-accent-glow);
 }
+.nav__item:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: -2px;
+}
+.nav__item.is-active .nav__icon { opacity: 1; }
 
 .nav__sair {
   margin-top: auto;
-  color: rgba(255, 255, 255, 0.26);
+  color: var(--c-sidebar-text);
+  opacity: 0.75;
 }
 .nav__sair:hover {
-  background: rgba(196, 43, 48, 0.13);
-  color: #f87171;
+  background: var(--c-saida-mid);
+  color: var(--c-saida);
+  opacity: 1;
 }
 
 .nav__icon {
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
-  opacity: 0.85;
+  opacity: 0.7;
 }
 
 /* Área de conteúdo --------------------------------------------------------- */
 .content {
-  padding: 36px 44px;
-  max-width: 1040px;
+  padding: 48px 56px;
+  max-width: 1100px;
   width: 100%;
 }
 
-/* ---- Responsivo: tablet -------------------------------------------------- */
-@media (max-width: 1040px) {
-  .content { padding: 28px 28px; }
+/* ── Responsivo: tablet ──────────────────────────────────────────────────── */
+@media (max-width: 1080px) {
+  .content { padding: 36px 36px; }
 }
 
-/* ---- Responsivo: mobile — menu vira gaveta lateral ----------------------- */
+/* ── Responsivo: mobile ──────────────────────────────────────────────────── */
+/* btn-menu oculto: a bottom nav já cobre toda a navegação no mobile          */
 @media (max-width: 760px) {
-  .btn-menu { display: flex; }
-  .body-grid { grid-template-columns: 1fr; }
+  .body-grid { display: block; }
+  .body-grid::before { display: none; }
 
   .nav {
     position: fixed;
     top: 0;
     left: 0;
     bottom: 0;
-    width: 248px;
+    width: 256px;
     height: 100%;
-    padding-top: 24px;
+    padding-top: 28px;
     transform: translateX(-100%);
-    transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.24s cubic-bezier(0.32, 0.72, 0, 1);
     z-index: 30;
-    box-shadow: 4px 0 40px rgba(0, 0, 0, 0.35);
+    box-shadow: 8px 0 48px rgba(0, 0, 0, 0.45);
   }
 
   .app-shell.nav-open .nav { transform: translateX(0); }
@@ -215,9 +251,11 @@
     content: "";
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.52);
+    background: rgba(0, 0, 0, 0.58);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     z-index: 25;
-    animation: fade-in 0.2s ease;
+    animation: fade-in 0.22s ease;
   }
 
   @keyframes fade-in {
@@ -225,12 +263,94 @@
     to   { opacity: 1; }
   }
 
-  .content { padding: 20px 16px; }
+  .content {
+    padding: 20px 16px calc(var(--bottom-nav-h, 64px) + 28px + env(safe-area-inset-bottom, 0px));
+  }
 
   .topbar__empresa { max-width: 140px; }
 }
 
 @media (max-width: 400px) {
   .brand__name { display: none; }
-  .topbar__empresa { max-width: 160px; font-size: 12px; }
+  .topbar__empresa { max-width: 160px; font-size: 11.5px; }
+}
+
+/* ── Bottom navigation bar (mobile) ──────────────────────────────────────── */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--bottom-nav-h, 64px) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--c-sidebar);
+  border-top: 1px solid var(--c-sidebar-border);
+  z-index: 24;
+  align-items: stretch;
+}
+
+.bottom-nav__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  color: var(--c-sidebar-text);
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  letter-spacing: 0.2px;
+  padding: 8px 2px;
+  transition: color 0.15s;
+  position: relative;
+}
+
+.bottom-nav__item svg {
+  width: 21px;
+  height: 21px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.bottom-nav__item.is-active { color: var(--c-primary); }
+
+.bottom-nav__item.is-active svg {
+  transform: scale(1.14) translateY(-1px);
+}
+
+.bottom-nav__item.is-active::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 2.5px;
+  background: var(--c-primary);
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 0 10px 2px var(--c-primary-glow);
+}
+
+/* Animação de entrada de tela — escalonada, bloco a bloco (estilo Linear) */
+@keyframes view-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.content.is-entering > * {
+  animation: view-enter 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.content.is-entering > *:nth-child(1) { animation-delay: 0.02s; }
+.content.is-entering > *:nth-child(2) { animation-delay: 0.07s; }
+.content.is-entering > *:nth-child(3) { animation-delay: 0.12s; }
+.content.is-entering > *:nth-child(4) { animation-delay: 0.17s; }
+.content.is-entering > *:nth-child(5) { animation-delay: 0.22s; }
+.content.is-entering > *:nth-child(6) { animation-delay: 0.27s; }
+.content.is-entering > *:nth-child(n+7) { animation-delay: 0.30s; }
+
+@media (max-width: 760px) {
+  .bottom-nav { display: flex; }
 }

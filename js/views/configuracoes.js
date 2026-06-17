@@ -5,18 +5,69 @@
 import { el, $, toast, senhaInput } from "../ui.js";
 import { state } from "../state.js";
 import { atualizarEmpresa } from "../api.js";
-import { updateEmail, updatePassword } from "../auth.js";
+import { updateEmail, updatePassword, signOut } from "../auth.js";
+import { getTheme, setTheme } from "../theme.js";
 
 export function renderConfiguracoes(root) {
   root.innerHTML = "";
   root.append(
     el("header", { class: "page-head" },
       el("h1", { class: "page-title" }, "Configurações"),
-      el("p", { class: "page-sub" }, "Empresa e dados da conta")
+      el("p", { class: "page-sub" }, "Empresa, conta e preferências")
     ),
+    secaoAparencia(),
     secaoEmpresa(),
     secaoEmail(),
-    secaoSenha()
+    secaoSenha(),
+    secaoSair()
+  );
+}
+
+// ── Seção: Aparência (tema) ───────────────────────────────────────────────────
+
+function secaoAparencia() {
+  const opcoes = [
+    { id: "light",  titulo: "Claro",      desc: "Fundo claro, ideal para o dia a dia" },
+    { id: "dark",   titulo: "Escuro",     desc: "Fundo escuro, mais suave à noite" },
+    { id: "system", titulo: "Automático", desc: "Acompanha o tema do seu sistema" },
+  ];
+
+  const grupo = el("div", { class: "theme-options", role: "radiogroup", "aria-label": "Tema" });
+
+  function marcar(ativo) {
+    grupo.querySelectorAll(".theme-option").forEach((b) => {
+      const on = b.dataset.theme === ativo;
+      b.classList.toggle("is-active", on);
+      b.setAttribute("aria-checked", on ? "true" : "false");
+    });
+  }
+
+  for (const op of opcoes) {
+    const btn = el("button", {
+      type: "button",
+      class: "theme-option",
+      role: "radio",
+      "data-theme": op.id,
+    },
+      el("span", { class: `theme-option__preview theme-option__preview--${op.id}` },
+        el("span", { class: "theme-option__bar" }),
+        el("span", { class: "theme-option__dot" })
+      ),
+      el("span", { class: "theme-option__titulo" }, op.titulo),
+      el("span", { class: "theme-option__desc" }, op.desc)
+    );
+    btn.addEventListener("click", () => {
+      setTheme(op.id);
+      marcar(op.id);
+    });
+    grupo.append(btn);
+  }
+
+  marcar(getTheme());
+
+  return secao("Aparência",
+    el("p", { class: "config__hint" }, "Escolha como o aplicativo aparece para você. A preferência fica salva neste dispositivo."),
+    grupo
   );
 }
 
@@ -43,7 +94,10 @@ function secaoEmpresa() {
       state.company = atualizada;
       // Atualiza o badge do topbar
       const badge = $("#empresa-nome");
-      if (badge) badge.textContent = atualizada.name;
+      if (badge) {
+        badge.textContent = atualizada.name;
+        badge.setAttribute("title", atualizada.name);
+      }
       toast("Nome atualizado!", "ok");
     } catch (err) {
       toast("Não foi possível salvar", "erro");
@@ -58,6 +112,7 @@ function secaoEmpresa() {
   nomeInput.addEventListener("keydown", (e) => { if (e.key === "Enter") salvar(); });
 
   return secao("Empresa",
+    el("p", { class: "config__hint" }, "Este nome aparece no topo de cada tela e nos relatórios exportados."),
     el("label", { class: "field" },
       el("span", { class: "field__label" }, "Nome da empresa"),
       nomeInput
@@ -157,6 +212,30 @@ function secaoSenha() {
       confirmarWrap
     ),
     el("div", { class: "form__actions" }, btn)
+  );
+}
+
+// ── Seção: Sair ──────────────────────────────────────────────────────────────
+
+function secaoSair() {
+  const btn = el("button", { class: "btn btn--danger" }, "Sair da conta");
+
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    btn.textContent = "Saindo...";
+    try {
+      await signOut();
+      window.location.reload();
+    } catch {
+      btn.disabled = false;
+      btn.textContent = "Sair da conta";
+    }
+  });
+
+  return secao("Sessão",
+    el("p", { class: "config__hint" }, `Conectado como ${state.user?.email ?? "—"}`),
+    el("p", { class: "config__note" }, "Ao sair, você precisará entrar novamente com seu email e senha."),
+    btn
   );
 }
 

@@ -1,64 +1,192 @@
 /* ============================================================================
-   base.css — Fundação do visual
+   base.css — Design tokens + fundação visual
    ========================================================================== */
 
-:root {
+/* ============================================================================
+   TEMAS
+   ----------------------------------------------------------------------------
+   As cores ficam todas em variáveis. O tema é escolhido pelo atributo
+   data-theme no <html> (definido em js/theme.js a partir do localStorage).
+     - sem atributo  -> tema claro (o :root abaixo)
+     - data-theme="dark" -> tema escuro
+   Tudo que NÃO for cor (tipografia, raios, espaçamentos, sombras) fica num
+   bloco comum no fim, pra não repetir.
+   ========================================================================== */
+
+/* ── TEMA CLARO (padrão) ───────────────────────────────────────────────────────
+   Neutros slate (paleta da Stripe) + UM único accent verde, que serve tanto
+   para os elementos interativos (botões, foco, ativo) quanto para valores
+   positivos. O vermelho é só semântica de saída. Nada de segundo verde. */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
   /* Superfícies */
-  --c-bg: #F1F5F3;
-  --c-surface: #ffffff;
-  --c-ink: #0C1410;
-  --c-muted: #8B9E98;
-  --c-border: #DDE5E2;
+  --c-bg:              #F6F8FB;
+  --c-bg-2:            #EEF1F6;
+  --c-surface:         #FFFFFF;
+  --c-surface-raised:  #FFFFFF;
+  --c-border:          #E6EAF0;
+  --c-border-strong:   #CFD6E0;
 
-  /* Cores financeiras — versão escura para texto (AA sobre branco) */
-  --c-entrada: #0A8C69;
-  --c-entrada-soft: #E5F7F1;
-  --c-saida: #C42B30;
-  --c-saida-soft: #FDF0F0;
+  /* Texto — escala slate da Stripe */
+  --c-ink:    #1A1F36;
+  --c-ink-2:  #3C4257;
+  --c-muted:  #697386;
+  --c-subtle: #8792A2;
+  --c-text-2: #697386;
 
-  /* Marca / primária (verde-menta vívido — sobre fundos escuros e em botões) */
-  --c-primary: #07CE8A;
-  --c-primary-ink: #05B278;
-  --c-primary-text: #062D1B;
-  --c-danger: #C42B30;
+  /* Accent ÚNICO (verde) — fills, foco, ativo */
+  --c-primary:      #059669;
+  --c-primary-hover:#047857;
+  --c-primary-deep: #065F46;
+  --c-primary-text: #FFFFFF;
+  --c-primary-glow: rgba(5, 150, 105, 0.16);
+  --c-primary-ink:  #059669;
 
-  /* Aliases úteis */
-  --c-text-2: #8B9E98;
-  --sidebar-w: 224px;
+  /* Semântica de dinheiro — entrada usa o MESMO verde do accent */
+  --c-entrada:      #059669;
+  --c-entrada-soft: #E6F5EF;
+  --c-entrada-mid:  rgba(5, 150, 105, 0.10);
+  --c-saida:        #DF1B41;
+  --c-saida-soft:   #FCEAEE;
+  --c-saida-mid:    rgba(223, 27, 65, 0.08);
+  --c-danger:       #DF1B41;
 
-  /* Sidebar escura */
-  --c-sidebar: #0B0F0E;
-  --c-sidebar-item-hover: rgba(255, 255, 255, 0.06);
-  --c-sidebar-item-active: rgba(7, 206, 138, 0.15);
-  --c-sidebar-accent: #07CE8A;
-  --c-sidebar-text: rgba(255, 255, 255, 0.40);
-  --c-sidebar-text-hover: rgba(255, 255, 255, 0.78);
-  --c-sidebar-text-active: #ffffff;
+  /* Topbar (translúcida com blur) */
+  --c-topbar-bg: rgba(255, 255, 255, 0.80);
 
-  /* Tipografia */
-  --font-display: 'DM Serif Display', Georgia, serif;
-  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  /* Fundo da tela de login — slate profundo, em ambos os temas */
+  --c-auth-bg: #1A1F36;
 
-  /* Espaçamento e formas */
-  --radius: 14px;
-  --radius-sm: 9px;
-  --radius-xs: 6px;
-  --gap: 20px;
-  --topbar-h: 60px;
+  /* Cartões de saldo — tinte bem sutil (lean) */
+  --c-saldo-pos-bg:     linear-gradient(155deg, #EDF8F3 0%, #F7FBF9 46%, #FFFFFF 78%);
+  --c-saldo-pos-border: #CEEBDD;
+  --c-saldo-neg-bg:     linear-gradient(155deg, #FCEDF0 0%, #FEF6F8 46%, #FFFFFF 78%);
+  --c-saldo-neg-border: #F5D2DA;
 
-  /* Sombras */
-  --shadow-xs: 0 1px 2px rgba(12, 20, 16, 0.05);
-  --shadow: 0 1px 3px rgba(12, 20, 16, 0.05),
-            0 8px 24px -6px rgba(12, 20, 16, 0.08);
-  --shadow-lg: 0 4px 12px rgba(12, 20, 16, 0.08),
-               0 24px 56px -8px rgba(12, 20, 16, 0.16);
+  /* Sidebar — painel branco, texto slate, ativo verde (sem glow) */
+  --c-sidebar:             #FFFFFF;
+  --c-sidebar-item-hover:  #F2F5F9;
+  --c-sidebar-item-active: rgba(5, 150, 105, 0.09);
+  --c-sidebar-accent:      #059669;
+  --c-sidebar-accent-glow: transparent;
+  --c-sidebar-text:        #697386;
+  --c-sidebar-text-hover:  #1A1F36;
+  --c-sidebar-text-active: #059669;
+  --c-sidebar-border:      #E6EAF0;
+
+  /* Sombras suaves em camadas (estilo Stripe) */
+  --shadow-xs: 0 1px 1px rgba(26, 31, 54, 0.04);
+  --shadow-sm: 0 1px 1px rgba(26, 31, 54, 0.04),
+               0 2px 4px rgba(26, 31, 54, 0.04);
+  --shadow:    0 1px 1px rgba(26, 31, 54, 0.03),
+               0 2px 5px rgba(26, 31, 54, 0.05),
+               0 6px 16px -4px rgba(26, 31, 54, 0.06);
+  --shadow-md: 0 1px 2px rgba(26, 31, 54, 0.04),
+               0 4px 10px -2px rgba(26, 31, 54, 0.06),
+               0 12px 32px -6px rgba(26, 31, 54, 0.10);
+  --shadow-lg: 0 2px 6px rgba(26, 31, 54, 0.05),
+               0 10px 24px -6px rgba(26, 31, 54, 0.10),
+               0 28px 56px -10px rgba(26, 31, 54, 0.18);
 }
 
-/* Reset básico ---------------------------------------------------------------- */
-*,
-*::before,
-*::after {
+/* ── TEMA ESCURO ───────────────────────────────────────────────────────────────
+   Slate-navy profundo em camadas (estilo Linear) + o mesmo accent verde, um
+   pouco mais claro pra brilhar no escuro. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Superfícies — slate profundo, em camadas */
+  --c-bg:              #0B0E14;
+  --c-bg-2:            #11151C;
+  --c-surface:         #14181F;
+  --c-surface-raised:  #1A1F28;
+  --c-border:          #232A35;
+  --c-border-strong:   #353D4A;
+
+  /* Texto */
+  --c-ink:    #EDEFF3;
+  --c-ink-2:  #C2C7D0;
+  --c-muted:  #888F9E;
+  --c-subtle: #5B6271;
+  --c-text-2: #888F9E;
+
+  /* Accent ÚNICO (verde) — fill mais claro, texto escuro por cima */
+  --c-primary:      #10B981;
+  --c-primary-hover:#34D399;
+  --c-primary-deep: #059669;
+  --c-primary-text: #04231A;
+  --c-primary-glow: rgba(16, 185, 129, 0.28);
+  --c-primary-ink:  #34D399;
+
+  /* Semântica de dinheiro */
+  --c-entrada:      #34D399;
+  --c-entrada-soft: rgba(52, 211, 153, 0.13);
+  --c-entrada-mid:  rgba(52, 211, 153, 0.16);
+  --c-saida:        #FB7185;
+  --c-saida-soft:   rgba(251, 113, 133, 0.13);
+  --c-saida-mid:    rgba(251, 113, 133, 0.15);
+  --c-danger:       #FB7185;
+
+  /* Topbar */
+  --c-topbar-bg: rgba(11, 14, 20, 0.78);
+
+  /* Login (um tom abaixo do bg) */
+  --c-auth-bg: #07090D;
+
+  /* Cartões de saldo */
+  --c-saldo-pos-bg:     linear-gradient(155deg, rgba(52,211,153,0.14) 0%, rgba(52,211,153,0.04) 46%, var(--c-surface) 80%);
+  --c-saldo-pos-border: rgba(52, 211, 153, 0.26);
+  --c-saldo-neg-bg:     linear-gradient(155deg, rgba(251,113,133,0.14) 0%, rgba(251,113,133,0.04) 46%, var(--c-surface) 80%);
+  --c-saldo-neg-border: rgba(251, 113, 133, 0.24);
+
+  /* Sidebar — mais escura que as superfícies */
+  --c-sidebar:             #080B11;
+  --c-sidebar-item-hover:  rgba(255, 255, 255, 0.05);
+  --c-sidebar-item-active: rgba(16, 185, 129, 0.14);
+  --c-sidebar-accent:      #10B981;
+  --c-sidebar-accent-glow: rgba(16, 185, 129, 0.0);
+  --c-sidebar-text:        rgba(237, 239, 243, 0.46);
+  --c-sidebar-text-hover:  rgba(237, 239, 243, 0.88);
+  --c-sidebar-text-active: #FFFFFF;
+  --c-sidebar-border:      rgba(255, 255, 255, 0.07);
+
+  /* Sombras mais profundas no escuro */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32), 0 2px 6px rgba(0, 0, 0, 0.30);
+  --shadow:    0 1px 2px rgba(0, 0, 0, 0.34), 0 4px 12px -2px rgba(0, 0, 0, 0.44);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.40), 0 12px 32px -6px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 6px 16px rgba(0, 0, 0, 0.46), 0 28px 56px -10px rgba(0, 0, 0, 0.64);
+}
+
+/* ── Tokens comuns (independentes de tema) ─────────────────────────────────── */
+:root {
+  /* ── Tipografia ──────────────────────────────────────────────────────────────
+     Uma família só (Inter). Os três aliases apontam todos pra ela, então o
+     código existente que usa --font-display / --font-mono continua funcionando.
+     Alinhamento de números vem de font-feature-settings, não de fonte mono. */
+  --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-sans);
+  --font-body:    var(--font-sans);
+  --font-mono:    var(--font-sans);
+
+  /* ── Raios ───────────────────────────────────────────────────────────────── */
+  --radius-xs:   7px;
+  --radius-sm:   10px;
+  --radius:      14px;
+  --radius-lg:   20px;
+  --radius-xl:   28px;
+  --radius-full: 9999px;
+
+  /* ── Layout (mais respiro) ─────────────────────────────────────────────────── */
+  --gap:       24px;
+  --topbar-h:  64px;
+  --sidebar-w: 248px;
+}
+
+/* ── Reset ───────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -66,24 +194,33 @@
 
 [hidden] { display: none !important; }
 
-html,
-body {
-  height: 100%;
-}
+html, body { height: 100%; }
 
 body {
   font-family: var(--font-body);
   background: var(--c-bg);
   color: var(--c-ink);
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.55;
+  letter-spacing: -0.011em;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
+/* Transição suave ao alternar entre tema claro e escuro.
+   Limitada às superfícies/textos principais para não dar "lag" visual. */
+body, .topbar, .nav, .bottom-nav, .card, .saldo, .stat, .input, .modal {
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+/* Títulos — Inter pesada e bem fechada, estilo Stripe/Linear */
 h1, h2, h3 {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 600;
   line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--c-ink);
 }
 
 button {
@@ -91,30 +228,26 @@ button {
   cursor: pointer;
 }
 
-input,
-select {
+input, select, textarea {
   font-family: inherit;
   font-size: 15px;
 }
 
-/* Valores monetários: monospace para legibilidade perfeita */
+/* Valores monetários — Inter com numerais tabulares (alinham em coluna) */
 .num {
-  font-family: var(--font-mono);
-  font-size: 0.93em;
   font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1;
+  font-feature-settings: "tnum" 1, "cv01" 1;
+  letter-spacing: -0.01em;
 }
 
 .c-entrada { color: var(--c-entrada); }
-.c-saida   { color: var(--c-saida); }
+.c-saida   { color: var(--c-saida);   }
 .ta-right  { text-align: right; }
 
-/* Respeita quem prefere menos animação */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

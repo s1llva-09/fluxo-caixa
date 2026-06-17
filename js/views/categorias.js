@@ -2,7 +2,7 @@
 //  views/categorias.js — Gerenciar categorias
 // ============================================================================
 
-import { el, $, toast, openModal, closeModal, emptyState, ICONS } from "../ui.js";
+import { el, $, toast, openModal, closeModal, emptyState, errorState, ICONS, skeletonList } from "../ui.js";
 import { state } from "../state.js";
 import { listarCategorias, criarCategoria, apagarCategoria } from "../api.js";
 
@@ -11,21 +11,20 @@ export async function renderCategorias(root) {
   root.append(
     el("header", { class: "page-head" },
       el("h1", { class: "page-title" }, "Categorias"),
-      el("p", { class: "page-sub" }, "Organize seus lançamentos")
+      el("p", { class: "page-sub" }, "Agrupe lançamentos por tipo de operação")
     ),
     formularioNova(),
-    el("div", { id: "lista-categorias", class: "card" },
-      el("div", { class: "loading" }, "Carregando..."))
+    el("div", { id: "lista-categorias", class: "card" }, skeletonList(4))
   );
   await carregar();
 }
 
 function formularioNova() {
-  const nome = el("input", { class: "input", placeholder: "Nome da categoria" });
+  const nome = el("input", { class: "input", placeholder: "Ex.: Venda, Aluguel, Fornecedores…" });
   const tipo = el("select", { class: "input" },
-    el("option", { value: "" }, "Entrada e saída"),
-    el("option", { value: "entrada" }, "Só entrada"),
-    el("option", { value: "saida" }, "Só saída")
+    el("option", { value: "" }, "Aparece em entradas e saídas"),
+    el("option", { value: "entrada" }, "Só em entradas"),
+    el("option", { value: "saida" }, "Só em saídas")
   );
   const btn = el("button", { class: "btn btn--primary" }, "Adicionar");
 
@@ -54,14 +53,31 @@ function formularioNova() {
   btn.addEventListener("click", adicionar);
   nome.addEventListener("keydown", (e) => { if (e.key === "Enter") adicionar(); });
 
-  return el("section", { class: "card form-inline" }, nome, tipo, btn);
+  return el("section", { class: "card" },
+    el("div", { class: "card__head" },
+      el("h2", { class: "card__title" }, "Nova categoria"),
+      el("span", { class: "card__hint" }, "Use o campo Tipo para filtrar a categoria na hora do lançamento")
+    ),
+    el("div", { class: "form-inline" }, nome, tipo, btn)
+  );
 }
 
 async function carregar() {
   const box = $("#lista-categorias");
   if (!box) return;
 
-  const cats = await listarCategorias(state.company.id);
+  box.innerHTML = "";
+  box.append(skeletonList(4));
+
+  let cats;
+  try {
+    cats = await listarCategorias(state.company.id);
+  } catch (err) {
+    console.error(err);
+    box.innerHTML = "";
+    box.append(errorState("Não foi possível carregar as categorias.", carregar));
+    return;
+  }
   state.categorias = cats;
 
   if (cats.length === 0) {
@@ -72,14 +88,15 @@ async function carregar() {
 
   const lista = el("ul", { class: "cat-list" });
   for (const c of cats) {
-    const [rotuloTipo, badgeClass] =
+    const [rotuloTipo, badgeClass, dotClass] =
       c.kind === "entrada"
-        ? ["Entrada", "badge"]
+        ? ["Só entradas",  "badge",            "cat__dot cat__dot--entrada"]
         : c.kind === "saida"
-        ? ["Saída", "badge badge--saida"]
-        : ["Ambos", "badge badge--muted"];
+        ? ["Só saídas",   "badge badge--saida","cat__dot cat__dot--saida"]
+        : ["Entradas e saídas", "badge badge--muted", "cat__dot cat__dot--ambos"];
     lista.append(
       el("li", { class: "cat" },
+        el("span", { class: dotClass }),
         el("span", { class: "cat__name" }, c.name),
         el("span", { class: badgeClass }, rotuloTipo),
         el("button", {

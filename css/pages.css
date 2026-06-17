@@ -2,7 +2,7 @@
    pages.css — Estilos específicos de telas
    ========================================================================== */
 
-/* Tela de entrada: fundo escuro dramático com card flutuante --------------- */
+/* ── Tela de entrada: fundo dramático com card flutuante ─────────────────── */
 .auth {
   min-height: 100vh;
   min-height: 100dvh;
@@ -10,80 +10,83 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: var(--c-sidebar);
+  background: var(--c-auth-bg);
   position: relative;
   overflow: hidden;
 }
 
-/* Orbe verde: atmosfera de marca no fundo escuro */
+/* Gradiente radial principal — brilho de marca */
 .auth::before {
   content: "";
   position: absolute;
-  width: 640px;
-  height: 640px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(7, 206, 138, 0.13) 0%, transparent 68%);
-  top: -160px;
-  right: -120px;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 900px 700px at 72% -8%,  rgba(16,185,129,0.14) 0%, transparent 55%),
+    radial-gradient(ellipse 560px 560px at 8%  108%, rgba(16,185,129,0.08) 0%, transparent 58%);
   pointer-events: none;
 }
+
+/* Grid sutil de fundo — profundidade dimensional */
 .auth::after {
   content: "";
   position: absolute;
-  width: 480px;
-  height: 480px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(7, 206, 138, 0.07) 0%, transparent 70%);
-  bottom: -100px;
-  left: -100px;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 52px 52px;
   pointer-events: none;
+  mask-image: radial-gradient(ellipse 75% 75% at 50% 50%, black 20%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 75% 75% at 50% 50%, black 20%, transparent 100%);
 }
 
 .auth__card {
   width: 100%;
-  max-width: 396px;
-  padding: 48px 44px;
+  max-width: 400px;
+  padding: 52px 44px;
   background: var(--c-surface);
-  border-radius: 20px;
-  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.45),
-              0 4px 16px rgba(0, 0, 0, 0.20),
-              0 0 0 1px rgba(255, 255, 255, 0.06);
+  border-radius: 24px;
+  box-shadow:
+    0 0  0 1px rgba(255, 255, 255, 0.07),
+    0 2px 8px rgba(0, 0, 0, 0.22),
+    0 16px 52px rgba(0, 0, 0, 0.42),
+    0 48px 96px rgba(0, 0, 0, 0.22);
   position: relative;
   z-index: 1;
-  animation: card-appear 0.4s cubic-bezier(0.34, 1.1, 0.64, 1);
+  animation: card-appear 0.44s cubic-bezier(0.34, 1.1, 0.64, 1);
 }
 @keyframes card-appear {
-  from { opacity: 0; transform: translateY(20px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(26px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
 }
 
-/* Título: DM Serif Display para a tela de auth */
+/* Título da tela de auth */
 .auth__title {
   font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 400;
+  font-size: 25px;
+  font-weight: 600;
   text-align: center;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.025em;
   color: var(--c-ink);
 }
 
 .auth__sub {
   color: var(--c-muted);
   text-align: center;
-  margin: 8px 0 28px;
+  margin: 8px 0 30px;
   font-size: 14px;
   line-height: 1.6;
 }
 
 /* Marca dentro do card de login */
 .auth .brand--lg {
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   flex-direction: column;
   gap: 12px;
 }
 .auth .brand--lg .brand__name {
   font-size: 20px;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.4px;
 }
 
 /* Botão ghost como link de alternância */
@@ -100,14 +103,22 @@
   border-color: var(--c-border);
 }
 
-/* Mobile */
+/* Mobile — card ocupa toda a tela */
 @media (max-width: 440px) {
   .auth {
-    padding: 16px;
+    padding: 0;
     align-items: flex-start;
-    padding-top: 40px;
   }
   .auth__card {
-    padding: 36px 26px;
+    border-radius: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 52px 28px 40px;
+    box-shadow: none;
+    animation: card-appear-mobile 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  @keyframes card-appear-mobile {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 }

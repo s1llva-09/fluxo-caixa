@@ -6,8 +6,9 @@
 //  Carregado no index.html com <script type="module" src="js/index.js">.
 // ============================================================================
 
-import { $, $$ } from "./ui.js";
+import { $, $$, closeModal } from "./ui.js";
 import { state } from "./state.js";
+import { initTheme } from "./theme.js";
 import { getUser, signOut, onAuthChange } from "./auth.js";
 import { getMinhaEmpresa } from "./api.js";
 
@@ -66,20 +67,30 @@ function mostrarOnboarding() {
 function mostrarApp() {
   $("#auth-root").hidden = true;
   $("#app-shell").hidden = false;
-  $("#empresa-nome").textContent = state.company.name;
+  const badge = $("#empresa-nome");
+  badge.textContent = state.company.name;
+  badge.setAttribute("title", state.company.name);
   irPara("dashboard");
 }
 
 // ---- navegação entre as telas ----------------------------------------------
 
 function irPara(nome) {
-  // Marca o item ativo no menu
-  $$(".nav__item").forEach((b) =>
+  // Marca o item ativo no menu lateral e na bottom nav
+  $$(".nav__item, .bottom-nav__item").forEach((b) =>
     b.classList.toggle("is-active", b.dataset.tela === nome)
   );
+
+  // Animação de entrada da view
+  const view = $("#view");
+  view.classList.remove("is-entering");
+  void view.offsetWidth; // força reflow para reiniciar a animação
+  view.classList.add("is-entering");
+
   // Desenha a tela escolhida dentro de #view
   const render = telas[nome];
-  if (render) render($("#view"));
+  if (render) render(view);
+
   // Fecha o menu no celular e volta ao topo
   $("#app-shell").classList.remove("nav-open");
   window.scrollTo({ top: 0, behavior: "instant" });
@@ -88,8 +99,8 @@ function irPara(nome) {
 // ---- liga os botões da interface -------------------------------------------
 
 function ligarEventos() {
-  // Navegação (cada botão tem data-tela="dashboard", etc.)
-  $$(".nav__item").forEach((btn) => {
+  // Navegação — sidebar e bottom nav
+  $$(".nav__item, .bottom-nav__item").forEach((btn) => {
     if (!btn.dataset.tela) return;
     btn.addEventListener("click", () => irPara(btn.dataset.tela));
   });
@@ -122,17 +133,13 @@ function ligarEventos() {
     }
   });
 
-  // Fechar o modal (X, clique fora ou Escape)
-  $("#modal-close")?.addEventListener("click", () =>
-    $("#modal-overlay").classList.remove("is-open")
-  );
+  // Fechar o modal (X, clique fora ou Escape) — com animação de saída
+  $("#modal-close")?.addEventListener("click", closeModal);
   $("#modal-overlay")?.addEventListener("click", (e) => {
-    if (e.target.id === "modal-overlay")
-      $("#modal-overlay").classList.remove("is-open");
+    if (e.target.id === "modal-overlay") closeModal();
   });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape")
-      $("#modal-overlay")?.classList.remove("is-open");
+    if (e.key === "Escape") closeModal();
   });
 }
 
@@ -145,5 +152,6 @@ onAuthChange((user) => {
 });
 
 // Liga tudo e inicia
+initTheme();
 ligarEventos();
 iniciar();

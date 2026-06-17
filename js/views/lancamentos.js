@@ -2,7 +2,7 @@
 //  views/lancamentos.js — Lista, cadastro e estorno de lançamentos
 // ============================================================================
 
-import { el, $, toast, openModal, closeModal, emptyState, ICONS } from "../ui.js";
+import { el, $, toast, openModal, closeModal, emptyState, errorState, ICONS, skeletonList } from "../ui.js";
 import { state, mesAtual } from "../state.js";
 import {
   listarLancamentos,
@@ -17,7 +17,13 @@ const filtros = { ...mesAtual(), kind: "", categoryId: "" };
 
 export async function renderLancamentos(root) {
   if (state.categorias.length === 0) {
-    state.categorias = await listarCategorias(state.company.id);
+    // Não-fatal: se falhar, os filtros ficam sem categorias e a lista
+    // mostra o erro com opção de tentar de novo.
+    try {
+      state.categorias = await listarCategorias(state.company.id);
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   root.innerHTML = "";
@@ -25,15 +31,14 @@ export async function renderLancamentos(root) {
     el("header", { class: "page-head page-head--row" },
       el("div", {},
         el("h1", { class: "page-title" }, "Lançamentos"),
-        el("p", { class: "page-sub" }, "Tudo que entra e sai do caixa")
+        el("p", { class: "page-sub" }, "Registre entradas e saídas do seu negócio")
       ),
       el("button",
         { class: "btn btn--primary", onclick: () => abrirFormulario() },
         "+ Novo lançamento")
     ),
     barraFiltros(),
-    el("div", { id: "lista-lancamentos", class: "card" },
-      el("div", { class: "loading" }, "Carregando..."))
+    el("div", { id: "lista-lancamentos", class: "card" }, skeletonList(5))
   );
 
   await carregarLista();
@@ -68,7 +73,12 @@ function barraFiltros() {
 
   [de, ate, tipo, cat].forEach((e) => e.addEventListener("change", aplicar));
 
-  return el("section", { class: "filtros" }, de, ate, tipo, cat);
+  return el("section", { class: "filtros" },
+    el("label", { class: "filtro-grupo" }, el("span", { class: "filtro-grupo__label" }, "De"), de),
+    el("label", { class: "filtro-grupo" }, el("span", { class: "filtro-grupo__label" }, "Até"), ate),
+    el("label", { class: "filtro-grupo" }, el("span", { class: "filtro-grupo__label" }, "Tipo"), tipo),
+    el("label", { class: "filtro-grupo" }, el("span", { class: "filtro-grupo__label" }, "Categoria"), cat)
+  );
 }
 
 // ---- lista -----------------------------------------------------------------
@@ -77,24 +87,43 @@ async function carregarLista() {
   const box = $("#lista-lancamentos");
   if (!box) return;
 
-  const sentinel = el("div", { class: "loading" }, "Carregando...");
+  const sentinel = skeletonList(5);
   box.innerHTML = "";
   box.append(sentinel);
 
-  const itens = await listarLancamentos({
-    companyId:  state.company.id,
-    de:         filtros.de,
-    ate:        filtros.ate,
-    kind:       filtros.kind || undefined,
-    categoryId: filtros.categoryId || undefined,
-  });
+  let itens;
+  try {
+    itens = await listarLancamentos({
+      companyId:  state.company.id,
+      de:         filtros.de,
+      ate:        filtros.ate,
+      kind:       filtros.kind || undefined,
+      categoryId: filtros.categoryId || undefined,
+    });
+  } catch (err) {
+    console.error(err);
+    if (!document.body.contains(sentinel)) return;
+    box.innerHTML = "";
+    box.append(errorState("Não foi possível carregar os lançamentos.", carregarLista));
+    return;
+  }
 
   // Se o usuário navegou para outra tela durante o fetch, descarta.
   if (!document.body.contains(sentinel)) return;
 
   if (itens.length === 0) {
+    const cta = el("button", {
+      class: "btn btn--primary",
+      style: "margin-top: 12px;",
+      onclick: () => abrirFormulario(),
+    }, "+ Novo lançamento");
+    const wrap = el("div", { class: "empty-state" },
+      el("div", { class: "empty-state__icon", html: ICONS.lancamentos }),
+      el("p", { class: "empty-state__text" }, "Nenhum lançamento encontrado para este período."),
+      cta
+    );
     box.innerHTML = "";
-    box.append(emptyState("Nenhum lançamento neste período.", ICONS.lancamentos));
+    box.append(wrap);
     return;
   }
 
@@ -112,7 +141,7 @@ async function carregarLista() {
       el("li", { class: `tx tx--${t.kind} ${t.is_reversed ? "is-reversed" : ""}` },
         el("div", { class: "tx__main" },
           el("span", { class: "tx__desc" },
-            (t.description || "(sem descrição)"),
+            el("span", {}, t.description || "(sem descrição)"),
             t.is_reversed ? el("span", { class: "badge badge--muted" }, "estornado") : null,
             t.reverses_id  ? el("span", { class: "badge badge--muted" }, "estorno")   : null
           ),
@@ -149,7 +178,7 @@ function abrirFormulario() {
     btnEntrada.classList.remove("seg--on");
   };
 
-  const valor = el("input", { class: "input", placeholder: "0,00", inputmode: "decimal" });
+  const valor = el("input", { class: "input", placeholder: "0,00", inputmode: "decimal", autofocus: "" });
   valor.addEventListener("blur", () => {
     const cents = parseToCents(valor.value);
     if (cents > 0) {
@@ -160,7 +189,7 @@ function abrirFormulario() {
     }
   });
   const data  = el("input", { type: "date", class: "input", value: todayISO() });
-  const desc  = el("input", { class: "input", placeholder: "Ex.: Venda de peça" });
+  const desc  = el("input", { class: "input", placeholder: "Ex.: Venda de produto, pagamento de fornecedor…" });
   const cat   = el("select", { class: "input" },
     el("option", { value: "" }, "Sem categoria"),
     ...state.categorias.map((c) => el("option", { value: c.id }, c.name))

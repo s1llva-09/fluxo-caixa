@@ -47,7 +47,11 @@ export function openModal(title, contentEl) {
 }
 
 export function closeModal() {
-  $("#modal-overlay")?.classList.remove("is-open");
+  const overlay = $("#modal-overlay");
+  if (!overlay || !overlay.classList.contains("is-open")) return;
+  // Anima a saída e só então remove de fato (a classe is-closing dispara o CSS).
+  overlay.classList.add("is-closing");
+  setTimeout(() => overlay.classList.remove("is-open", "is-closing"), 190);
 }
 
 // ---- Campo de senha com olhinho ----------------------------------------
@@ -76,12 +80,51 @@ export function senhaInput(attrs = {}) {
   return { wrap, input };
 }
 
+// ---- Skeleton de carregamento (placeholder animado de lista) -----------
+
+// Devolve uma lista de linhas "fantasma" com shimmer, no formato de uma
+// lista de lançamentos: [linha de texto + valor em pílula].
+export function skeletonList(rows = 5) {
+  const lista = el("div", { class: "skeleton-list", "aria-hidden": "true" });
+  const larguras = ["sk--w60", "sk--w40", "sk--w60", "sk--w24", "sk--w40"];
+  for (let i = 0; i < rows; i++) {
+    lista.append(
+      el("div", { class: "skeleton-row" },
+        el("div", { class: "skeleton-row__main" },
+          el("div", { class: `sk sk--line ${larguras[i % larguras.length]}` }),
+          el("div", { class: "sk sk--line sk--w24" })
+        ),
+        el("div", { class: "sk sk--pill" })
+      )
+    );
+  }
+  return lista;
+}
+
 // ---- Estado vazio com ícone --------------------------------------------
 
 export function emptyState(texto, svgIcon = "") {
   const children = [];
   if (svgIcon) children.push(el("div", { class: "empty-state__icon", html: svgIcon }));
   children.push(el("p", { class: "empty-state__text" }, texto));
+  return el("div", { class: "empty-state" }, ...children);
+}
+
+// ---- Estado de erro com botão de tentar de novo ------------------------
+
+const SVG_ALERT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+
+// onRetry: função chamada ao clicar em "Tentar de novo" (opcional).
+export function errorState(texto = "Não foi possível carregar os dados.", onRetry) {
+  const children = [
+    el("div", { class: "empty-state__icon empty-state__icon--erro", html: SVG_ALERT }),
+    el("p", { class: "empty-state__text" }, texto),
+  ];
+  if (typeof onRetry === "function") {
+    children.push(
+      el("button", { class: "btn btn--ghost", style: "margin-top: 4px;", onclick: onRetry }, "↻ Tentar de novo")
+    );
+  }
   return el("div", { class: "empty-state" }, ...children);
 }
 
