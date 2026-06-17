@@ -4,7 +4,7 @@
 
 import { el, $, toast, openModal, closeModal, emptyState, errorState, ICONS, skeletonList } from "../ui.js";
 import { state } from "../state.js";
-import { listarCategorias, criarCategoria, apagarCategoria } from "../api.js";
+import { listarCategorias, criarCategoria, atualizarCategoria, apagarCategoria } from "../api.js";
 
 export async function renderCategorias(root) {
   root.innerHTML = "";
@@ -101,6 +101,10 @@ async function carregar() {
         el("span", { class: badgeClass }, rotuloTipo),
         el("button", {
           class: "btn btn--tiny btn--ghost",
+          onclick: () => abrirEdicao(c),
+        }, "Editar"),
+        el("button", {
+          class: "btn btn--tiny btn--ghost",
           onclick: () => confirmarApagar(c),
         }, "Apagar")
       )
@@ -108,6 +112,61 @@ async function carregar() {
   }
   box.innerHTML = "";
   box.append(lista);
+}
+
+function abrirEdicao(c) {
+  const nome = el("input", { class: "input", value: c.name });
+  const tipo = el("select", { class: "input" },
+    el("option", { value: "" }, "Aparece em entradas e saídas"),
+    el("option", { value: "entrada" }, "Só em entradas"),
+    el("option", { value: "saida" }, "Só em saídas")
+  );
+  tipo.value = c.kind || "";
+
+  const btnSalvar = el("button", { class: "btn btn--primary" }, "Salvar");
+
+  async function salvar() {
+    const nomeNovo = nome.value.trim();
+    if (!nomeNovo) { toast("Digite o nome", "erro"); return; }
+    if (nomeNovo === c.name && (tipo.value || null) === (c.kind || null)) {
+      closeModal();
+      return;
+    }
+    btnSalvar.disabled    = true;
+    btnSalvar.textContent = "Salvando...";
+    try {
+      await atualizarCategoria(c.id, nomeNovo, tipo.value || null);
+      state.categorias = [];
+      closeModal();
+      toast("Categoria atualizada", "ok");
+      await carregar();
+    } catch (err) {
+      toast("Não foi possível salvar", "erro");
+      console.error(err);
+      btnSalvar.disabled    = false;
+      btnSalvar.textContent = "Salvar";
+    }
+  }
+
+  btnSalvar.addEventListener("click", salvar);
+  nome.addEventListener("keydown", (e) => { if (e.key === "Enter") salvar(); });
+
+  openModal("Editar categoria",
+    el("div", {},
+      el("label", { class: "field" },
+        el("span", { class: "field__label" }, "Nome"),
+        nome
+      ),
+      el("label", { class: "field" },
+        el("span", { class: "field__label" }, "Tipo"),
+        tipo
+      ),
+      el("div", { class: "form__actions" },
+        el("button", { class: "btn btn--ghost", onclick: closeModal }, "Cancelar"),
+        btnSalvar
+      )
+    )
+  );
 }
 
 function confirmarApagar(c) {

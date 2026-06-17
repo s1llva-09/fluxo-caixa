@@ -64,6 +64,17 @@ export async function criarCategoria(companyId, nome, kind) {
   return data;
 }
 
+export async function atualizarCategoria(id, nome, kind) {
+  const { data, error } = await supabase
+    .from("categories")
+    .update({ name: nome, kind: kind || null })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export async function apagarCategoria(id) {
   const { error } = await supabase.from("categories").delete().eq("id", id);
   if (error) throw error;
