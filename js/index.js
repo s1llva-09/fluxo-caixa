@@ -238,6 +238,13 @@ onAuthChange((user) => {
 // Quando a pessoa volta pelo link de redefinição de senha.
 onPasswordRecovery(() => mostrarRedefinir());
 
+// Registra o Service Worker (PWA) — sem travar o boot se falhar.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  });
+}
+
 // Liga tudo e inicia
 initTheme();
 ligarEventos();

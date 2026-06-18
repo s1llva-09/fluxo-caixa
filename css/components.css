@@ -223,6 +223,9 @@ select.input {
   align-items: end;
 }
 .filtros .input { width: 100%; }
+.filtro-grupo--busca { grid-column: 1 / -1; }
+
+.page-head__acoes { display: flex; gap: 10px; flex-wrap: wrap; }
 
 .filtro-grupo {
   display: flex;

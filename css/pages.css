@@ -167,3 +167,35 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 }
+
+/* ── Impressão / PDF (usado em Relatórios → botão PDF) ────────────────────────
+   Esconde a "casca" do app e força cores legíveis no papel, mesmo no tema
+   escuro (senão sairia texto claro em fundo branco). */
+@media print {
+  /* [data-theme] iguala a especificidade do tema (senão o dark venceria) */
+  :root[data-theme] {
+    --c-bg: #FFFFFF; --c-surface: #FFFFFF;
+    --c-ink: #111111; --c-ink-2: #333333; --c-muted: #555555; --c-subtle: #777777;
+    --c-border: #CCCCCC; --c-border-strong: #999999;
+    --c-entrada: #0A7C55; --c-saida: #C0392B;
+  }
+  body {
+    background: #FFFFFF !important;
+    color: #111111 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .topbar, .nav, .bottom-nav, #sub-banner, .filtros, .admin-filtros,
+  .btn, .modal-overlay, [data-tip]::after { display: none !important; }
+
+  .app-shell { display: block !important; }
+  .body-grid { display: block !important; }
+  .body-grid::before { display: none !important; }
+  .content { padding: 0 !important; max-width: none !important; }
+  .card { box-shadow: none !important; border: 1px solid #CCCCCC !important; }
+
+  .page-title { font-size: 20px !important; }
+  /* No papel, mostra a tabela mesmo em telas estreitas */
+  .tabela-wrap { display: block !important; }
+  .rel-lista { display: none !important; }
+}

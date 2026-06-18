@@ -23,7 +23,10 @@ export async function renderRelatorios(root) {
         el("h1", { class: "page-title" }, "Relatórios"),
         el("p", { class: "page-sub" }, "Entradas e saídas agrupadas por categoria")
       ),
-      el("button", { class: "btn btn--ghost", onclick: exportar, "data-tip": "Baixar planilha com os lançamentos do período" }, "↓ Exportar planilha")
+      el("div", { class: "page-head__acoes" },
+        el("button", { class: "btn btn--ghost", onclick: () => window.print(), "data-tip": "Gerar PDF / imprimir o relatório" }, "🖨 PDF"),
+        el("button", { class: "btn btn--ghost", onclick: exportar, "data-tip": "Baixar planilha com os lançamentos do período" }, "↓ Exportar planilha")
+      )
     ),
     el("section", { class: "filtros filtros--relatorio" },
       el("label", { class: "filtro-grupo" }, el("span", { class: "filtro-grupo__label" }, "De"), de),

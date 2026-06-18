@@ -15,6 +15,10 @@ import { formatBRL, formatDate, parseToCents, todayISO } from "../money.js";
 // Filtros atuais da tela (começa no mês corrente)
 const filtros = { ...mesAtual(), kind: "", categoryId: "" };
 
+// Itens carregados (pra filtrar a busca por texto sem ir no banco de novo)
+let itensCarregados = [];
+let termoBusca = "";
+
 export async function renderLancamentos(root) {
   if (state.categorias.length === 0) {
     // Não-fatal: se falhar, os filtros ficam sem categorias e a lista
@@ -37,11 +41,43 @@ export async function renderLancamentos(root) {
         { class: "btn btn--primary", onclick: () => abrirFormulario() },
         "+ Novo lançamento")
     ),
+    presetsPeriodo(),
     barraFiltros(),
     el("div", { id: "lista-lancamentos", class: "card" }, skeletonList(5))
   );
 
   await carregarLista();
+}
+
+// ---- atalhos de período (chips) --------------------------------------------
+
+function presetsPeriodo() {
+  const hoje = new Date();
+  const iso = (d) => d.toISOString().slice(0, 10);
+  const opcoes = [
+    ["Este mês", () => mesAtual()],
+    ["Mês passado", () => {
+      const p = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+      return { de: iso(new Date(p.getFullYear(), p.getMonth(), 1)),
+               ate: iso(new Date(p.getFullYear(), p.getMonth() + 1, 0)) };
+    }],
+    ["Este ano", () => ({ de: iso(new Date(hoje.getFullYear(), 0, 1)),
+                          ate: iso(new Date(hoje.getFullYear(), 11, 31)) })],
+    ["Tudo", () => ({ de: "2000-01-01", ate: iso(hoje) })],
+  ];
+  const box = el("div", { class: "admin-filtros" });
+  for (const [label, calc] of opcoes) {
+    box.append(el("button", {
+      class: "chip", type: "button",
+      onclick: async () => {
+        const r = calc();
+        filtros.de = r.de; filtros.ate = r.ate;
+        // re-renderiza a tela toda pra atualizar os campos De/Até
+        renderLancamentos($("#view"));
+      },
+    }, label));
+  }
+  return box;
 }
 
 // ---- filtros ---------------------------------------------------------------
@@ -63,6 +99,11 @@ function barraFiltros() {
   );
   cat.value = filtros.categoryId;
 
+  const busca = el("input", {
+    class: "input", type: "search", placeholder: "Buscar na descrição…", value: termoBusca,
+  });
+  busca.addEventListener("input", () => { termoBusca = busca.value; renderLista(); });
+
   async function aplicar() {
     filtros.de         = de.value;
     filtros.ate        = ate.value;
@@ -77,7 +118,8 @@ function barraFiltros() {
     el("label", { class: "filtro-grupo" }, el("span", { class: "filtro-grupo__label" }, "De"), de),
     el("label", { class: "filtro-grupo" }, el("span", { class: "filtro-grupo__label" }, "Até"), ate),
     el("label", { class: "filtro-grupo" }, el("span", { class: "filtro-grupo__label" }, "Tipo"), tipo),
-    el("label", { class: "filtro-grupo" }, el("span", { class: "filtro-grupo__label" }, "Categoria"), cat)
+    el("label", { class: "filtro-grupo" }, el("span", { class: "filtro-grupo__label" }, "Categoria"), cat),
+    el("label", { class: "filtro-grupo filtro-grupo--busca" }, el("span", { class: "filtro-grupo__label" }, "Buscar"), busca)
   );
 }
 
@@ -111,7 +153,26 @@ async function carregarLista() {
   // Se o usuário navegou para outra tela durante o fetch, descarta.
   if (!document.body.contains(sentinel)) return;
 
+  itensCarregados = itens;
+  renderLista();
+}
+
+// Desenha a lista já filtrada pela busca por texto (sem ir no banco).
+function renderLista() {
+  const box = $("#lista-lancamentos");
+  if (!box) return;
+
+  const termo = termoBusca.trim().toLowerCase();
+  const itens = !termo
+    ? itensCarregados
+    : itensCarregados.filter((t) => (t.description || "").toLowerCase().includes(termo));
+
+  box.innerHTML = "";
   if (itens.length === 0) {
+    if (termo) {
+      box.append(el("div", { class: "empty" }, "Nenhum lançamento com esse texto."));
+      return;
+    }
     const cta = el("button", {
       class: "btn btn--primary",
       style: "margin-top: 12px;",
@@ -122,7 +183,6 @@ async function carregarLista() {
       el("p", { class: "empty-state__text" }, "Nenhum lançamento encontrado para este período."),
       cta
     );
-    box.innerHTML = "";
     box.append(wrap);
     return;
   }

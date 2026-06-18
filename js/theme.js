@@ -26,7 +26,11 @@ function resolve(theme) {
 
 // Aplica o tema no documento (sem salvar).
 export function applyTheme(theme) {
-  document.documentElement.setAttribute("data-theme", resolve(theme));
+  const resolvido = resolve(theme);
+  document.documentElement.setAttribute("data-theme", resolvido);
+  // Cor da barra de status no mobile / PWA acompanha o tema.
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", resolvido === "dark" ? "#0B0E14" : "#FFFFFF");
 }
 
 // Salva e aplica.
