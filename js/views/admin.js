@@ -6,8 +6,10 @@
 //  no banco (RLS + funções is_admin): aqui é só a interface.
 // ============================================================================
 
-import { el, $, toast, openModal, closeModal, errorState, skeletonList } from "../ui.js";
+import { el, $, toast, openModal, closeModal, errorState, skeletonList, senhaInput } from "../ui.js";
 import { listarClientesAdmin, definirStatusCliente } from "../api.js";
+import { updateEmail, updatePassword } from "../auth.js";
+import { state } from "../state.js";
 import { formatDate, todayISO } from "../money.js";
 
 let clientes = [];
@@ -27,9 +29,82 @@ export async function renderAdmin(root) {
         buscaInput()
       ),
       el("div", { id: "admin-lista" }, skeletonList(5))
-    )
+    ),
+    secaoConta()
   );
   await carregar();
+}
+
+// ---- conta do admin (trocar email / senha) ---------------------------------
+
+function secaoConta() {
+  const emailAtual = state.user?.email ?? "";
+
+  // -- email --
+  const emailInput = el("input", {
+    class: "input", type: "email", placeholder: emailAtual, autocomplete: "email",
+  });
+  const btnEmail = el("button", { class: "btn btn--primary" }, "Atualizar email");
+  async function salvarEmail() {
+    const v = emailInput.value.trim();
+    if (!v) { toast("Digite o novo email", "erro"); return; }
+    if (v === emailAtual) { toast("É o mesmo email atual", "info"); return; }
+    btnEmail.disabled = true; btnEmail.textContent = "Enviando...";
+    try {
+      await updateEmail(v);
+      toast("Confirme o novo email pela caixa de entrada", "info");
+      emailInput.value = "";
+    } catch (err) {
+      toast(traduzErroConta(err), "erro");
+    } finally {
+      btnEmail.disabled = false; btnEmail.textContent = "Atualizar email";
+    }
+  }
+  btnEmail.addEventListener("click", salvarEmail);
+
+  // -- senha --
+  const { wrap: w1, input: s1 } = senhaInput({ placeholder: "Mínimo 6 caracteres", autocomplete: "new-password" });
+  const { wrap: w2, input: s2 } = senhaInput({ placeholder: "Repita a nova senha", autocomplete: "new-password" });
+  const btnSenha = el("button", { class: "btn btn--primary" }, "Atualizar senha");
+  async function salvarSenha() {
+    if (s1.value.length < 6) { toast("A senha precisa ter pelo menos 6 caracteres", "erro"); return; }
+    if (s1.value !== s2.value) { toast("As senhas não coincidem", "erro"); return; }
+    btnSenha.disabled = true; btnSenha.textContent = "Salvando...";
+    try {
+      await updatePassword(s1.value);
+      toast("Senha atualizada!", "ok");
+      s1.value = ""; s2.value = "";
+    } catch (err) {
+      toast(traduzErroConta(err), "erro");
+    } finally {
+      btnSenha.disabled = false; btnSenha.textContent = "Atualizar senha";
+    }
+  }
+  btnSenha.addEventListener("click", salvarSenha);
+
+  return el("section", { class: "card", style: "margin-top: var(--gap);" },
+    el("h2", { class: "card__title" }, "Conta do admin"),
+    el("p", { class: "config__hint" },
+      `Logado como ${emailAtual}. Trocar o email NÃO tira seu acesso de admin — ele segue a sua conta, não o endereço.`),
+    el("label", { class: "field" },
+      el("span", { class: "field__label" }, "Novo email"), emailInput),
+    el("div", { class: "form__actions" }, btnEmail),
+    el("hr", { class: "admin-conta__sep" }),
+    el("label", { class: "field" },
+      el("span", { class: "field__label" }, "Nova senha"), w1),
+    el("label", { class: "field" },
+      el("span", { class: "field__label" }, "Confirmar nova senha"), w2),
+    el("div", { class: "form__actions" }, btnSenha)
+  );
+}
+
+function traduzErroConta(err) {
+  const m = (err?.message || "").toLowerCase();
+  if (m.includes("email") && m.includes("taken")) return "Este email já está em uso";
+  if (m.includes("same password")) return "A nova senha não pode ser igual à atual";
+  if (m.includes("password") && m.includes("6")) return "A senha precisa ter pelo menos 6 caracteres";
+  if (m.includes("rate") || m.includes("too many")) return "Muitas tentativas. Aguarde e tente de novo.";
+  return "Algo deu errado. Tente de novo.";
 }
 
 function buscaInput() {

@@ -1056,6 +1056,7 @@ select.input {
 .admin-cli__metavalue { font-size: 13px; color: var(--c-ink-2); font-weight: 500; }
 .admin-cli__actions { flex-shrink: 0; }
 .admin-modal__id { margin-bottom: 20px; }
+.admin-conta__sep { border: none; border-top: 1px solid var(--c-border); margin: 22px 0; }
 
 @media (max-width: 560px) {
   .admin-busca { max-width: none; }

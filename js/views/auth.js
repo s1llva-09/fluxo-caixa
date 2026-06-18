@@ -52,22 +52,25 @@ export function renderAuth(root, onSuccess) {
           await signIn(emailVal, senhaVal);
           onSuccess();
         } else {
-          await signUp(emailVal, senhaVal);
-          // Tenta entrar direto. Se o projeto exigir confirmação de email,
-          // o Supabase rejeita aqui e orientamos o usuário.
-          try {
-            await signIn(emailVal, senhaVal);
+          const data = await signUp(emailVal, senhaVal);
+
+          // Email já cadastrado: o Supabase devolve um "usuário" sem identidades
+          // (pra não vazar quem tem conta). Tratamos como "já existe".
+          if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+            toast("Este email já tem conta. Faça login.", "erro");
+            modo = "login";
+            root.innerHTML = "";
+            root.append(tela());
+            return;
+          }
+
+          if (data?.session) {
+            // Confirmação de email está DESLIGADA no Supabase: já entrou.
             onSuccess();
-          } catch (errLogin) {
-            const m = (errLogin?.message || "").toLowerCase();
-            if (m.includes("email not confirmed") || m.includes("email_not_confirmed")) {
-              toast("Conta criada! Verifique seu email para confirmar o cadastro.", "info");
-              modo = "login";
-              root.innerHTML = "";
-              root.append(tela());
-            } else {
-              throw errLogin;
-            }
+          } else {
+            // Confirmação LIGADA: não entra ainda. Mostra a tela de
+            // "verifique seu email" e só libera depois que ele confirmar.
+            mostrarConfirmacao(emailVal);
           }
         }
       } catch (err) {
@@ -116,6 +119,36 @@ export function renderAuth(root, onSuccess) {
             : "Crie sua conta e comece a controlar seu caixa."),
         el("h2", { class: "auth__title", style: "margin-bottom:22px" }, titulo),
         form
+      )
+    );
+  }
+
+  // Tela mostrada depois do cadastro, quando o email precisa ser confirmado.
+  function mostrarConfirmacao(email) {
+    const voltar = el("button", {
+      type: "button",
+      class: "btn btn--ghost btn--block",
+      onclick: () => {
+        modo = "login";
+        root.innerHTML = "";
+        root.append(tela());
+      },
+    }, "Voltar ao login");
+
+    root.innerHTML = "";
+    root.append(
+      el("div", { class: "auth" },
+        el("div", { class: "auth__card card" },
+          el("div", { class: "auth__lock auth__lock--ok", "aria-hidden": "true",
+            html: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6 12 13 2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>` }),
+          el("h1", { class: "auth__title" }, "Confirme seu email"),
+          el("p", { class: "auth__sub" },
+            "Enviamos um link de confirmação para ", el("strong", {}, email),
+            ". Abra o email e clique no link para ativar sua conta — depois é só entrar."),
+          el("p", { class: "auth__contato" },
+            "Não recebeu? Verifique a caixa de spam."),
+          voltar
+        )
       )
     );
   }

@@ -73,6 +73,7 @@
   color: var(--c-saida);
 }
 .auth__lock svg { width: 26px; height: 26px; }
+.auth__lock--ok { background: var(--c-entrada-soft); color: var(--c-entrada); }
 .auth__contato {
   font-size: 13px;
   color: var(--c-subtle);
