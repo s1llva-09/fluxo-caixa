@@ -91,6 +91,16 @@ export async function listarPagamentos(companyId) {
   return data || [];
 }
 
+// Soma dos pagamentos (receita) num período. Datas em "YYYY-MM-DD" ou null.
+export async function receitaPeriodo(de, ate) {
+  const { data, error } = await supabase.rpc("admin_revenue", {
+    p_from: de || null,
+    p_to: ate || null,
+  });
+  if (error) throw error;
+  return data || 0;
+}
+
 // -------- CATEGORIAS --------
 
 export async function listarCategorias(companyId) {

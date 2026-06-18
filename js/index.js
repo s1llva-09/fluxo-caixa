@@ -6,9 +6,13 @@
 //  Carregado no index.html com <script type="module" src="js/index.js">.
 // ============================================================================
 
-import { $, $$, closeModal } from "./ui.js";
+import { $, $$, el, closeModal } from "./ui.js";
 import { state, empresaAtiva } from "./state.js";
+import { formatDate } from "./money.js";
 import { initTheme } from "./theme.js";
+
+// Janela (dias) para avisar o cliente que a mensalidade está perto de vencer.
+const AVISO_VENC_DIAS = 7;
 import { getUser, signOut, onAuthChange, onPasswordRecovery } from "./auth.js";
 import { getMinhaEmpresa, souAdmin } from "./api.js";
 
@@ -114,7 +118,43 @@ function mostrarApp() {
   badge.setAttribute("title", state.company.name);
   // Mostra o item "Admin" no menu só pra quem é admin.
   $$(".nav__admin").forEach((b) => { b.hidden = !state.isAdmin; });
+  mostrarAvisoVencimento();
   irPara("dashboard");
+}
+
+// Banner de "mensalidade vencendo" no topo do app (só pro cliente, não pro admin).
+function mostrarAvisoVencimento() {
+  const slot = $("#sub-banner");
+  if (!slot) return;
+  slot.innerHTML = "";
+  if (state.isAdmin) return;
+
+  const c = state.company;
+  if (!c || !empresaAtiva(c) || !c.plan_until) return;
+
+  const ms = new Date(c.plan_until + "T00:00:00") -
+             new Date(new Date().toISOString().slice(0, 10) + "T00:00:00");
+  const dias = Math.round(ms / 86400000);
+  if (dias < 0 || dias > AVISO_VENC_DIAS) return;
+
+  // Se já fechou o aviso pra ESTA data de vencimento, não mostra de novo.
+  if (sessionStorage.getItem("sub-banner-dismiss") === c.plan_until) return;
+
+  const quando = dias === 0 ? "hoje" : dias === 1 ? "amanhã" : `em ${dias} dias`;
+  slot.append(
+    el("div", { class: "sub-banner" },
+      el("span", { class: "sub-banner__text" },
+        `Sua mensalidade vence ${quando} (${formatDate(c.plan_until)}). Regularize para não perder o acesso.`),
+      el("button", {
+        class: "sub-banner__close",
+        "aria-label": "Fechar aviso",
+        onclick: () => {
+          slot.innerHTML = "";
+          sessionStorage.setItem("sub-banner-dismiss", c.plan_until);
+        },
+      }, "×")
+    )
+  );
 }
 
 // ---- navegação entre as telas ----------------------------------------------

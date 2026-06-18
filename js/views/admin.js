@@ -7,9 +7,9 @@
 // ============================================================================
 
 import { el, $, toast, openModal, closeModal, errorState, skeletonList, senhaInput } from "../ui.js";
-import { listarClientesAdmin, definirStatusCliente, registrarPagamento, listarPagamentos } from "../api.js";
+import { listarClientesAdmin, definirStatusCliente, registrarPagamento, listarPagamentos, receitaPeriodo } from "../api.js";
 import { updateEmail, updatePassword } from "../auth.js";
-import { state } from "../state.js";
+import { state, mesAtual } from "../state.js";
 import { formatDate, formatBRL, parseToCents, todayISO } from "../money.js";
 
 // Janela (em dias) para o aviso de "mensalidade vencendo em breve".
@@ -17,6 +17,8 @@ const AVISO_DIAS = 7;
 
 let clientes = [];
 let filtro = "";
+let filtroStatus = "todos"; // todos | ativos | vencendo | inativos
+let receitaMes = 0;
 
 export async function renderAdmin(root) {
   root.innerHTML = "";
@@ -31,6 +33,7 @@ export async function renderAdmin(root) {
         el("h2", { class: "card__title" }, "Clientes"),
         buscaInput()
       ),
+      el("div", { id: "admin-filtros", class: "admin-filtros" }),
       el("div", { id: "admin-lista" }, skeletonList(5))
     ),
     secaoConta()
@@ -135,7 +138,16 @@ async function carregar() {
     box.append(errorState("Não foi possível carregar os clientes.", carregar));
     return;
   }
+  // Receita do mês (não-fatal: se falhar, mostra 0).
+  try {
+    const { de, ate } = mesAtual();
+    receitaMes = await receitaPeriodo(de, ate);
+  } catch (err) {
+    console.error(err);
+    receitaMes = 0;
+  }
   desenharResumo();
+  desenharFiltros();
   desenharLista();
 }
 
@@ -153,8 +165,38 @@ function desenharResumo() {
     resumoCard("Clientes", total),
     resumoCard("Ativos", ativos, "entrada"),
     resumoCard(`Vencendo (${AVISO_DIAS}d)`, vencendo, vencendo > 0 ? "alerta" : ""),
-    resumoCard("Bloqueados / vencidos", inativos, inativos > 0 ? "saida" : "")
+    resumoCard("Bloqueados / vencidos", inativos, inativos > 0 ? "saida" : ""),
+    resumoCard("Receita do mês", formatBRL(receitaMes), "entrada")
   );
+}
+
+// ---- filtro por status ------------------------------------------------------
+
+function desenharFiltros() {
+  const box = $("#admin-filtros");
+  if (!box) return;
+  const opcoes = [
+    ["todos", "Todos"],
+    ["ativos", "Ativos"],
+    ["vencendo", "Vencendo"],
+    ["inativos", "Bloqueados / vencidos"],
+  ];
+  box.innerHTML = "";
+  for (const [id, label] of opcoes) {
+    const chip = el("button", {
+      class: `chip ${filtroStatus === id ? "chip--on" : ""}`,
+      onclick: () => { filtroStatus = id; desenharFiltros(); desenharLista(); },
+    }, label);
+    box.append(chip);
+  }
+}
+
+// Aplica o filtro de status escolhido na lista.
+function passaStatus(c) {
+  if (filtroStatus === "ativos") return !!c.active;
+  if (filtroStatus === "inativos") return !c.active;
+  if (filtroStatus === "vencendo") return venceEmBreve(c);
+  return true;
 }
 
 // True se o cliente está ativo e a mensalidade vence dentro da janela de aviso.
@@ -200,11 +242,12 @@ function desenharLista() {
   if (!box) return;
 
   const termo = filtro.trim().toLowerCase();
-  const itens = !termo
-    ? clientes
-    : clientes.filter((c) =>
-        (c.name || "").toLowerCase().includes(termo) ||
-        (c.owner_email || "").toLowerCase().includes(termo));
+  const itens = clientes.filter((c) => {
+    if (!passaStatus(c)) return false;
+    if (!termo) return true;
+    return (c.name || "").toLowerCase().includes(termo) ||
+           (c.owner_email || "").toLowerCase().includes(termo);
+  });
 
   box.innerHTML = "";
   if (itens.length === 0) {
