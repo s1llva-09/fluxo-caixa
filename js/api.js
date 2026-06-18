@@ -69,6 +69,28 @@ export async function definirStatusCliente(companyId, status, planUntil) {
   return data;
 }
 
+// Registra um pagamento; se renewUntil vier, renova o acesso até essa data.
+export async function registrarPagamento(companyId, amountCents, paidOn, note, renewUntil) {
+  const { data, error } = await supabase.rpc("admin_add_payment", {
+    p_company_id: companyId,
+    p_amount_cents: amountCents ?? null,
+    p_paid_on: paidOn || null,
+    p_note: note || "",
+    p_renew_until: renewUntil || null,
+  });
+  if (error) throw error;
+  return data;
+}
+
+// Histórico de pagamentos de um cliente.
+export async function listarPagamentos(companyId) {
+  const { data, error } = await supabase.rpc("admin_list_payments", {
+    p_company_id: companyId,
+  });
+  if (error) throw error;
+  return data || [];
+}
+
 // -------- CATEGORIAS --------
 
 export async function listarCategorias(companyId) {

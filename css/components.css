@@ -378,6 +378,15 @@ select.input {
 }
 .stat--entrada::before { background: linear-gradient(90deg, var(--c-entrada) 0%, var(--c-primary) 100%); }
 .stat--saida::before   { background: linear-gradient(90deg, var(--c-saida) 0%, var(--c-danger) 100%); }
+.stat--alerta::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--c-alerta);
+}
+.stat--alerta .stat__value { color: var(--c-alerta); }
 
 .stat__header {
   display: flex;
@@ -580,6 +589,10 @@ select.input {
   background: var(--c-bg);
   color: var(--c-muted);
   border: 1px solid var(--c-border);
+}
+.badge--alerta {
+  background: var(--c-alerta-soft);
+  color: var(--c-alerta);
 }
 
 /* ── Tabela (relatórios) ──────────────────────────────────────────────────── */
@@ -875,7 +888,12 @@ select.input {
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--c-border);
   animation: modal-in 0.24s cubic-bezier(0.34, 1.28, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 40px);
 }
+.modal__head { flex-shrink: 0; }
+.modal__body { overflow-y: auto; }
 @keyframes modal-in {
   from { opacity: 0; transform: translateY(18px) scale(0.96); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
@@ -1012,6 +1030,44 @@ select.input {
 
 /* ── Painel do Admin ──────────────────────────────────────────────────────── */
 .admin-busca { max-width: 280px; margin-left: auto; }
+
+/* Resumo com 4 cards que se ajustam */
+.admin-resumo { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+
+/* Registrar pagamento + histórico (dentro do modal) */
+.admin-pay__titulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-ink);
+  margin-bottom: 12px;
+}
+.admin-pay__row { display: flex; gap: 12px; }
+.admin-pay__row .field { flex: 1; min-width: 0; }
+.admin-pay__hist { margin-top: 4px; }
+.admin-pay__vazio { font-size: 13px; color: var(--c-muted); padding: 4px 0; }
+.admin-pay__list { list-style: none; }
+.admin-pay__item {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--c-border);
+  font-size: 13px;
+}
+.admin-pay__item:last-child { border-bottom: none; }
+.admin-pay__data { color: var(--c-muted); flex-shrink: 0; width: 86px; }
+.admin-pay__val { font-weight: 600; color: var(--c-ink); flex-shrink: 0; }
+.admin-pay__obs {
+  color: var(--c-muted);
+  margin-left: auto;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .admin-pay__row { flex-direction: column; gap: 0; }
+}
 
 .admin-list { list-style: none; }
 .admin-cli {

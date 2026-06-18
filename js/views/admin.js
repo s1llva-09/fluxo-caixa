@@ -7,10 +7,13 @@
 // ============================================================================
 
 import { el, $, toast, openModal, closeModal, errorState, skeletonList, senhaInput } from "../ui.js";
-import { listarClientesAdmin, definirStatusCliente } from "../api.js";
+import { listarClientesAdmin, definirStatusCliente, registrarPagamento, listarPagamentos } from "../api.js";
 import { updateEmail, updatePassword } from "../auth.js";
 import { state } from "../state.js";
-import { formatDate, todayISO } from "../money.js";
+import { formatDate, formatBRL, parseToCents, todayISO } from "../money.js";
+
+// Janela (em dias) para o aviso de "mensalidade vencendo em breve".
+const AVISO_DIAS = 7;
 
 let clientes = [];
 let filtro = "";
@@ -22,7 +25,7 @@ export async function renderAdmin(root) {
       el("h1", { class: "page-title" }, "Painel do Admin"),
       el("p", { class: "page-sub" }, "Clientes do Fluxo de Caixa e controle de assinatura")
     ),
-    el("section", { id: "admin-resumo", class: "stats" }),
+    el("section", { id: "admin-resumo", class: "stats admin-resumo" }),
     el("section", { class: "card" },
       el("div", { class: "card__head" },
         el("h2", { class: "card__title" }, "Clientes"),
@@ -144,12 +147,43 @@ function desenharResumo() {
   const total = clientes.length;
   const ativos = clientes.filter((c) => c.active).length;
   const inativos = total - ativos;
+  const vencendo = clientes.filter((c) => venceEmBreve(c)).length;
   box.innerHTML = "";
   box.append(
     resumoCard("Clientes", total),
     resumoCard("Ativos", ativos, "entrada"),
+    resumoCard(`Vencendo (${AVISO_DIAS}d)`, vencendo, vencendo > 0 ? "alerta" : ""),
     resumoCard("Bloqueados / vencidos", inativos, inativos > 0 ? "saida" : "")
   );
+}
+
+// True se o cliente está ativo e a mensalidade vence dentro da janela de aviso.
+function venceEmBreve(c) {
+  if (!c.active || !c.plan_until) return false;
+  const d = diasAte(c.plan_until);
+  return d !== null && d >= 0 && d <= AVISO_DIAS;
+}
+
+// Texto do aviso de vencimento ("Vence hoje" / "Vence amanhã" / "Vence em Xd").
+function avisoVenc(c) {
+  const d = diasAte(c.plan_until);
+  if (d === 0) return "Vence hoje";
+  if (d === 1) return "Vence amanhã";
+  return `Vence em ${d}d`;
+}
+
+// Dias entre hoje e uma data ISO (negativo = no passado).
+function diasAte(iso) {
+  if (!iso) return null;
+  const ms = new Date(iso + "T00:00:00") - new Date(todayISO() + "T00:00:00");
+  return Math.round(ms / 86400000);
+}
+
+// Soma 1 mês a uma data ISO (YYYY-MM-DD), devolvendo ISO.
+function addUmMes(iso) {
+  const base = new Date((iso || todayISO()) + "T00:00:00");
+  base.setMonth(base.getMonth() + 1);
+  return base.toISOString().slice(0, 10);
 }
 
 function resumoCard(label, valor, tipo = "") {
@@ -187,7 +221,8 @@ function desenharLista() {
         el("div", { class: "admin-cli__main" },
           el("div", { class: "admin-cli__top" },
             el("span", { class: "admin-cli__name" }, c.name || "(sem nome)"),
-            el("span", { class: st.cls }, st.label)
+            el("span", { class: st.cls }, st.label),
+            venceEmBreve(c) ? el("span", { class: "badge badge--alerta" }, avisoVenc(c)) : null
           ),
           el("div", { class: "admin-cli__email" }, c.owner_email || "—"),
           el("div", { class: "admin-cli__meta" },
@@ -245,25 +280,91 @@ function gerenciar(c) {
     btnSalvar.textContent = "Salvando...";
     try {
       const atualizada = await definirStatusCliente(c.id, status, dataInput.value || null);
-      // Atualiza em memória pra refletir sem novo fetch
-      Object.assign(c, {
-        status: atualizada.status,
-        plan_until: atualizada.plan_until,
-        active: atualizada.status === "active" &&
-          (!atualizada.plan_until || atualizada.plan_until >= todayISO()),
-      });
-      closeModal();
-      toast("Cliente atualizado", "ok");
+      aplicarNaMemoria(atualizada.status, atualizada.plan_until);
+      toast("Acesso atualizado", "ok");
       desenharResumo();
       desenharLista();
     } catch (err) {
       console.error(err);
       toast("Não foi possível salvar", "erro");
+    } finally {
       btnSalvar.disabled = false;
-      btnSalvar.textContent = "Salvar";
+      btnSalvar.textContent = "Salvar acesso";
     }
   }
+  btnSalvar.textContent = "Salvar acesso";
   btnSalvar.addEventListener("click", salvar);
+
+  // Reflete mudanças no objeto em memória + nos campos do modal.
+  function aplicarNaMemoria(novoStatus, novoVenc) {
+    Object.assign(c, {
+      status: novoStatus,
+      plan_until: novoVenc,
+      active: novoStatus === "active" && (!novoVenc || novoVenc >= todayISO()),
+    });
+    dataInput.value = c.plan_until || "";
+    status = c.status === "blocked" ? "blocked" : "active";
+    pintarSeg();
+  }
+
+  // ---- pagamentos ----
+  const baseVenc = (c.plan_until && c.plan_until >= todayISO()) ? c.plan_until : todayISO();
+  const valorInput = el("input", { class: "input", inputmode: "decimal", placeholder: "R$ (opcional)" });
+  const dataPagInput = el("input", { class: "input", type: "date", value: todayISO() });
+  const renovarInput = el("input", { class: "input", type: "date", value: addUmMes(baseVenc) });
+  const obsInput = el("input", { class: "input", placeholder: "Observação (opcional)" });
+  const btnPagar = el("button", { class: "btn btn--primary" }, "Registrar pagamento");
+  const histBox = el("div", { class: "admin-pay__hist" }, el("div", { class: "loading" }, "Carregando..."));
+
+  async function carregarHist() {
+    histBox.innerHTML = "";
+    try {
+      const pags = await listarPagamentos(c.id);
+      if (pags.length === 0) {
+        histBox.append(el("p", { class: "admin-pay__vazio" }, "Nenhum pagamento registrado ainda."));
+        return;
+      }
+      const ul = el("ul", { class: "admin-pay__list" });
+      for (const p of pags) {
+        ul.append(
+          el("li", { class: "admin-pay__item" },
+            el("span", { class: "admin-pay__data" }, formatDate(p.paid_on)),
+            el("span", { class: "admin-pay__val num" }, p.amount_cents != null ? formatBRL(p.amount_cents) : "—"),
+            p.note ? el("span", { class: "admin-pay__obs" }, p.note) : null
+          )
+        );
+      }
+      histBox.append(ul);
+    } catch (err) {
+      console.error(err);
+      histBox.append(el("p", { class: "admin-pay__vazio" }, "Não foi possível carregar o histórico."));
+    }
+  }
+
+  async function pagar() {
+    const cents = parseToCents(valorInput.value); // null se vazio/!número (valor é opcional)
+    btnPagar.disabled = true;
+    btnPagar.textContent = "Registrando...";
+    try {
+      await registrarPagamento(
+        c.id, cents, dataPagInput.value || todayISO(), obsInput.value.trim(), renovarInput.value || null
+      );
+      if (renovarInput.value) aplicarNaMemoria("active", renovarInput.value);
+      valorInput.value = "";
+      obsInput.value = "";
+      toast("Pagamento registrado", "ok");
+      desenharResumo();
+      desenharLista();
+      carregarHist();
+    } catch (err) {
+      console.error(err);
+      toast("Não foi possível registrar o pagamento", "erro");
+    } finally {
+      btnPagar.disabled = false;
+      btnPagar.textContent = "Registrar pagamento";
+    }
+  }
+  btnPagar.addEventListener("click", pagar);
 
   openModal("Gerenciar cliente",
     el("div", {},
@@ -271,6 +372,7 @@ function gerenciar(c) {
         el("div", { class: "admin-cli__name" }, c.name || "(sem nome)"),
         el("div", { class: "admin-cli__email" }, c.owner_email || "—")
       ),
+
       el("label", { class: "field" },
         el("span", { class: "field__label" }, "Acesso"),
         el("div", { class: "seg-group", style: "margin-bottom:0" }, segAtivo, segBloq)
@@ -279,13 +381,30 @@ function gerenciar(c) {
         el("span", { class: "field__label" }, "Mensalidade vence em (opcional)"),
         dataInput
       ),
-      el("p", { class: "config__note" },
-        "Sem data, o acesso fica liberado até você bloquear na mão. " +
-        "Com data, o acesso cai sozinho quando ela passa."),
-      el("div", { class: "form__actions" },
-        el("button", { class: "btn btn--ghost", onclick: closeModal }, "Cancelar"),
-        btnSalvar
+      el("div", { class: "form__actions" }, btnSalvar),
+
+      el("hr", { class: "admin-conta__sep" }),
+
+      el("h3", { class: "admin-pay__titulo" }, "Registrar pagamento"),
+      el("div", { class: "admin-pay__row" },
+        el("label", { class: "field" }, el("span", { class: "field__label" }, "Valor"), valorInput),
+        el("label", { class: "field" }, el("span", { class: "field__label" }, "Data do pagamento"), dataPagInput)
+      ),
+      el("label", { class: "field" },
+        el("span", { class: "field__label" }, "Renovar acesso até"), renovarInput),
+      el("label", { class: "field" },
+        el("span", { class: "field__label" }, "Observação"), obsInput),
+      el("div", { class: "form__actions" }, btnPagar),
+
+      el("hr", { class: "admin-conta__sep" }),
+      el("h3", { class: "admin-pay__titulo" }, "Histórico de pagamentos"),
+      histBox,
+
+      el("div", { class: "form__actions", style: "margin-top:18px" },
+        el("button", { class: "btn btn--ghost", onclick: closeModal }, "Fechar")
       )
     )
   );
+
+  carregarHist();
 }
