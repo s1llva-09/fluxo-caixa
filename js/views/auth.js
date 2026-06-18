@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { el, $, toast, senhaInput } from "../ui.js";
-import { signIn, signUp } from "../auth.js";
+import { signIn, signUp, resetPassword, updatePassword } from "../auth.js";
 import { criarEmpresa } from "../api.js";
 
 // ---- Tela de login / cadastro ----------------------------------------------
@@ -90,6 +90,13 @@ export function renderAuth(root, onSuccess) {
         el("span", { class: "field__label" }, "Email"), email),
       el("label", { class: "field" },
         el("span", { class: "field__label" }, "Senha"), senhaWrap),
+      modo === "login"
+        ? el("button", {
+            type: "button",
+            class: "auth__link",
+            onclick: () => mostrarRecuperar(email.value.trim()),
+          }, "Esqueci minha senha")
+        : null,
       btnSubmit,
       el("button", {
         type: "button",
@@ -153,8 +160,112 @@ export function renderAuth(root, onSuccess) {
     );
   }
 
+  // Tela de "esqueci minha senha": pede o email e dispara o link de redefinição.
+  function mostrarRecuperar(prefillEmail = "") {
+    const email = el("input", {
+      type: "email", class: "input", placeholder: "seu@email.com",
+      autocomplete: "email", value: prefillEmail, autofocus: "",
+    });
+    const btn = el("button", { class: "btn btn--primary btn--block" }, "Enviar link");
+
+    function voltarLogin() {
+      modo = "login";
+      root.innerHTML = "";
+      root.append(tela());
+    }
+
+    async function enviar() {
+      const v = email.value.trim();
+      if (!v) { toast("Digite seu email", "erro"); return; }
+      btn.disabled = true; btn.textContent = "Enviando...";
+      try {
+        await resetPassword(v);
+        // Mensagem genérica de propósito (não revela se o email tem conta).
+        root.innerHTML = "";
+        root.append(
+          el("div", { class: "auth" },
+            el("div", { class: "auth__card card" },
+              el("div", { class: "auth__lock auth__lock--ok", "aria-hidden": "true",
+                html: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 6 12 13 2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>` }),
+              el("h1", { class: "auth__title" }, "Link enviado"),
+              el("p", { class: "auth__sub" },
+                "Se existe uma conta com ", el("strong", {}, v),
+                ", enviamos um link para você criar uma nova senha. Abra o email e clique no link."),
+              el("p", { class: "auth__contato" }, "Não recebeu? Verifique a caixa de spam."),
+              el("button", { type: "button", class: "btn btn--ghost btn--block", onclick: voltarLogin }, "Voltar ao login")
+            )
+          )
+        );
+      } catch (err) {
+        toast(traduzErro(err), "erro");
+        btn.disabled = false; btn.textContent = "Enviar link";
+      }
+    }
+
+    btn.addEventListener("click", enviar);
+    email.addEventListener("keydown", (e) => { if (e.key === "Enter") enviar(); });
+
+    root.innerHTML = "";
+    root.append(
+      el("div", { class: "auth" },
+        el("div", { class: "auth__card card" },
+          el("h1", { class: "auth__title" }, "Recuperar senha"),
+          el("p", { class: "auth__sub" },
+            "Digite seu email e enviamos um link para você criar uma nova senha."),
+          el("label", { class: "field" },
+            el("span", { class: "field__label" }, "Email"), email),
+          btn,
+          el("button", { type: "button", class: "btn btn--ghost btn--block", onclick: voltarLogin }, "Voltar ao login")
+        )
+      )
+    );
+  }
+
   root.innerHTML = "";
   root.append(tela());
+}
+
+// ---- Tela de criar nova senha (quando volta pelo link de redefinição) ------
+// onDone: função chamada após salvar a nova senha com sucesso.
+export function renderRedefinir(root, onDone) {
+  const { wrap: w1, input: s1 } = senhaInput({ placeholder: "Mínimo 6 caracteres", autocomplete: "new-password" });
+  const { wrap: w2, input: s2 } = senhaInput({ placeholder: "Repita a nova senha", autocomplete: "new-password" });
+  const btn = el("button", { class: "btn btn--primary btn--block" }, "Salvar nova senha");
+
+  async function salvar() {
+    if (s1.value.length < 6) { toast("A senha precisa ter pelo menos 6 caracteres", "erro"); return; }
+    if (s1.value !== s2.value) { toast("As senhas não coincidem", "erro"); return; }
+    btn.disabled = true; btn.textContent = "Salvando...";
+    try {
+      await updatePassword(s1.value);
+      toast("Senha redefinida!", "ok");
+      onDone();
+    } catch (err) {
+      toast(traduzErro(err), "erro");
+      btn.disabled = false; btn.textContent = "Salvar nova senha";
+    }
+  }
+  btn.addEventListener("click", salvar);
+
+  root.innerHTML = "";
+  root.append(
+    el("div", { class: "auth" },
+      el("div", { class: "auth__card card" },
+        el("div", { class: "brand brand--lg", style: "margin-bottom:20px" },
+          el("span", { class: "brand__mark", "aria-hidden": "true",
+            html: `<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><text x="10" y="10" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="800" fill="white" font-family="system-ui,-apple-system,sans-serif">$</text></svg>` }),
+          el("span", { class: "brand__name" }, "Fluxo de Caixa")
+        ),
+        el("h1", { class: "auth__title" }, "Criar nova senha"),
+        el("p", { class: "auth__sub" }, "Escolha uma nova senha para sua conta."),
+        el("label", { class: "field" },
+          el("span", { class: "field__label" }, "Nova senha"), w1),
+        el("label", { class: "field" },
+          el("span", { class: "field__label" }, "Confirmar nova senha"), w2),
+        btn
+      )
+    )
+  );
 }
 
 // ---- Tela de criar empresa (primeiro acesso) -------------------------------

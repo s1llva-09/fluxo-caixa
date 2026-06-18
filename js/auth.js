@@ -56,3 +56,21 @@ export async function updatePassword(password) {
   if (error) throw error;
   return data;
 }
+
+// Envia um email com link para redefinir a senha.
+// O link traz a pessoa de volta ao app já autenticada num modo "recovery",
+// e aí o app pede a nova senha. redirectTo precisa estar liberado no Supabase
+// (Authentication > URL Configuration > Redirect URLs).
+export async function resetPassword(email) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin,
+  });
+  if (error) throw error;
+}
+
+// Dispara o callback quando o usuário chega pelo link de redefinição de senha.
+export function onPasswordRecovery(callback) {
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === "PASSWORD_RECOVERY") callback(session);
+  });
+}

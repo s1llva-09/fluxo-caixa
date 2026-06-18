@@ -9,10 +9,10 @@
 import { $, $$, closeModal } from "./ui.js";
 import { state, empresaAtiva } from "./state.js";
 import { initTheme } from "./theme.js";
-import { getUser, signOut, onAuthChange } from "./auth.js";
+import { getUser, signOut, onAuthChange, onPasswordRecovery } from "./auth.js";
 import { getMinhaEmpresa, souAdmin } from "./api.js";
 
-import { renderAuth, renderOnboarding, renderBloqueado } from "./views/auth.js";
+import { renderAuth, renderOnboarding, renderBloqueado, renderRedefinir } from "./views/auth.js";
 import { renderDashboard } from "./views/dashboard.js";
 import { renderLancamentos } from "./views/lancamentos.js";
 import { renderCategorias } from "./views/categorias.js";
@@ -78,6 +78,21 @@ function mostrarOnboarding() {
   $("#app-shell").hidden = true;
   $("#auth-root").hidden = false;
   renderOnboarding($("#auth-root"), iniciar);
+}
+
+// Tela de criar nova senha (quando a pessoa volta pelo link de redefinição).
+let redefinindo = false;
+function mostrarRedefinir() {
+  if (redefinindo) return;
+  redefinindo = true;
+  $("#app-shell").hidden = true;
+  $("#auth-root").hidden = false;
+  renderRedefinir($("#auth-root"), async () => {
+    // Limpa o hash de "recovery" da URL e segue o fluxo normal já logado.
+    history.replaceState({}, "", window.location.pathname + window.location.search);
+    redefinindo = false;
+    await iniciar();
+  });
 }
 
 // Tela de acesso suspenso (mensalidade vencida / cliente bloqueado).
@@ -180,7 +195,17 @@ onAuthChange((user) => {
   }
 });
 
+// Quando a pessoa volta pelo link de redefinição de senha.
+onPasswordRecovery(() => mostrarRedefinir());
+
 // Liga tudo e inicia
 initTheme();
 ligarEventos();
-iniciar();
+
+// Se a URL é o retorno do link de redefinição, mostra a tela de nova senha
+// em vez do fluxo normal (evita "piscar" o app antes de pedir a senha).
+if (window.location.hash.includes("type=recovery")) {
+  mostrarRedefinir();
+} else {
+  iniciar();
+}

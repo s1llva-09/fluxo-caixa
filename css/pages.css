@@ -82,6 +82,29 @@
   line-height: 1.5;
 }
 
+/* Link discreto ("Esqueci minha senha") */
+.auth__link {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--c-muted);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  padding: 4px;
+  margin: -4px 0 8px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.auth__link:hover { color: var(--c-primary); text-decoration: underline; }
+.auth__link:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
 /* Título da tela de auth */
 .auth__title {
   font-family: var(--font-display);
