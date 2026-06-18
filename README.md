@@ -26,6 +26,11 @@ Feito com **HTML + CSS + JavaScript puro** (sem framework, sem build) e **Supaba
 2. Vá em **SQL Editor → New query**.
 3. Abra o arquivo `supabase/schema.sql`, copie todo o conteúdo, cole e clique em **Run**.
    Isso cria as tabelas e as regras de segurança.
+4. (Opcional, mas recomendado) Rode também `supabase/admin.sql` para habilitar o
+   **painel de admin** e o **controle de assinatura** (bloquear/liberar clientes e
+   definir vencimento). Antes de rodar, troque o email no topo do arquivo pelo email
+   da SUA conta de login — é quem vira o admin. O painel aparece no menu lateral só
+   pra esse usuário.
 
 ### 2. Configurar as chaves
 

@@ -42,6 +42,33 @@ export async function atualizarEmpresa(companyId, nome) {
   return data;
 }
 
+// -------- ADMIN (painel — só o admin consegue usar) --------
+
+// Diz se o usuário logado é o admin do sistema (checado no banco).
+export async function souAdmin() {
+  const { data, error } = await supabase.rpc("is_admin");
+  if (error) throw error;
+  return data === true;
+}
+
+// Lista todas as empresas/clientes com email do dono e resumo de uso.
+export async function listarClientesAdmin() {
+  const { data, error } = await supabase.rpc("admin_list_companies");
+  if (error) throw error;
+  return data || [];
+}
+
+// Define status ('active' | 'blocked') e vencimento (date ou null) de um cliente.
+export async function definirStatusCliente(companyId, status, planUntil) {
+  const { data, error } = await supabase.rpc("admin_set_company_status", {
+    p_company_id: companyId,
+    p_status: status,
+    p_plan_until: planUntil || null,
+  });
+  if (error) throw error;
+  return data;
+}
+
 // -------- CATEGORIAS --------
 
 export async function listarCategorias(companyId) {

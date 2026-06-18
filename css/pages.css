@@ -60,6 +60,27 @@
   to   { opacity: 1; transform: translateY(0)    scale(1); }
 }
 
+/* Tela de acesso suspenso — cadeado */
+.auth__lock {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  border-radius: var(--radius-full);
+  background: var(--c-saida-soft);
+  color: var(--c-saida);
+}
+.auth__lock svg { width: 26px; height: 26px; }
+.auth__contato {
+  font-size: 13px;
+  color: var(--c-subtle);
+  text-align: center;
+  margin: -12px 0 24px;
+  line-height: 1.5;
+}
+
 /* Título da tela de auth */
 .auth__title {
   font-family: var(--font-display);

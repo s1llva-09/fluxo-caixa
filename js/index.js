@@ -7,17 +7,18 @@
 // ============================================================================
 
 import { $, $$, closeModal } from "./ui.js";
-import { state } from "./state.js";
+import { state, empresaAtiva } from "./state.js";
 import { initTheme } from "./theme.js";
 import { getUser, signOut, onAuthChange } from "./auth.js";
-import { getMinhaEmpresa } from "./api.js";
+import { getMinhaEmpresa, souAdmin } from "./api.js";
 
-import { renderAuth, renderOnboarding } from "./views/auth.js";
+import { renderAuth, renderOnboarding, renderBloqueado } from "./views/auth.js";
 import { renderDashboard } from "./views/dashboard.js";
 import { renderLancamentos } from "./views/lancamentos.js";
 import { renderCategorias } from "./views/categorias.js";
 import { renderRelatorios } from "./views/relatorios.js";
 import { renderConfiguracoes } from "./views/configuracoes.js";
+import { renderAdmin } from "./views/admin.js";
 
 // Mapa: nome da tela -> função que desenha ela
 const telas = {
@@ -26,6 +27,7 @@ const telas = {
   categorias: renderCategorias,
   relatorios: renderRelatorios,
   configuracoes: renderConfiguracoes,
+  admin: renderAdmin,
 };
 
 // ---- decide o que mostrar na tela ------------------------------------------
@@ -39,9 +41,23 @@ async function iniciar() {
       return;
     }
 
+    // Descobre se é o admin (não-fatal: se falhar, segue como cliente comum).
+    try {
+      state.isAdmin = await souAdmin();
+    } catch {
+      state.isAdmin = false;
+    }
+
     state.company = await getMinhaEmpresa();
     if (!state.company) {
       mostrarOnboarding();
+      return;
+    }
+
+    // Cliente com mensalidade vencida ou bloqueado perde o acesso ao app.
+    // O admin nunca é bloqueado (precisa entrar pra gerenciar).
+    if (!state.isAdmin && !empresaAtiva(state.company)) {
+      mostrarBloqueado();
       return;
     }
 
@@ -64,12 +80,25 @@ function mostrarOnboarding() {
   renderOnboarding($("#auth-root"), iniciar);
 }
 
+// Tela de acesso suspenso (mensalidade vencida / cliente bloqueado).
+function mostrarBloqueado() {
+  $("#app-shell").hidden = true;
+  $("#auth-root").hidden = false;
+  renderBloqueado($("#auth-root"), async () => {
+    await signOut();
+    state.company = null;
+    mostrarAuth();
+  });
+}
+
 function mostrarApp() {
   $("#auth-root").hidden = true;
   $("#app-shell").hidden = false;
   const badge = $("#empresa-nome");
   badge.textContent = state.company.name;
   badge.setAttribute("title", state.company.name);
+  // Mostra o item "Admin" no menu só pra quem é admin.
+  $$(".nav__admin").forEach((b) => { b.hidden = !state.isAdmin; });
   irPara("dashboard");
 }
 

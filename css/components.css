@@ -1010,6 +1010,59 @@ select.input {
   line-height: 1.6;
 }
 
+/* ── Painel do Admin ──────────────────────────────────────────────────────── */
+.admin-busca { max-width: 280px; margin-left: auto; }
+
+.admin-list { list-style: none; }
+.admin-cli {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 4px;
+  border-bottom: 1px solid var(--c-border);
+}
+.admin-cli:first-child { border-top: 1px solid var(--c-border); }
+.admin-cli:last-child  { border-bottom: none; }
+.admin-cli__main { flex: 1; min-width: 0; }
+.admin-cli__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 3px;
+}
+.admin-cli__name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--c-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-cli__email {
+  font-size: 13px;
+  color: var(--c-muted);
+  margin-bottom: 11px;
+  word-break: break-all;
+}
+.admin-cli__meta { display: flex; flex-wrap: wrap; gap: 10px 24px; }
+.admin-cli__metaitem { display: flex; flex-direction: column; gap: 2px; }
+.admin-cli__metalabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-subtle);
+  font-weight: 700;
+}
+.admin-cli__metavalue { font-size: 13px; color: var(--c-ink-2); font-weight: 500; }
+.admin-cli__actions { flex-shrink: 0; }
+.admin-modal__id { margin-bottom: 20px; }
+
+@media (max-width: 560px) {
+  .admin-busca { max-width: none; }
+  .admin-cli { flex-direction: column; align-items: stretch; gap: 12px; }
+  .admin-cli__actions .btn { width: 100%; }
+}
+
 /* ── Tooltip (atributo data-tip) ──────────────────────────────────────────────
    Aparece abaixo do elemento no hover/foco. As cores usam ink/surface, então
    invertem sozinhas entre tema claro e escuro. */
