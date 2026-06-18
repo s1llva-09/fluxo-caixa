@@ -5,7 +5,7 @@
 import Chart from "https://esm.sh/chart.js@4/auto";
 import { el, $, emptyState, errorState, ICONS } from "../ui.js";
 import { state, mesAtual } from "../state.js";
-import { listarLancamentos } from "../api.js";
+import { listarLancamentos, listarContas } from "../api.js";
 import { formatBRL, formatDate } from "../money.js";
 
 let chartRef = null;
@@ -25,6 +25,16 @@ export async function renderDashboard(root) {
   }
 
   const saldo = somaSaldo(todos);
+
+  // Contas em aberto (não-fatal: se a migração não rodou ainda, ignora).
+  let pendentes = [];
+  try {
+    pendentes = await listarContas(state.company.id, "pending");
+  } catch (err) {
+    console.error("Contas:", err);
+  }
+  const aReceber = pendentes.filter((c) => c.kind === "entrada").reduce((s, c) => s + c.amount_cents, 0);
+  const aPagar = pendentes.filter((c) => c.kind === "saida").reduce((s, c) => s + c.amount_cents, 0);
 
   const { de, ate } = mesAtual();
   const doMes = todos.filter((t) => t.occurred_on >= de && t.occurred_on <= ate);
@@ -56,6 +66,18 @@ export async function renderDashboard(root) {
       statCard("Saídas do mês",   saidasMes,   "saida"),
       statCard("Resultado do mês", resultadoMes, resultadoMes >= 0 ? "entrada" : "saida")
     ),
+
+    // Só aparece se houver contas em aberto.
+    (aReceber || aPagar)
+      ? el("section", { class: "stats admin-resumo" },
+          statCard("A receber", aReceber, "entrada"),
+          statCard("A pagar", aPagar, "saida"),
+          (() => {
+            const proj = saldo + aReceber - aPagar;
+            return statCard("Saldo projetado", proj, proj >= 0 ? "entrada" : "saida");
+          })()
+        )
+      : null,
 
     el("section", { class: "card chart-card" },
       el("div", { class: "card__head" },

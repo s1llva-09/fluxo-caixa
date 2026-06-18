@@ -314,10 +314,15 @@ html { overflow-x: clip; }
   border-top: 1px solid var(--c-sidebar-border);
   z-index: 24;
   align-items: stretch;
+  /* Com muitos itens (Contas, Admin...), rola na horizontal em vez de espremer */
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.bottom-nav::-webkit-scrollbar { display: none; }
 
 .bottom-nav__item {
-  flex: 1;
+  flex: 1 0 auto;
+  min-width: 62px;
   display: flex;
   flex-direction: column;
   align-items: center;

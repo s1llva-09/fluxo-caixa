@@ -94,6 +94,54 @@ export async function processarRecorrencias(companyId) {
   return data || 0;
 }
 
+// -------- CONTAS A PAGAR / A RECEBER (scheduled) --------
+
+// status opcional: "pending" | "paid" | "canceled" (sem filtro = todas).
+export async function listarContas(companyId, status) {
+  let q = supabase
+    .from("scheduled")
+    .select("*, categories(name)")
+    .eq("company_id", companyId)
+    .order("due_on", { ascending: true });
+  if (status) q = q.eq("status", status);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data || [];
+}
+
+export async function criarConta(companyId, dados) {
+  const { data, error } = await supabase
+    .from("scheduled")
+    .insert({ company_id: companyId, ...dados })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// Marca como paga: cria o lançamento real e linka. paidOn em "YYYY-MM-DD".
+export async function pagarConta(id, paidOn) {
+  const { data, error } = await supabase.rpc("pagar_conta", {
+    p_id: id,
+    p_paid_on: paidOn || null,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function cancelarConta(id) {
+  const { error } = await supabase
+    .from("scheduled")
+    .update({ status: "canceled" })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function apagarConta(id) {
+  const { error } = await supabase.from("scheduled").delete().eq("id", id);
+  if (error) throw error;
+}
+
 // -------- ADMIN (painel — só o admin consegue usar) --------
 
 // Diz se o usuário logado é o admin do sistema (checado no banco).

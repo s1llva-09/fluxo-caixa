@@ -1162,7 +1162,8 @@ select.input {
 }
 .rec:last-child { border-bottom: none; }
 .rec.is-pausada { opacity: 0.55; }
-.rec__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rec__main { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.conta__venc { font-size: 11.5px; color: var(--c-subtle); }
 .rec__desc {
   font-size: 14px; font-weight: 500; color: var(--c-ink);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;

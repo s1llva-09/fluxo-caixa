@@ -19,6 +19,7 @@ import { getMinhaEmpresa, souAdmin, processarRecorrencias } from "./api.js";
 import { renderAuth, renderOnboarding, renderBloqueado, renderRedefinir } from "./views/auth.js";
 import { renderDashboard } from "./views/dashboard.js";
 import { renderLancamentos } from "./views/lancamentos.js";
+import { renderContas } from "./views/contas.js";
 import { renderCategorias } from "./views/categorias.js";
 import { renderRelatorios } from "./views/relatorios.js";
 import { renderConfiguracoes } from "./views/configuracoes.js";
@@ -28,6 +29,7 @@ import { renderAdmin } from "./views/admin.js";
 const telas = {
   dashboard: renderDashboard,
   lancamentos: renderLancamentos,
+  contas: renderContas,
   categorias: renderCategorias,
   relatorios: renderRelatorios,
   configuracoes: renderConfiguracoes,
