@@ -10,11 +10,16 @@ import { supabase } from "./supabaseClient.js";
 
 // -------- EMPRESAS --------
 
-// Pega a primeira empresa do usuário (no MVP cada dono tem uma).
+// Pega a empresa do usuário logado (no MVP cada dono tem uma).
+// IMPORTANTE: filtra por owner_id. O admin enxerga TODAS as empresas pela RLS,
+// então sem esse filtro ele pegaria a empresa de outro cliente por engano.
 export async function getMinhaEmpresa() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
   const { data, error } = await supabase
     .from("companies")
     .select("*")
+    .eq("owner_id", user.id)
     .limit(1)
     .maybeSingle();
   if (error) throw error;
