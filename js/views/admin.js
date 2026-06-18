@@ -64,6 +64,7 @@ function secaoConta() {
     class: "input", type: "email", placeholder: emailAtual, autocomplete: "email",
   });
   const btnEmail = el("button", { class: "btn btn--primary" }, "Atualizar email");
+  const avisoEmail = el("p", { class: "config__sucesso", hidden: "" });
   async function salvarEmail() {
     const v = emailInput.value.trim();
     if (!v) { toast("Digite o novo email", "erro"); return; }
@@ -71,7 +72,10 @@ function secaoConta() {
     btnEmail.disabled = true; btnEmail.textContent = "Enviando...";
     try {
       await updateEmail(v);
-      toast("Confirme o novo email pela caixa de entrada", "info");
+      avisoEmail.textContent =
+        `Enviamos um link de confirmação para ${v}. ` +
+        `O email só muda depois que você abrir esse email e clicar no link.`;
+      avisoEmail.hidden = false;
       emailInput.value = "";
     } catch (err) {
       toast(traduzErroConta(err), "erro");
@@ -107,6 +111,10 @@ function secaoConta() {
       `Logado como ${emailAtual}. Trocar o email NÃO tira seu acesso de admin — ele segue a sua conta, não o endereço.`),
     el("label", { class: "field" },
       el("span", { class: "field__label" }, "Novo email"), emailInput),
+    el("p", { class: "config__note" },
+      "O email não muda na hora: enviamos um link de confirmação, e a troca só " +
+      "acontece depois que você clica nele."),
+    avisoEmail,
     el("div", { class: "form__actions" }, btnEmail),
     el("hr", { class: "admin-conta__sep" }),
     el("label", { class: "field" },

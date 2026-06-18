@@ -708,6 +708,16 @@ select.input {
   margin-top: -8px;
   margin-bottom: 14px;
 }
+/* Aviso de sucesso fixo (ex.: "link de confirmação enviado") */
+.config__sucesso {
+  font-size: 13px;
+  color: var(--c-entrada);
+  background: var(--c-entrada-soft);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
 
 /* ── Seletor de tema ──────────────────────────────────────────────────────── */
 .theme-options {

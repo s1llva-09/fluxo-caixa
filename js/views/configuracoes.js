@@ -132,6 +132,7 @@ function secaoEmail() {
     autocomplete: "email",
   });
   const btn = el("button", { class: "btn btn--primary" }, "Atualizar email");
+  const aviso = el("p", { class: "config__sucesso", hidden: "" });
 
   async function salvar() {
     const email = emailInput.value.trim();
@@ -142,7 +143,10 @@ function secaoEmail() {
     btn.textContent = "Enviando...";
     try {
       await updateEmail(email);
-      toast("Confirme o novo email pela caixa de entrada", "info");
+      aviso.textContent =
+        `Enviamos um link de confirmação para ${email}. ` +
+        `O email só muda depois que você abrir esse email e clicar no link.`;
+      aviso.hidden = false;
       emailInput.value = "";
     } catch (err) {
       toast(traduzErro(err), "erro");
@@ -161,8 +165,10 @@ function secaoEmail() {
       emailInput
     ),
     el("p", { class: "config__note" },
-      "Você receberá um link de confirmação no novo endereço."
+      "O email não muda na hora: enviamos um link de confirmação para o novo " +
+      "endereço, e a troca só acontece depois que você clica nele."
     ),
+    aviso,
     el("div", { class: "form__actions" }, btn)
   );
 }
