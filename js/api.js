@@ -47,6 +47,53 @@ export async function atualizarEmpresa(companyId, nome) {
   return data;
 }
 
+// -------- RECORRÊNCIAS (lançamentos que se repetem) --------
+
+export async function listarRecorrencias(companyId) {
+  const { data, error } = await supabase
+    .from("recurrences")
+    .select("*, categories(name)")
+    .eq("company_id", companyId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function criarRecorrencia(companyId, dados) {
+  const { data, error } = await supabase
+    .from("recurrences")
+    .insert({ company_id: companyId, ...dados })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function atualizarRecorrencia(id, mudancas) {
+  const { data, error } = await supabase
+    .from("recurrences")
+    .update(mudancas)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function apagarRecorrencia(id) {
+  const { error } = await supabase.from("recurrences").delete().eq("id", id);
+  if (error) throw error;
+}
+
+// Gera os lançamentos vencidos das recorrências. Devolve quantos criou.
+export async function processarRecorrencias(companyId) {
+  const { data, error } = await supabase.rpc("processar_recorrencias", {
+    p_company_id: companyId,
+  });
+  if (error) throw error;
+  return data || 0;
+}
+
 // -------- ADMIN (painel — só o admin consegue usar) --------
 
 // Diz se o usuário logado é o admin do sistema (checado no banco).

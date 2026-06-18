@@ -9,6 +9,11 @@ import {
   criarLancamento,
   estornarLancamento,
   listarCategorias,
+  listarRecorrencias,
+  criarRecorrencia,
+  atualizarRecorrencia,
+  apagarRecorrencia,
+  processarRecorrencias,
 } from "../api.js";
 import { formatBRL, formatDate, parseToCents, todayISO } from "../money.js";
 
@@ -37,9 +42,10 @@ export async function renderLancamentos(root) {
         el("h1", { class: "page-title" }, "Lançamentos"),
         el("p", { class: "page-sub" }, "Registre entradas e saídas do seu negócio")
       ),
-      el("button",
-        { class: "btn btn--primary", onclick: () => abrirFormulario() },
-        "+ Novo lançamento")
+      el("div", { class: "page-head__acoes" },
+        el("button", { class: "btn btn--ghost", onclick: abrirRecorrentes }, "🔁 Recorrentes"),
+        el("button", { class: "btn btn--primary", onclick: () => abrirFormulario() }, "+ Novo lançamento")
+      )
     ),
     presetsPeriodo(),
     barraFiltros(),
@@ -335,5 +341,130 @@ function confirmarEstorno(t) {
         btnEstornar
       )
     )
+  );
+}
+
+// ---- recorrentes (modal) ---------------------------------------------------
+
+function abrirRecorrentes() {
+  const listaBox = el("div", {}, el("div", { class: "loading" }, "Carregando..."));
+
+  async function carregar() {
+    listaBox.innerHTML = "";
+    let recs;
+    try {
+      recs = await listarRecorrencias(state.company.id);
+    } catch (err) {
+      console.error(err);
+      listaBox.append(el("p", { class: "admin-pay__vazio" }, "Não foi possível carregar."));
+      return;
+    }
+    if (recs.length === 0) {
+      listaBox.append(el("p", { class: "admin-pay__vazio" }, "Nenhuma recorrência ainda."));
+      return;
+    }
+    const ul = el("ul", { class: "rec-list" });
+    for (const r of recs) ul.append(recItem(r, carregar));
+    listaBox.append(ul);
+  }
+
+  // form: nova recorrência
+  let kind = "saida";
+  const segE = el("button", { class: "seg", type: "button" }, "Entrada");
+  const segS = el("button", { class: "seg seg--on", type: "button" }, "Saída");
+  segE.onclick = () => { kind = "entrada"; segE.classList.add("seg--on"); segS.classList.remove("seg--on"); };
+  segS.onclick = () => { kind = "saida"; segS.classList.add("seg--on"); segE.classList.remove("seg--on"); };
+
+  const valor = el("input", { class: "input", placeholder: "0,00", inputmode: "decimal" });
+  const dia = el("input", { class: "input", type: "number", min: "1", max: "31", value: "5" });
+  const desc = el("input", { class: "input", placeholder: "Ex.: Aluguel, salário, assinatura…" });
+  const cat = el("select", { class: "input" },
+    el("option", { value: "" }, "Sem categoria"),
+    ...state.categorias.map((c) => el("option", { value: c.id }, c.name))
+  );
+  const fim = el("input", { class: "input", type: "date" });
+  const btnAdd = el("button", { class: "btn btn--primary" }, "Adicionar recorrência");
+
+  async function adicionar() {
+    const cents = parseToCents(valor.value);
+    const d = parseInt(dia.value, 10);
+    if (!cents || cents <= 0) { toast("Digite um valor válido", "erro"); return; }
+    if (!(d >= 1 && d <= 31)) { toast("Dia do mês inválido (1 a 31)", "erro"); return; }
+    btnAdd.disabled = true; btnAdd.textContent = "Adicionando...";
+    try {
+      await criarRecorrencia(state.company.id, {
+        kind,
+        amount_cents: cents,
+        description: desc.value.trim(),
+        category_id: cat.value || null,
+        day_of_month: d,
+        start_on: todayISO(),
+        end_on: fim.value || null,
+      });
+      // gera de imediato o que já venceu e atualiza a lista por baixo
+      try { await processarRecorrencias(state.company.id); } catch {}
+      valor.value = ""; desc.value = ""; fim.value = "";
+      toast("Recorrência criada", "ok");
+      carregar();
+      carregarLista();
+    } catch (err) {
+      console.error(err);
+      toast("Não foi possível criar", "erro");
+    } finally {
+      btnAdd.disabled = false; btnAdd.textContent = "Adicionar recorrência";
+    }
+  }
+  btnAdd.addEventListener("click", adicionar);
+
+  openModal("Lançamentos recorrentes",
+    el("div", {},
+      el("p", { class: "config__note", style: "margin-top:0" },
+        "Recorrências viram lançamentos sozinhas (ex.: aluguel todo dia 5). São geradas quando você entra no sistema."),
+      el("h3", { class: "admin-pay__titulo" }, "Nova recorrência"),
+      el("div", { class: "seg-group", style: "margin-bottom:14px" }, segE, segS),
+      el("div", { class: "admin-pay__row" },
+        el("label", { class: "field" }, el("span", { class: "field__label" }, "Valor (R$)"), valor),
+        el("label", { class: "field" }, el("span", { class: "field__label" }, "Dia do mês"), dia)
+      ),
+      el("label", { class: "field" }, el("span", { class: "field__label" }, "Descrição"), desc),
+      el("div", { class: "admin-pay__row" },
+        el("label", { class: "field" }, el("span", { class: "field__label" }, "Categoria"), cat),
+        el("label", { class: "field" }, el("span", { class: "field__label" }, "Termina em (opcional)"), fim)
+      ),
+      el("div", { class: "form__actions" }, btnAdd),
+      el("hr", { class: "admin-conta__sep" }),
+      el("h3", { class: "admin-pay__titulo" }, "Suas recorrências"),
+      listaBox,
+      el("div", { class: "form__actions", style: "margin-top:18px" },
+        el("button", { class: "btn btn--ghost", onclick: closeModal }, "Fechar")
+      )
+    )
+  );
+  carregar();
+}
+
+function recItem(r, recarregar) {
+  const tipo = r.kind === "entrada" ? "Entrada" : "Saída";
+  const btnToggle = el("button", { class: "btn btn--tiny btn--ghost" }, r.active ? "Pausar" : "Retomar");
+  btnToggle.addEventListener("click", async () => {
+    btnToggle.disabled = true;
+    try { await atualizarRecorrencia(r.id, { active: !r.active }); recarregar(); }
+    catch (err) { console.error(err); toast("Erro ao atualizar", "erro"); btnToggle.disabled = false; }
+  });
+  const btnDel = el("button", { class: "btn btn--tiny btn--ghost" }, "Apagar");
+  btnDel.addEventListener("click", async () => {
+    btnDel.disabled = true;
+    try { await apagarRecorrencia(r.id); recarregar(); }
+    catch (err) { console.error(err); toast("Erro ao apagar", "erro"); btnDel.disabled = false; }
+  });
+  return el("li", { class: `rec ${r.active ? "" : "is-pausada"}` },
+    el("span", { class: `cat__dot cat__dot--${r.kind}` }),
+    el("div", { class: "rec__main" },
+      el("span", { class: "rec__desc" }, r.description || "(sem descrição)"),
+      el("span", { class: "rec__meta" },
+        `${tipo} de ${formatBRL(r.amount_cents)} · todo dia ${r.day_of_month}` +
+        `${r.categories?.name ? " · " + r.categories.name : ""}${r.active ? "" : " · pausada"}`)
+    ),
+    el("div", { class: "rec__actions" }, btnToggle, btnDel)
   );
 }

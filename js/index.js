@@ -14,7 +14,7 @@ import { initTheme } from "./theme.js";
 // Janela (dias) para avisar o cliente que a mensalidade está perto de vencer.
 const AVISO_VENC_DIAS = 7;
 import { getUser, signOut, onAuthChange, onPasswordRecovery } from "./auth.js";
-import { getMinhaEmpresa, souAdmin } from "./api.js";
+import { getMinhaEmpresa, souAdmin, processarRecorrencias } from "./api.js";
 
 import { renderAuth, renderOnboarding, renderBloqueado, renderRedefinir } from "./views/auth.js";
 import { renderDashboard } from "./views/dashboard.js";
@@ -63,6 +63,13 @@ async function iniciar() {
     if (!state.isAdmin && !empresaAtiva(state.company)) {
       mostrarBloqueado();
       return;
+    }
+
+    // Gera os lançamentos recorrentes que já venceram (não-fatal).
+    try {
+      await processarRecorrencias(state.company.id);
+    } catch (err) {
+      console.error("Recorrências:", err);
     }
 
     mostrarApp();

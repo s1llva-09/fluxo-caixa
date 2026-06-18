@@ -1151,6 +1151,25 @@ select.input {
 .admin-notas { resize: vertical; min-height: 64px; line-height: 1.5; padding-top: 10px; }
 .admin-renew { display: flex; gap: 8px; flex-wrap: wrap; }
 
+/* Lista de recorrências (modal) */
+.rec-list { list-style: none; }
+.rec {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--c-border);
+}
+.rec:last-child { border-bottom: none; }
+.rec.is-pausada { opacity: 0.55; }
+.rec__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rec__desc {
+  font-size: 14px; font-weight: 500; color: var(--c-ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.rec__meta { font-size: 12px; color: var(--c-muted); }
+.rec__actions { display: flex; gap: 6px; flex-shrink: 0; }
+
 @media (max-width: 560px) {
   .admin-busca { max-width: none; }
   .admin-cli { flex-direction: column; align-items: stretch; gap: 12px; }
