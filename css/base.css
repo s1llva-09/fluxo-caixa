@@ -36,13 +36,14 @@
   --c-subtle: #8792A2;
   --c-text-2: #697386;
 
-  /* Accent ÚNICO (verde) — fills, foco, ativo */
-  --c-primary:      #059669;
-  --c-primary-hover:#047857;
-  --c-primary-deep: #065F46;
+  /* Accent ÚNICO (índigo) — fills, foco, ativo. Verde/vermelho ficam só
+     pra semântica de dinheiro (entrada/saída). */
+  --c-primary:      #4F46E5;
+  --c-primary-hover:#4338CA;
+  --c-primary-deep: #3730A3;
   --c-primary-text: #FFFFFF;
-  --c-primary-glow: rgba(5, 150, 105, 0.16);
-  --c-primary-ink:  #059669;
+  --c-primary-glow: rgba(79, 70, 229, 0.18);
+  --c-primary-ink:  #4F46E5;
 
   /* Semântica de dinheiro — entrada usa o MESMO verde do accent */
   --c-entrada:      #059669;
@@ -67,15 +68,15 @@
   --c-saldo-neg-bg:     linear-gradient(155deg, #FCEDF0 0%, #FEF6F8 46%, #FFFFFF 78%);
   --c-saldo-neg-border: #F5D2DA;
 
-  /* Sidebar — painel branco, texto slate, ativo verde (sem glow) */
+  /* Sidebar — painel branco, texto slate, ativo índigo (sem glow) */
   --c-sidebar:             #FFFFFF;
   --c-sidebar-item-hover:  #F2F5F9;
-  --c-sidebar-item-active: rgba(5, 150, 105, 0.09);
-  --c-sidebar-accent:      #059669;
+  --c-sidebar-item-active: rgba(79, 70, 229, 0.10);
+  --c-sidebar-accent:      #4F46E5;
   --c-sidebar-accent-glow: transparent;
   --c-sidebar-text:        #697386;
   --c-sidebar-text-hover:  #1A1F36;
-  --c-sidebar-text-active: #059669;
+  --c-sidebar-text-active: #4F46E5;
   --c-sidebar-border:      #E6EAF0;
 
   /* Sombras suaves em camadas (estilo Stripe) */
@@ -114,13 +115,13 @@
   --c-subtle: #5B6271;
   --c-text-2: #888F9E;
 
-  /* Accent ÚNICO (verde) — fill mais claro, texto escuro por cima */
-  --c-primary:      #10B981;
-  --c-primary-hover:#34D399;
-  --c-primary-deep: #059669;
-  --c-primary-text: #04231A;
-  --c-primary-glow: rgba(16, 185, 129, 0.28);
-  --c-primary-ink:  #34D399;
+  /* Accent ÚNICO (índigo) — fill que brilha no escuro, texto branco por cima */
+  --c-primary:      #6366F1;
+  --c-primary-hover:#818CF8;
+  --c-primary-deep: #4F46E5;
+  --c-primary-text: #FFFFFF;
+  --c-primary-glow: rgba(99, 102, 241, 0.30);
+  --c-primary-ink:  #818CF8;
 
   /* Semântica de dinheiro */
   --c-entrada:      #34D399;
@@ -148,9 +149,9 @@
   /* Sidebar — mais escura que as superfícies */
   --c-sidebar:             #080B11;
   --c-sidebar-item-hover:  rgba(255, 255, 255, 0.05);
-  --c-sidebar-item-active: rgba(16, 185, 129, 0.14);
-  --c-sidebar-accent:      #10B981;
-  --c-sidebar-accent-glow: rgba(16, 185, 129, 0.0);
+  --c-sidebar-item-active: rgba(99, 102, 241, 0.16);
+  --c-sidebar-accent:      #6366F1;
+  --c-sidebar-accent-glow: rgba(99, 102, 241, 0.0);
   --c-sidebar-text:        rgba(237, 239, 243, 0.46);
   --c-sidebar-text-hover:  rgba(237, 239, 243, 0.88);
   --c-sidebar-text-active: #FFFFFF;

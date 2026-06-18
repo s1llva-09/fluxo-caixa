@@ -8,7 +8,7 @@
 
 import Chart from "https://esm.sh/chart.js@4/auto";
 import { el, $, toast, openModal, closeModal, errorState, skeletonList, senhaInput } from "../ui.js";
-import { listarClientesAdmin, definirStatusCliente, registrarPagamento, listarPagamentos, receitaPeriodo, receitaMensal } from "../api.js";
+import { listarClientesAdmin, definirStatusCliente, atualizarDadosCliente, registrarPagamento, listarPagamentos, receitaPeriodo, receitaMensal } from "../api.js";
 import { updateEmail, updatePassword } from "../auth.js";
 import { state, mesAtual } from "../state.js";
 import { formatDate, formatBRL, parseToCents, todayISO } from "../money.js";
@@ -25,9 +25,13 @@ let chartRef = null;
 export async function renderAdmin(root) {
   root.innerHTML = "";
   root.append(
-    el("header", { class: "page-head" },
-      el("h1", { class: "page-title" }, "Painel do Admin"),
-      el("p", { class: "page-sub" }, "Clientes do Fluxo de Caixa e controle de assinatura")
+    el("header", { class: "page-head page-head--row" },
+      el("div", {},
+        el("h1", { class: "page-title" }, "Painel do Admin"),
+        el("p", { class: "page-sub" }, "Clientes do Fluxo de Caixa e controle de assinatura")
+      ),
+      el("button", { class: "btn btn--ghost", onclick: exportarCSV,
+        "data-tip": "Baixar a lista de clientes em planilha" }, "↓ Exportar clientes")
     ),
     el("section", { id: "admin-resumo", class: "stats admin-resumo" }),
     el("section", { class: "card" },
@@ -181,7 +185,7 @@ function desenharGraficoReceita(serie) {
 
   const css = getComputedStyle(document.documentElement);
   const v = (nome, fb) => (css.getPropertyValue(nome).trim() || fb);
-  const cor = v("--c-entrada", "#0E9F6E");
+  const cor = v("--c-primary", "#4F46E5");
   const muted = v("--c-muted", "#8B9E98");
   const grid = v("--c-border", "rgba(221,229,226,0.8)");
   const font = "'Inter', system-ui, sans-serif";
@@ -235,13 +239,16 @@ function desenharResumo() {
   const ativos = clientes.filter((c) => c.active).length;
   const inativos = total - ativos;
   const vencendo = clientes.filter((c) => venceEmBreve(c)).length;
+  // MRR = soma das mensalidades dos clientes ativos (receita recorrente prevista).
+  const mrr = clientes.reduce((s, c) => s + (c.active ? (c.plan_value_cents || 0) : 0), 0);
   box.innerHTML = "";
   box.append(
     resumoCard("Clientes", total),
     resumoCard("Ativos", ativos, "entrada"),
     resumoCard(`Vencendo (${AVISO_DIAS}d)`, vencendo, vencendo > 0 ? "alerta" : ""),
     resumoCard("Bloqueados / vencidos", inativos, inativos > 0 ? "saida" : ""),
-    resumoCard("Receita do mês", formatBRL(receitaMes), "entrada")
+    resumoCard("Receita do mês", formatBRL(receitaMes), "entrada"),
+    resumoCard("MRR (recorrente)", formatBRL(mrr))
   );
 }
 
@@ -298,9 +305,39 @@ function diasAte(iso) {
 
 // Soma 1 mês a uma data ISO (YYYY-MM-DD), devolvendo ISO.
 function addUmMes(iso) {
+  return addMeses(iso, 1);
+}
+
+// Soma N meses a uma data ISO (a base é a data dada, ou hoje).
+function addMeses(iso, n) {
   const base = new Date((iso || todayISO()) + "T00:00:00");
-  base.setMonth(base.getMonth() + 1);
+  base.setMonth(base.getMonth() + n);
   return base.toISOString().slice(0, 10);
+}
+
+// ---- exportar clientes em CSV ----------------------------------------------
+
+function exportarCSV() {
+  if (!clientes.length) { toast("Nenhum cliente para exportar", "info"); return; }
+  const cab = ["Cliente", "Email", "Status", "Vencimento", "Mensalidade (R$)", "Lançamentos", "Última atividade", "Observações"];
+  const linhas = clientes.map((c) => [
+    c.name || "",
+    c.owner_email || "",
+    statusInfo(c).label,
+    c.plan_until ? formatDate(c.plan_until) : "",
+    c.plan_value_cents != null ? (c.plan_value_cents / 100).toFixed(2).replace(".", ",") : "",
+    String(c.tx_count ?? 0),
+    c.last_activity ? formatDate(c.last_activity) : "",
+    (c.notes || "").replace(/"/g, '""'),
+  ]);
+  const csv = [cab, ...linhas].map((l) => l.map((x) => `"${x}"`).join(";")).join("\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = el("a", { href: url, download: `clientes-${todayISO()}.csv` });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 function resumoCard(label, valor, tipo = "") {
@@ -344,10 +381,11 @@ function desenharLista() {
           ),
           el("div", { class: "admin-cli__email" }, c.owner_email || "—"),
           el("div", { class: "admin-cli__meta" },
+            metaItem("Mensalidade", c.plan_value_cents != null ? formatBRL(c.plan_value_cents) : "—"),
+            metaItem("Vencimento", c.plan_until ? formatDate(c.plan_until) : "sem data"),
             metaItem("Lançamentos", String(c.tx_count ?? 0)),
             metaItem("Última atividade", c.last_activity ? formatDate(c.last_activity) : "—"),
-            metaItem("Cadastro", c.created_at ? formatDate(c.created_at.slice(0, 10)) : "—"),
-            metaItem("Vencimento", c.plan_until ? formatDate(c.plan_until) : "sem data")
+            metaItem("Cadastro", c.created_at ? formatDate(c.created_at.slice(0, 10)) : "—")
           )
         ),
         el("div", { class: "admin-cli__actions" },
@@ -425,11 +463,40 @@ function gerenciar(c) {
     pintarSeg();
   }
 
+  // ---- plano e anotações ----
+  const valorPadrao = c.plan_value_cents != null
+    ? (c.plan_value_cents / 100).toFixed(2).replace(".", ",") : "";
+  const planValorInput = el("input", { class: "input", inputmode: "decimal", placeholder: "R$ por mês (opcional)", value: valorPadrao });
+  const notasInput = el("textarea", { class: "input admin-notas", rows: "3", placeholder: "Anotações sobre o cliente (só você vê)" }, c.notes || "");
+  const btnDados = el("button", { class: "btn btn--primary" }, "Salvar plano e anotações");
+  async function salvarDados() {
+    const cents = parseToCents(planValorInput.value); // null se vazio
+    btnDados.disabled = true; btnDados.textContent = "Salvando...";
+    try {
+      const at = await atualizarDadosCliente(c.id, cents, notasInput.value.trim());
+      Object.assign(c, { plan_value_cents: at.plan_value_cents, notes: at.notes });
+      toast("Dados atualizados", "ok");
+      desenharResumo();
+      desenharLista();
+    } catch (err) {
+      console.error(err);
+      toast("Não foi possível salvar", "erro");
+    } finally {
+      btnDados.disabled = false; btnDados.textContent = "Salvar plano e anotações";
+    }
+  }
+  btnDados.addEventListener("click", salvarDados);
+
   // ---- pagamentos ----
   const baseVenc = (c.plan_until && c.plan_until >= todayISO()) ? c.plan_until : todayISO();
-  const valorInput = el("input", { class: "input", inputmode: "decimal", placeholder: "R$ (opcional)" });
+  const valorInput = el("input", { class: "input", inputmode: "decimal", placeholder: "R$ (opcional)", value: valorPadrao });
   const dataPagInput = el("input", { class: "input", type: "date", value: todayISO() });
   const renovarInput = el("input", { class: "input", type: "date", value: addUmMes(baseVenc) });
+  const renovarRapido = el("div", { class: "admin-renew" },
+    ...[["+1 mês", 1], ["+3 meses", 3], ["+1 ano", 12]].map(([lbl, n]) =>
+      el("button", { type: "button", class: "btn btn--ghost btn--tiny",
+        onclick: () => { renovarInput.value = addMeses(baseVenc, n); } }, lbl))
+  );
   const obsInput = el("input", { class: "input", placeholder: "Observação (opcional)" });
   const btnPagar = el("button", { class: "btn btn--primary" }, "Registrar pagamento");
   const histBox = el("div", { class: "admin-pay__hist" }, el("div", { class: "loading" }, "Carregando..."));
@@ -503,6 +570,15 @@ function gerenciar(c) {
 
       el("hr", { class: "admin-conta__sep" }),
 
+      el("h3", { class: "admin-pay__titulo" }, "Plano e anotações"),
+      el("label", { class: "field" },
+        el("span", { class: "field__label" }, "Valor da mensalidade"), planValorInput),
+      el("label", { class: "field" },
+        el("span", { class: "field__label" }, "Anotações"), notasInput),
+      el("div", { class: "form__actions" }, btnDados),
+
+      el("hr", { class: "admin-conta__sep" }),
+
       el("h3", { class: "admin-pay__titulo" }, "Registrar pagamento"),
       el("div", { class: "admin-pay__row" },
         el("label", { class: "field" }, el("span", { class: "field__label" }, "Valor"), valorInput),
@@ -510,7 +586,8 @@ function gerenciar(c) {
       ),
       el("label", { class: "field" },
         el("span", { class: "field__label" }, "Renovar acesso até"), renovarInput),
-      el("label", { class: "field" },
+      renovarRapido,
+      el("label", { class: "field", style: "margin-top:14px" },
         el("span", { class: "field__label" }, "Observação"), obsInput),
       el("div", { class: "form__actions" }, btnPagar),
 

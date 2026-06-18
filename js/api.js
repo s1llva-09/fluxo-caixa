@@ -69,6 +69,17 @@ export async function definirStatusCliente(companyId, status, planUntil) {
   return data;
 }
 
+// Atualiza campos administrativos do cliente: valor da mensalidade e anotações.
+export async function atualizarDadosCliente(companyId, planValueCents, notes) {
+  const { data, error } = await supabase.rpc("admin_update_company", {
+    p_company_id: companyId,
+    p_plan_value_cents: planValueCents ?? null,
+    p_notes: notes || "",
+  });
+  if (error) throw error;
+  return data;
+}
+
 // Registra um pagamento; se renewUntil vier, renova o acesso até essa data.
 export async function registrarPagamento(companyId, amountCents, paidOn, note, renewUntil) {
   const { data, error } = await supabase.rpc("admin_add_payment", {

@@ -376,8 +376,8 @@ select.input {
   height: 3px;
   border-radius: var(--radius) var(--radius) 0 0;
 }
-.stat--entrada::before { background: linear-gradient(90deg, var(--c-entrada) 0%, var(--c-primary) 100%); }
-.stat--saida::before   { background: linear-gradient(90deg, var(--c-saida) 0%, var(--c-danger) 100%); }
+.stat--entrada::before { background: var(--c-entrada); }
+.stat--saida::before   { background: var(--c-saida); }
 .stat--alerta::before {
   content: "";
   position: absolute;
@@ -773,8 +773,8 @@ select.input {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #10B981;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.45);
+  background: #6366F1;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.45);
 }
 .theme-option__titulo {
   font-size: 14px;
@@ -1135,6 +1135,8 @@ select.input {
 .admin-cli__actions { flex-shrink: 0; }
 .admin-modal__id { margin-bottom: 20px; }
 .admin-conta__sep { border: none; border-top: 1px solid var(--c-border); margin: 22px 0; }
+.admin-notas { resize: vertical; min-height: 64px; line-height: 1.5; padding-top: 10px; }
+.admin-renew { display: flex; gap: 8px; flex-wrap: wrap; }
 
 @media (max-width: 560px) {
   .admin-busca { max-width: none; }

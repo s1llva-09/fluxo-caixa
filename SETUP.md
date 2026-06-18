@@ -52,6 +52,26 @@ O link de redefinição precisa voltar pro seu app.
 
 Sem isso, o email de redefinição não consegue abrir a tela de nova senha.
 
+## 5. Email automático de vencimento  ⚙️ opcional (mais avançado)
+Avisa o cliente por email alguns dias antes de vencer. Precisa de um serviço de
+email e de uma Edge Function agendada.
+
+- [ ] Criar conta no **Resend** (resend.com), verificar um domínio e pegar a API key.
+- [ ] Definir os segredos:
+  ```bash
+  supabase secrets set RESEND_API_KEY=re_xxx
+  supabase secrets set EMAIL_FROM="Fluxo de Caixa <avisos@seu-dominio.com>"
+  ```
+- [ ] Deploy da função:
+  ```bash
+  supabase functions deploy avisos-vencimento
+  ```
+- [ ] Agendar 1x/dia (pg_cron + pg_net) — o SQL de exemplo está no fim de
+      `supabase/functions/avisos-vencimento/index.ts`.
+
+Enquanto isso não estiver configurado, o cliente ainda vê o **banner de aviso**
+dentro do app (isso já funciona sem nada extra).
+
 ---
 
 ## Chaves do app — `js/config.js`
