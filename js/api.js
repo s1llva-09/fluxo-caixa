@@ -101,6 +101,15 @@ export async function receitaPeriodo(de, ate) {
   return data || 0;
 }
 
+// Receita mês a mês nos últimos N meses (pro gráfico). [{ mes, total }]
+export async function receitaMensal(meses = 6) {
+  const { data, error } = await supabase.rpc("admin_revenue_monthly", {
+    p_months: meses,
+  });
+  if (error) throw error;
+  return data || [];
+}
+
 // -------- CATEGORIAS --------
 
 export async function listarCategorias(companyId) {

@@ -6,8 +6,9 @@
 //  no banco (RLS + funções is_admin): aqui é só a interface.
 // ============================================================================
 
+import Chart from "https://esm.sh/chart.js@4/auto";
 import { el, $, toast, openModal, closeModal, errorState, skeletonList, senhaInput } from "../ui.js";
-import { listarClientesAdmin, definirStatusCliente, registrarPagamento, listarPagamentos, receitaPeriodo } from "../api.js";
+import { listarClientesAdmin, definirStatusCliente, registrarPagamento, listarPagamentos, receitaPeriodo, receitaMensal } from "../api.js";
 import { updateEmail, updatePassword } from "../auth.js";
 import { state, mesAtual } from "../state.js";
 import { formatDate, formatBRL, parseToCents, todayISO } from "../money.js";
@@ -19,6 +20,7 @@ let clientes = [];
 let filtro = "";
 let filtroStatus = "todos"; // todos | ativos | vencendo | inativos
 let receitaMes = 0;
+let chartRef = null;
 
 export async function renderAdmin(root) {
   root.innerHTML = "";
@@ -35,6 +37,13 @@ export async function renderAdmin(root) {
       ),
       el("div", { id: "admin-filtros", class: "admin-filtros" }),
       el("div", { id: "admin-lista" }, skeletonList(5))
+    ),
+    el("section", { class: "card chart-card" },
+      el("div", { class: "card__head" },
+        el("h2", { class: "card__title" }, "Receita — últimos 6 meses"),
+        el("span", { class: "card__hint" }, "Soma das mensalidades recebidas por mês")
+      ),
+      el("div", { class: "chart-wrap" }, el("canvas", { id: "chart-receita" }))
     ),
     secaoConta()
   );
@@ -149,6 +158,72 @@ async function carregar() {
   desenharResumo();
   desenharFiltros();
   desenharLista();
+
+  // Gráfico de receita dos últimos meses (não-fatal).
+  try {
+    const serie = await receitaMensal(6);
+    desenharGraficoReceita(serie);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// ---- gráfico de receita -----------------------------------------------------
+
+function desenharGraficoReceita(serie) {
+  const canvas = $("#chart-receita");
+  if (!canvas) return;
+  if (chartRef) chartRef.destroy();
+
+  const labels = serie.map((p) =>
+    new Date(p.mes + "T00:00:00").toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""));
+  const valores = serie.map((p) => (p.total || 0) / 100);
+
+  const css = getComputedStyle(document.documentElement);
+  const v = (nome, fb) => (css.getPropertyValue(nome).trim() || fb);
+  const cor = v("--c-entrada", "#0E9F6E");
+  const muted = v("--c-muted", "#8B9E98");
+  const grid = v("--c-border", "rgba(221,229,226,0.8)");
+  const font = "'Inter', system-ui, sans-serif";
+
+  chartRef = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{ label: "Receita", data: valores, backgroundColor: cor, borderRadius: 7, borderSkipped: false }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#1E293B",
+          padding: 12,
+          cornerRadius: 8,
+          titleFont: { family: font, size: 12 },
+          bodyFont: { family: font, size: 12 },
+          callbacks: { label: (ctx) => "  R$ " + ctx.raw.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) },
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: { font: { family: font, size: 12 }, color: muted },
+        },
+        y: {
+          grid: { color: grid },
+          border: { display: false },
+          ticks: {
+            callback: (val) => "R$ " + val.toLocaleString("pt-BR", { minimumFractionDigits: 0 }),
+            font: { family: font, size: 11 },
+            color: muted,
+          },
+        },
+      },
+    },
+  });
 }
 
 // ---- resumo (cards de cima) ------------------------------------------------
