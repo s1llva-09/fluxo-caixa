@@ -225,6 +225,22 @@ select.input {
 .filtros .input { width: 100%; }
 .filtro-grupo--busca { grid-column: 1 / -1; }
 
+/* Input de arquivo (comprovante) */
+.input--file { padding: 8px 10px; font-size: 13px; cursor: pointer; }
+.input--file::file-selector-button {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--c-border);
+  background: var(--c-bg);
+  color: var(--c-ink-2);
+  border-radius: var(--radius-xs);
+  padding: 6px 10px;
+  margin-right: 10px;
+  cursor: pointer;
+}
+.input--file::file-selector-button:hover { border-color: var(--c-border-strong); }
+
 .page-head__acoes { display: flex; gap: 10px; flex-wrap: wrap; }
 
 .filtro-grupo {

@@ -51,14 +51,22 @@ a receber − a pagar). Ao marcar como pago, vira lançamento no caixa.
 
 No app: aba **Contas**.
 
-## 5. Confirmação de email no cadastro  ⚙️ opcional
+## 5. Comprovantes (anexos) — `supabase/comprovantes.sql`  ✅ recomendado
+Permite anexar foto/PDF do comprovante a cada lançamento (Supabase Storage).
+
+- [ ] Rodar o conteúdo inteiro de `supabase/comprovantes.sql`.
+
+No app: em **Lançamentos**, cada linha tem 📎 (Ver ou Anexar); o formulário de
+novo lançamento também aceita um comprovante.
+
+## 6. Confirmação de email no cadastro  ⚙️ opcional
 Faz o cadastro **esperar a confirmação** por email antes de liberar o app.
 
 - [ ] **Authentication → Providers → Email → "Confirm email" = ON**.
 
 Com isso desligado, o cadastro entra direto (sem pedir confirmação).
 
-## 6. "Esqueci minha senha" / redirecionamentos  ✅ pra reset funcionar
+## 7. "Esqueci minha senha" / redirecionamentos  ✅ pra reset funcionar
 O link de redefinição precisa voltar pro seu app.
 
 - [ ] **Authentication → URL Configuration**:
@@ -68,7 +76,7 @@ O link de redefinição precisa voltar pro seu app.
 
 Sem isso, o email de redefinição não consegue abrir a tela de nova senha.
 
-## 7. Email automático de vencimento  ⚙️ opcional (mais avançado)
+## 8. Email automático de vencimento  ⚙️ opcional (mais avançado)
 Avisa o cliente por email alguns dias antes de vencer. Precisa de um serviço de
 email e de uma Edge Function agendada.
 

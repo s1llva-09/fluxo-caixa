@@ -142,6 +142,40 @@ export async function apagarConta(id) {
   if (error) throw error;
 }
 
+// -------- COMPROVANTES (anexos) --------
+
+// Lista os anexos da empresa (pra cruzar com os lançamentos no cliente).
+export async function listarComprovantes(companyId) {
+  const { data, error } = await supabase
+    .from("attachments")
+    .select("*")
+    .eq("company_id", companyId);
+  if (error) throw error;
+  return data || [];
+}
+
+// Envia o arquivo pro Storage e registra o anexo no lançamento.
+export async function uploadComprovante(companyId, transactionId, file) {
+  const safe = (file.name || "arquivo").replace(/[^\w.\-]/g, "_");
+  const path = `${companyId}/${transactionId}-${Date.now()}-${safe}`;
+  const up = await supabase.storage.from("comprovantes").upload(path, file, { upsert: false });
+  if (up.error) throw up.error;
+  const { data, error } = await supabase
+    .from("attachments")
+    .insert({ company_id: companyId, transaction_id: transactionId, path, filename: file.name || safe })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// URL temporária (assinada) pra abrir/baixar o comprovante.
+export async function urlComprovante(path) {
+  const { data, error } = await supabase.storage.from("comprovantes").createSignedUrl(path, 120);
+  if (error) throw error;
+  return data.signedUrl;
+}
+
 // -------- ADMIN (painel — só o admin consegue usar) --------
 
 // Diz se o usuário logado é o admin do sistema (checado no banco).

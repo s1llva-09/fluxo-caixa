@@ -14,6 +14,9 @@ import {
   atualizarRecorrencia,
   apagarRecorrencia,
   processarRecorrencias,
+  listarComprovantes,
+  uploadComprovante,
+  urlComprovante,
 } from "../api.js";
 import { formatBRL, formatDate, parseToCents, todayISO } from "../money.js";
 
@@ -23,6 +26,8 @@ const filtros = { ...mesAtual(), kind: "", categoryId: "" };
 // Itens carregados (pra filtrar a busca por texto sem ir no banco de novo)
 let itensCarregados = [];
 let termoBusca = "";
+// Mapa transaction_id -> anexo (comprovante)
+let comprovantesMap = {};
 
 export async function renderLancamentos(root) {
   if (state.categorias.length === 0) {
@@ -159,8 +164,50 @@ async function carregarLista() {
   // Se o usuário navegou para outra tela durante o fetch, descarta.
   if (!document.body.contains(sentinel)) return;
 
+  // Comprovantes (não-fatal: se a migração não rodou, segue sem anexos).
+  try {
+    const comps = await listarComprovantes(state.company.id);
+    comprovantesMap = {};
+    for (const a of comps) comprovantesMap[a.transaction_id] = a;
+  } catch (err) {
+    console.error("Comprovantes:", err);
+    comprovantesMap = {};
+  }
+
   itensCarregados = itens;
   renderLista();
+}
+
+// Abre o comprovante (URL assinada) numa nova aba.
+async function verComprovante(anexo) {
+  try {
+    const url = await urlComprovante(anexo.path);
+    window.open(url, "_blank", "noopener");
+  } catch (err) {
+    console.error(err);
+    toast("Não foi possível abrir o comprovante", "erro");
+  }
+}
+
+// Abre o seletor de arquivo e anexa o comprovante a um lançamento existente.
+function anexarA(t) {
+  const inp = el("input", { type: "file", accept: "image/*,application/pdf", style: "display:none" });
+  inp.addEventListener("change", async () => {
+    const file = inp.files && inp.files[0];
+    inp.remove();
+    if (!file) return;
+    toast("Enviando comprovante…", "info");
+    try {
+      await uploadComprovante(state.company.id, t.id, file);
+      toast("Comprovante anexado", "ok");
+      await carregarLista();
+    } catch (err) {
+      console.error(err);
+      toast("Não foi possível enviar", "erro");
+    }
+  });
+  document.body.append(inp);
+  inp.click();
 }
 
 // Desenha a lista já filtrada pela busca por texto (sem ir no banco).
@@ -203,6 +250,13 @@ function renderLista() {
           }, "Estornar")
         : null;
 
+    const anexo = comprovantesMap[t.id];
+    const btnAnexo = anexo
+      ? el("button", { class: "btn btn--tiny btn--ghost", title: "Ver comprovante",
+          onclick: () => verComprovante(anexo) }, "📎 Ver")
+      : el("button", { class: "btn btn--tiny btn--ghost", title: "Anexar comprovante",
+          onclick: () => anexarA(t) }, "📎");
+
     lista.append(
       el("li", { class: `tx tx--${t.kind} ${t.is_reversed ? "is-reversed" : ""}` },
         el("div", { class: "tx__main" },
@@ -217,6 +271,7 @@ function renderLista() {
         el("div", { class: "tx__right" },
           el("span", { class: "tx__value num" },
             (t.kind === "entrada" ? "+ " : "− ") + formatBRL(t.amount_cents)),
+          btnAnexo,
           estornar
         )
       )
@@ -261,6 +316,7 @@ function abrirFormulario() {
     ...state.categorias.map((c) => el("option", { value: c.id }, c.name))
   );
 
+  const comprovante = el("input", { type: "file", class: "input input--file", accept: "image/*,application/pdf" });
   const btnSalvar = el("button", { class: "btn btn--primary" }, "Salvar");
 
   async function salvar() {
@@ -272,7 +328,7 @@ function abrirFormulario() {
     btnSalvar.disabled    = true;
     btnSalvar.textContent = "Salvando...";
     try {
-      await criarLancamento({
+      const novo = await criarLancamento({
         companyId:   state.company.id,
         kind,
         amountCents: cents,
@@ -280,6 +336,16 @@ function abrirFormulario() {
         categoryId:  cat.value || null,
         occurredOn:  data.value || todayISO(),
       });
+      // Anexa o comprovante, se houver (falha aqui não desfaz o lançamento).
+      const file = comprovante.files && comprovante.files[0];
+      if (file && novo?.id) {
+        try {
+          await uploadComprovante(state.company.id, novo.id, file);
+        } catch (e) {
+          console.error(e);
+          toast("Lançamento salvo, mas o comprovante falhou", "erro");
+        }
+      }
       closeModal();
       toast("Lançamento salvo!", "ok");
       await carregarLista();
@@ -300,6 +366,7 @@ function abrirFormulario() {
       el("label", { class: "field" }, el("span", { class: "field__label" }, "Data"), data),
       el("label", { class: "field" }, el("span", { class: "field__label" }, "Descrição"), desc),
       el("label", { class: "field" }, el("span", { class: "field__label" }, "Categoria"), cat),
+      el("label", { class: "field" }, el("span", { class: "field__label" }, "Comprovante (opcional)"), comprovante),
       el("div", { class: "form__actions" },
         el("button", { class: "btn btn--ghost", onclick: closeModal }, "Cancelar"),
         btnSalvar
