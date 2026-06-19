@@ -72,6 +72,20 @@ function secaoEquipe() {
     if (ehDono && convites.length) {
       const ulc = el("ul", { class: "rec-list" });
       for (const cv of convites) {
+        const bCopy = el("button", { class: "btn btn--tiny btn--ghost" }, "Copiar convite");
+        bCopy.addEventListener("click", async () => {
+          const msg =
+            `Você foi convidado para acessar "${state.company.name}" no Fluxo de Caixa.\n` +
+            `Crie sua conta (ou entre) com o email ${cv.email} e aceite o convite.\n` +
+            `Acesse: ${window.location.origin}`;
+          try {
+            await navigator.clipboard.writeText(msg);
+            toast("Convite copiado — cole no WhatsApp ou email", "ok");
+          } catch (err) {
+            console.error(err);
+            toast("Não foi possível copiar", "erro");
+          }
+        });
         const bRev = el("button", { class: "btn btn--tiny btn--ghost" }, "Revogar");
         bRev.addEventListener("click", async () => {
           bRev.disabled = true;
@@ -83,7 +97,7 @@ function secaoEquipe() {
             el("span", { class: "rec__desc" }, cv.email),
             el("span", { class: "rec__meta" }, "Convite pendente")
           ),
-          el("div", { class: "rec__actions" }, bRev)
+          el("div", { class: "rec__actions" }, bCopy, bRev)
         ));
       }
       box.append(el("h3", { class: "admin-pay__titulo", style: "margin-top:18px" }, "Convites pendentes"), ulc);
@@ -109,7 +123,7 @@ function secaoEquipe() {
         // Dispara o email do convite (não-fatal se o email não estiver configurado).
         try { await enviarEmailConvite(inv.id, window.location.origin); } catch (e2) { console.error(e2); }
         email.value = "";
-        toast("Convite enviado", "ok");
+        toast("Convite criado — use 'Copiar convite' pra mandar pra pessoa", "ok");
         carregar();
       } catch (err) {
         console.error(err);
