@@ -58,8 +58,9 @@ export async function renderDashboard(root) {
     el("section", { class: `saldo ${saldo >= 0 ? "is-pos" : "is-neg"}` },
       el("span", { class: "saldo__label" }, "Saldo total acumulado"),
       el("span", { class: "saldo__value num" }, formatBRL(saldo)),
-      el("span", { class: "saldo__hint" }, saldo >= 0
-        ? "Seu negócio está no azul — continue assim!"
+      el("span", { class: "saldo__hint" },
+        saldo > 0 ? "Seu negócio está no azul — continue assim!"
+        : saldo === 0 ? "Comece registrando suas entradas e saídas."
         : "Fique de olho nas saídas para voltar ao positivo.")
     ),
 

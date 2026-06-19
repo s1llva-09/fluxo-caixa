@@ -54,6 +54,35 @@ export function closeModal() {
   setTimeout(() => overlay.classList.remove("is-open", "is-closing"), 190);
 }
 
+// Modal de confirmação reutilizável. onConfirmar é chamado se o usuário confirmar.
+// opts: { titulo, texto, confirmar (label), perigo (bool) }
+export function confirmar(opts, onConfirmar) {
+  const { titulo = "Tem certeza?", texto = "", confirmar: label = "Confirmar", perigo = false } = opts || {};
+  const btnOk = el("button", { class: `btn ${perigo ? "btn--danger" : "btn--primary"}` }, label);
+  btnOk.addEventListener("click", async () => {
+    btnOk.disabled = true;
+    btnOk.textContent = "Aguarde...";
+    try {
+      await onConfirmar();
+      closeModal();
+    } catch (err) {
+      console.error(err);
+      toast("Não foi possível", "erro");
+      btnOk.disabled = false;
+      btnOk.textContent = label;
+    }
+  });
+  openModal(titulo,
+    el("div", {},
+      texto ? el("p", { style: "margin:0 0 22px; color:var(--c-muted); line-height:1.6;" }, texto) : null,
+      el("div", { class: "form__actions" },
+        el("button", { class: "btn btn--ghost", onclick: closeModal }, "Cancelar"),
+        btnOk
+      )
+    )
+  );
+}
+
 // ---- Campo de senha com olhinho ----------------------------------------
 
 const SVG_EYE = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;

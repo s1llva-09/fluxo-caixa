@@ -6,7 +6,7 @@
 //  um lançamento real (via pagar_conta no banco).
 // ============================================================================
 
-import { el, $, toast, openModal, closeModal, errorState, skeletonList } from "../ui.js";
+import { el, $, toast, openModal, closeModal, confirmar, errorState, skeletonList } from "../ui.js";
 import { state } from "../state.js";
 import {
   listarContas, criarConta, pagarConta, cancelarConta, apagarConta,
@@ -138,10 +138,12 @@ function contaItem(c) {
     const bPagar = el("button", { class: "btn btn--tiny btn--primary" }, "Marcar pago");
     bPagar.addEventListener("click", () => abrirPagar(c));
     const bApagar = el("button", { class: "btn btn--tiny btn--ghost" }, "Apagar");
-    bApagar.addEventListener("click", async () => {
-      bApagar.disabled = true;
-      try { await apagarConta(c.id); await carregar(); }
-      catch (err) { console.error(err); toast("Erro ao apagar", "erro"); bApagar.disabled = false; }
+    bApagar.addEventListener("click", () => {
+      confirmar({
+        titulo: "Apagar conta",
+        texto: `Apagar "${c.description || "(sem descrição)"}" de ${formatBRL(c.amount_cents)}? Isso não mexe em lançamentos já feitos.`,
+        confirmar: "Apagar", perigo: true,
+      }, async () => { await apagarConta(c.id); await carregar(); });
     });
     acoes.append(bPagar, bApagar);
   }

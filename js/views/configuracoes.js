@@ -2,7 +2,7 @@
 //  views/configuracoes.js — Configurações da empresa e da conta
 // ============================================================================
 
-import { el, $, toast, senhaInput } from "../ui.js";
+import { el, $, toast, senhaInput, confirmar } from "../ui.js";
 import { state } from "../state.js";
 import {
   atualizarEmpresa,
@@ -82,10 +82,12 @@ function secaoEquipe() {
       const acoes = el("div", { class: "rec__actions" });
       if (ehDono && m.user_id !== state.user.id && m.role !== "owner") {
         const bRem = el("button", { class: "btn btn--tiny btn--ghost" }, "Remover");
-        bRem.addEventListener("click", async () => {
-          bRem.disabled = true;
-          try { await removerMembro(state.company.id, m.user_id); carregar(); }
-          catch (err) { console.error(err); toast("Erro ao remover", "erro"); bRem.disabled = false; }
+        bRem.addEventListener("click", () => {
+          confirmar({
+            titulo: "Remover membro",
+            texto: `Remover ${m.email} da equipe? A pessoa perde o acesso a esta empresa.`,
+            confirmar: "Remover", perigo: true,
+          }, async () => { await removerMembro(state.company.id, m.user_id); carregar(); });
         });
         acoes.append(bRem);
       }
@@ -118,10 +120,12 @@ function secaoEquipe() {
           }
         });
         const bRev = el("button", { class: "btn btn--tiny btn--ghost" }, "Revogar");
-        bRev.addEventListener("click", async () => {
-          bRev.disabled = true;
-          try { await revogarConvite(cv.id); carregar(); }
-          catch (err) { console.error(err); toast("Erro", "erro"); bRev.disabled = false; }
+        bRev.addEventListener("click", () => {
+          confirmar({
+            titulo: "Revogar convite",
+            texto: `Revogar o convite de ${cv.email}?`,
+            confirmar: "Revogar", perigo: true,
+          }, async () => { await revogarConvite(cv.id); carregar(); });
         });
         ulc.append(el("li", { class: "rec" },
           el("div", { class: "rec__main" },
