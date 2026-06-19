@@ -1175,6 +1175,7 @@ select.input {
 .notif-item:last-child { border-bottom: none; }
 .notif-item__nome { font-weight: 600; color: var(--c-ink); }
 .notif-item__sub { font-size: 13px; color: var(--c-muted); margin: 2px 0 0; }
+.notif-vazio { color: var(--c-muted); text-align: center; padding: 24px 4px; font-size: 14px; }
 .admin-notas { resize: vertical; min-height: 64px; line-height: 1.5; padding-top: 10px; }
 .admin-renew { display: flex; gap: 8px; flex-wrap: wrap; }
 

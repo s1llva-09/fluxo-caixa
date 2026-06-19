@@ -8,7 +8,7 @@
 
 import { $, $$, el, toast, openModal, closeModal } from "./ui.js";
 import { state, empresaAtiva } from "./state.js";
-import { formatDate } from "./money.js";
+import { formatDate, todayISO } from "./money.js";
 import { initTheme } from "./theme.js";
 
 // Janela (dias) para avisar o cliente que a mensalidade está perto de vencer.
@@ -16,7 +16,7 @@ const AVISO_VENC_DIAS = 7;
 import { getUser, signOut, onAuthChange, onPasswordRecovery } from "./auth.js";
 import {
   getMinhaEmpresa, souAdmin, processarRecorrencias, meusConvites, aceitarConvite,
-  setEmpresaAtiva, minhasEmpresas, listarCategorias,
+  setEmpresaAtiva, minhasEmpresas, listarCategorias, listarContas,
 } from "./api.js";
 
 import { renderAuth, renderOnboarding, renderBloqueado, renderRedefinir, renderConvites } from "./views/auth.js";
@@ -158,46 +158,85 @@ function mostrarApp() {
   irPara("dashboard");
 }
 
-// Sininho de notificações no topo (aparece só quando há convites recebidos).
+// Sininho de notificações no topo (sempre visível; badge com a contagem).
 async function configurarNotificacoes() {
   const btn = $("#btn-notif");
   if (!btn) return;
-  let convites = [];
-  try { convites = await meusConvites(); } catch (err) { btn.hidden = true; return; }
-  convites = convites.filter((c) => c.company_id !== state.company.id);
-  if (!convites.length) { btn.hidden = true; return; }
-
-  btn.hidden = false;
-  $("#notif-count").textContent = String(convites.length);
-  btn.onclick = () => abrirNotificacoes(convites);
+  btn.hidden = false; // o sino fica sempre na barra
+  const notifs = await coletarNotificacoes();
+  const badge = $("#notif-count");
+  if (notifs.length) { badge.textContent = String(notifs.length); badge.hidden = false; }
+  else { badge.hidden = true; }
+  btn.onclick = () => abrirNotificacoes(notifs);
 }
 
-function abrirNotificacoes(convites) {
-  const lista = el("div", {});
-  for (const c of convites) {
-    const btn = el("button", { class: "btn btn--primary btn--block", style: "margin-top:6px" }, "Entrar nesta empresa");
-    btn.addEventListener("click", async () => {
-      btn.disabled = true; btn.textContent = "Entrando...";
-      try {
-        await aceitarConvite(c.id);
-        setEmpresaAtiva(c.company_id);
-        closeModal();
-        await iniciar();
-      } catch (err) {
-        console.error(err);
-        toast("Não foi possível aceitar", "erro");
-        btn.disabled = false; btn.textContent = "Entrar nesta empresa";
-      }
-    });
-    lista.append(
-      el("div", { class: "notif-item" },
-        el("div", { class: "notif-item__nome" }, c.company_name),
-        el("div", { class: "notif-item__sub" }, "Você foi convidado para entrar nesta empresa."),
-        btn
-      )
-    );
+// Junta tudo que vale notificar: convites, contas vencidas/vencendo, mensalidade.
+async function coletarNotificacoes() {
+  const out = [];
+  const dias = (iso) =>
+    Math.round((new Date(iso + "T00:00:00") - new Date(todayISO() + "T00:00:00")) / 86400000);
+
+  // Convites recebidos.
+  try {
+    let convites = await meusConvites();
+    convites = convites.filter((c) => c.company_id !== state.company.id);
+    for (const c of convites) {
+      out.push({
+        titulo: `Convite: ${c.company_name}`,
+        sub: "Você foi convidado para entrar nesta empresa.",
+        acaoLabel: "Entrar nesta empresa",
+        acao: async () => { await aceitarConvite(c.id); setEmpresaAtiva(c.company_id); closeModal(); await iniciar(); },
+      });
+    }
+  } catch (err) { /* migração de equipe pode não ter rodado */ }
+
+  // Contas a pagar/receber vencidas ou vencendo.
+  try {
+    const pend = await listarContas(state.company.id, "pending");
+    const hoje = todayISO();
+    const vencidas = pend.filter((c) => c.due_on < hoje).length;
+    const vencendo = pend.filter((c) => c.due_on >= hoje && dias(c.due_on) <= 7).length;
+    const verContas = () => { closeModal(); document.querySelector('[data-tela="contas"]')?.click(); };
+    if (vencidas) out.push({ titulo: `${vencidas} conta(s) vencida(s)`, sub: "Contas a pagar/receber em atraso.", acaoLabel: "Ver contas", acao: verContas });
+    if (vencendo) out.push({ titulo: `${vencendo} conta(s) vencendo`, sub: "Vencem nos próximos 7 dias.", acaoLabel: "Ver contas", acao: verContas });
+  } catch (err) { /* migração de contas pode não ter rodado */ }
+
+  // Mensalidade do próprio cliente perto de vencer.
+  if (!state.isAdmin && state.company?.plan_until) {
+    const d = dias(state.company.plan_until);
+    if (d >= 0 && d <= 7) {
+      out.push({
+        titulo: d === 0 ? "Mensalidade vence hoje" : d === 1 ? "Mensalidade vence amanhã" : `Mensalidade vence em ${d} dias`,
+        sub: "Regularize para não perder o acesso.",
+      });
+    }
   }
-  openModal("Convites recebidos", lista);
+  return out;
+}
+
+function abrirNotificacoes(notifs) {
+  const lista = el("div", {});
+  if (!notifs.length) {
+    lista.append(el("p", { class: "notif-vazio" }, "Nenhuma notificação no momento."));
+  } else {
+    for (const n of notifs) {
+      const item = el("div", { class: "notif-item" },
+        el("div", { class: "notif-item__nome" }, n.titulo),
+        el("div", { class: "notif-item__sub" }, n.sub)
+      );
+      if (n.acao) {
+        const b = el("button", { class: "btn btn--primary btn--block", style: "margin-top:8px" }, n.acaoLabel || "Abrir");
+        b.addEventListener("click", async () => {
+          b.disabled = true;
+          try { await n.acao(); }
+          catch (err) { console.error(err); toast("Não foi possível", "erro"); b.disabled = false; }
+        });
+        item.append(b);
+      }
+      lista.append(item);
+    }
+  }
+  openModal("Notificações", lista);
 }
 
 // Deixa o badge da empresa trocar de empresa (se o usuário participa de várias).
