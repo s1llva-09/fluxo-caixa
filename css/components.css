@@ -1190,6 +1190,12 @@ select.input {
 }
 .rec__meta { font-size: 12px; color: var(--c-muted); }
 .rec__actions { display: flex; gap: 6px; flex-shrink: 0; }
+.rec__right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+/* Mobile: valor + ações vão pra baixo, alinhados à direita (não espremem) */
+@media (max-width: 560px) {
+  .rec__right { flex-direction: column; align-items: flex-end; gap: 6px; }
+}
 
 @media (max-width: 560px) {
   .admin-busca { max-width: none; }

@@ -156,9 +156,11 @@ function contaItem(c) {
         `${c.status === "paid" ? " · pago" : c.status === "canceled" ? " · cancelada" : ""}`),
       venc.badge
     ),
-    el("span", { class: `tx__value num ${c.kind === "entrada" ? "c-entrada" : "c-saida"}` },
-      (c.kind === "entrada" ? "+ " : "− ") + formatBRL(c.amount_cents)),
-    acoes
+    el("div", { class: "rec__right" },
+      el("span", { class: `tx__value num ${c.kind === "entrada" ? "c-entrada" : "c-saida"}` },
+        (c.kind === "entrada" ? "+ " : "− ") + formatBRL(c.amount_cents)),
+      acoes
+    )
   );
 }
 
