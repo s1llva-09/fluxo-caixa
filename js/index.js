@@ -16,7 +16,7 @@ const AVISO_VENC_DIAS = 7;
 import { getUser, signOut, onAuthChange, onPasswordRecovery } from "./auth.js";
 import {
   getMinhaEmpresa, souAdmin, processarRecorrencias, meusConvites, aceitarConvite,
-  setEmpresaAtiva, minhasEmpresas, listarCategorias, listarContas,
+  setEmpresaAtiva, minhasEmpresas, listarCategorias, listarContas, listarMembros,
 } from "./api.js";
 
 import { renderAuth, renderOnboarding, renderBloqueado, renderRedefinir, renderConvites } from "./views/auth.js";
@@ -84,9 +84,10 @@ async function iniciar() {
 
     // Gera os lançamentos recorrentes que já venceram (não-fatal).
     try {
-      await processarRecorrencias(state.company.id);
+      state.recorrenciasGeradas = await processarRecorrencias(state.company.id);
     } catch (err) {
       console.error("Recorrências:", err);
+      state.recorrenciasGeradas = 0;
     }
 
     mostrarApp();
@@ -211,6 +212,35 @@ async function coletarNotificacoes() {
       });
     }
   }
+
+  // Lançamentos recorrentes gerados neste acesso.
+  if (state.recorrenciasGeradas > 0) {
+    const n = state.recorrenciasGeradas;
+    out.push({
+      titulo: `${n} lançamento(s) recorrente(s) gerado(s)`,
+      sub: "Criados automaticamente a partir das suas recorrências.",
+      acaoLabel: "Ver lançamentos",
+      acao: () => { closeModal(); document.querySelector('[data-tela="lancamentos"]')?.click(); },
+    });
+  }
+
+  // Membro(s) novo(s) na equipe (só pro dono; entraram nos últimos 3 dias).
+  if (state.company?.owner_id === state.user?.id) {
+    try {
+      const membros = await listarMembros(state.company.id);
+      const novos = membros.filter((m) =>
+        m.user_id !== state.user.id && m.created_at && dias(m.created_at.slice(0, 10)) >= -3 && dias(m.created_at.slice(0, 10)) <= 0);
+      if (novos.length) {
+        out.push({
+          titulo: novos.length === 1 ? "Novo membro na equipe" : `${novos.length} novos membros na equipe`,
+          sub: novos.map((m) => m.email).join(", "),
+          acaoLabel: "Ver equipe",
+          acao: () => { closeModal(); document.querySelector('[data-tela="configuracoes"]')?.click(); },
+        });
+      }
+    } catch (err) { /* equipe pode não ter rodado */ }
+  }
+
   return out;
 }
 
