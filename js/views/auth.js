@@ -234,7 +234,7 @@ export function renderConvites(root, convites, acoes) {
     btn.addEventListener("click", async () => {
       btn.disabled = true; btn.textContent = "Entrando...";
       try {
-        await acoes.onAceitar(c.id);
+        await acoes.onAceitar(c);
       } catch (err) {
         toast("Não foi possível aceitar o convite", "erro");
         btn.disabled = false; btn.textContent = "Entrar nesta empresa";

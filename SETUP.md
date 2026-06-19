@@ -65,7 +65,13 @@ quem foi convidado aceita ao entrar (precisa de conta com o mesmo email).
 
 - [ ] Rodar o conteúdo inteiro de `supabase/equipe.sql`.
 
-No app: **Configurações → Equipe**.
+No app: **Configurações → Equipe**. Quem já está logado vê o convite num
+**aviso no topo** (não só ao entrar).
+
+> Email do convite (opcional): pra mandar email automático ao convidar, faça o
+> deploy da função e configure o Resend (igual ao passo 9):
+> `supabase functions deploy enviar-convite`. Sem isso, o convite é criado e
+> aparece pra pessoa no app — você só avisa a URL na mão.
 
 ## 7. Confirmação de email no cadastro  ⚙️ opcional
 Faz o cadastro **esperar a confirmação** por email antes de liberar o app.

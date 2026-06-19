@@ -1164,6 +1164,10 @@ select.input {
 .admin-cli__actions { flex-shrink: 0; }
 .admin-modal__id { margin-bottom: 20px; }
 .admin-conta__sep { border: none; border-top: 1px solid var(--c-border); margin: 22px 0; }
+
+/* Trocar de empresa (modal) */
+.troca-empresa__papel { font-size: 12px; color: var(--c-muted); font-weight: 500; }
+.troca-empresa.is-atual { border-color: var(--c-primary); color: var(--c-ink); }
 .admin-notas { resize: vertical; min-height: 64px; line-height: 1.5; padding-top: 10px; }
 .admin-renew { display: flex; gap: 8px; flex-wrap: wrap; }
 

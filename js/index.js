@@ -6,7 +6,7 @@
 //  Carregado no index.html com <script type="module" src="js/index.js">.
 // ============================================================================
 
-import { $, $$, el, closeModal } from "./ui.js";
+import { $, $$, el, toast, openModal, closeModal, ICON } from "./ui.js";
 import { state, empresaAtiva } from "./state.js";
 import { formatDate } from "./money.js";
 import { initTheme } from "./theme.js";
@@ -14,7 +14,10 @@ import { initTheme } from "./theme.js";
 // Janela (dias) para avisar o cliente que a mensalidade está perto de vencer.
 const AVISO_VENC_DIAS = 7;
 import { getUser, signOut, onAuthChange, onPasswordRecovery } from "./auth.js";
-import { getMinhaEmpresa, souAdmin, processarRecorrencias, meusConvites, aceitarConvite } from "./api.js";
+import {
+  getMinhaEmpresa, souAdmin, processarRecorrencias, meusConvites, aceitarConvite,
+  setEmpresaAtiva, minhasEmpresas,
+} from "./api.js";
 
 import { renderAuth, renderOnboarding, renderBloqueado, renderRedefinir, renderConvites } from "./views/auth.js";
 import { renderDashboard } from "./views/dashboard.js";
@@ -102,7 +105,7 @@ function mostrarConvites(convites) {
   $("#app-shell").hidden = true;
   $("#auth-root").hidden = false;
   renderConvites($("#auth-root"), convites, {
-    onAceitar: async (id) => { await aceitarConvite(id); await iniciar(); },
+    onAceitar: async (c) => { await aceitarConvite(c.id); setEmpresaAtiva(c.company_id); await iniciar(); },
     onCriarPropria: () => mostrarOnboarding(),
   });
 }
@@ -142,7 +145,79 @@ function mostrarApp() {
   // Mostra o item "Admin" no menu só pra quem é admin.
   $$(".nav__admin").forEach((b) => { b.hidden = !state.isAdmin; });
   mostrarAvisoVencimento();
+  mostrarNotificacoes();
+  configurarSeletorEmpresa();
   irPara("dashboard");
+}
+
+// Banner de notificação de convites recebidos (pra quem já está logado).
+async function mostrarNotificacoes() {
+  const slot = $("#notif-banner");
+  if (!slot) return;
+  slot.innerHTML = "";
+  let convites = [];
+  try { convites = await meusConvites(); } catch (err) { return; }
+  // Não mostra convite da empresa em que já estou.
+  convites = convites.filter((c) => c.company_id !== state.company.id);
+  if (!convites.length) return;
+  if (sessionStorage.getItem("notif-dismiss") === String(convites.length)) return;
+
+  const c = convites[0];
+  const extra = convites.length > 1 ? ` (+${convites.length - 1})` : "";
+  const btn = el("button", { class: "btn btn--tiny btn--primary" }, "Aceitar");
+  btn.addEventListener("click", async () => {
+    btn.disabled = true; btn.textContent = "Entrando...";
+    try {
+      await aceitarConvite(c.id);
+      setEmpresaAtiva(c.company_id);
+      await iniciar();
+    } catch (err) {
+      console.error(err);
+      toast("Não foi possível aceitar", "erro");
+      btn.disabled = false; btn.textContent = "Aceitar";
+    }
+  });
+  slot.append(
+    el("div", { class: "notif-banner" },
+      el("span", { class: "notif-banner__icon", html: ICON.bell }),
+      el("span", { class: "notif-banner__text" },
+        `Você foi convidado para entrar em ${c.company_name}${extra}.`),
+      btn,
+      el("button", {
+        class: "notif-banner__close", "aria-label": "Dispensar",
+        onclick: () => { slot.innerHTML = ""; sessionStorage.setItem("notif-dismiss", String(convites.length)); },
+      }, "×")
+    )
+  );
+}
+
+// Deixa o badge da empresa trocar de empresa (se o usuário participa de várias).
+async function configurarSeletorEmpresa() {
+  const badge = $("#empresa-nome");
+  if (!badge) return;
+  let empresas = [];
+  try { empresas = await minhasEmpresas(); } catch (err) { return; }
+  if (empresas.length <= 1) return;
+
+  badge.classList.add("topbar__empresa--switch");
+  badge.onclick = () => {
+    const lista = el("div", {});
+    for (const e of empresas) {
+      const atual = e.id === state.company.id;
+      const item = el("button", {
+        class: `btn btn--ghost btn--block troca-empresa ${atual ? "is-atual" : ""}`,
+        style: "justify-content:space-between; margin-bottom:8px;",
+        onclick: async () => {
+          if (atual) { closeModal(); return; }
+          setEmpresaAtiva(e.id);
+          closeModal();
+          await iniciar();
+        },
+      }, el("span", {}, e.name), el("span", { class: "troca-empresa__papel" }, atual ? "atual" : (e.role === "owner" ? "dono" : "membro")));
+      lista.append(item);
+    }
+    openModal("Trocar de empresa", lista);
+  };
 }
 
 // Banner de "mensalidade vencendo" no topo do app (só pro cliente, não pro admin).

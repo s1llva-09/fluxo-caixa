@@ -6,7 +6,7 @@ import { el, $, toast, senhaInput } from "../ui.js";
 import { state } from "../state.js";
 import {
   atualizarEmpresa,
-  convidar, listarConvites, revogarConvite, listarMembros, removerMembro,
+  convidar, enviarEmailConvite, listarConvites, revogarConvite, listarMembros, removerMembro,
 } from "../api.js";
 import { updateEmail, updatePassword, signOut } from "../auth.js";
 import { getTheme, setTheme } from "../theme.js";
@@ -105,9 +105,11 @@ function secaoEquipe() {
       if (!e) { toast("Digite o email", "erro"); return; }
       btn.disabled = true; btn.textContent = "Convidando...";
       try {
-        await convidar(state.company.id, e);
+        const inv = await convidar(state.company.id, e);
+        // Dispara o email do convite (não-fatal se o email não estiver configurado).
+        try { await enviarEmailConvite(inv.id, window.location.origin); } catch (e2) { console.error(e2); }
         email.value = "";
-        toast("Convite criado", "ok");
+        toast("Convite enviado", "ok");
         carregar();
       } catch (err) {
         console.error(err);

@@ -10,29 +10,53 @@ import { supabase } from "./supabaseClient.js";
 
 // -------- EMPRESAS --------
 
-// Pega a empresa do usuário logado — a que ele é MEMBRO (dono ou convidado).
-// Busca pela company_members (não por owner_id) pra funcionar com equipe; e o
-// admin enxerga todas pela RLS, então filtrar pela membership evita pegar a de
-// outro cliente por engano.
+const ACTIVE_KEY = "fc-active-company";
+
+// Define qual empresa está "ativa" (quando o usuário participa de várias).
+export function setEmpresaAtiva(id) {
+  try { localStorage.setItem(ACTIVE_KEY, id); } catch (e) { /* ignore */ }
+}
+
+// Pega a empresa ativa do usuário logado — a que ele é MEMBRO (dono ou convidado).
+// Busca pela company_members (não por owner_id) pra funcionar com equipe; respeita
+// a empresa ativa salva; senão prefere a que ele é dono; senão a primeira.
 export async function getMinhaEmpresa() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data: mem, error: e1 } = await supabase
+  const { data: mems, error: e1 } = await supabase
     .from("company_members")
     .select("company_id, role")
-    .eq("user_id", user.id)
-    .order("role", { ascending: true }) // 'owner' antes de 'member'
-    .limit(1)
-    .maybeSingle();
+    .eq("user_id", user.id);
   if (e1) throw e1;
-  if (!mem) return null;
+  if (!mems || mems.length === 0) return null;
+
+  let active = null;
+  try { active = localStorage.getItem(ACTIVE_KEY); } catch (e) { /* ignore */ }
+  const chosen = mems.find((m) => m.company_id === active)
+    || mems.find((m) => m.role === "owner")
+    || mems[0];
+
   const { data, error } = await supabase
     .from("companies")
     .select("*")
-    .eq("id", mem.company_id)
+    .eq("id", chosen.company_id)
     .maybeSingle();
   if (error) throw error;
   return data;
+}
+
+// Lista as empresas das quais o usuário participa (pro seletor de empresa).
+export async function minhasEmpresas() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data, error } = await supabase
+    .from("company_members")
+    .select("role, companies(id, name)")
+    .eq("user_id", user.id);
+  if (error) throw error;
+  return (data || [])
+    .map((r) => ({ id: r.companies?.id, name: r.companies?.name, role: r.role }))
+    .filter((c) => c.id);
 }
 
 // -------- EQUIPE (convidar / membros) --------
@@ -45,6 +69,15 @@ export async function convidar(companyId, email, role = "member") {
     .single();
   if (error) throw error;
   return data;
+}
+
+// Dispara o email do convite (Edge Function). Não-fatal: se o email não
+// estiver configurado, o convite já foi criado mesmo assim.
+export async function enviarEmailConvite(inviteId, appUrl) {
+  const { error } = await supabase.functions.invoke("enviar-convite", {
+    body: { invite_id: inviteId, app_url: appUrl },
+  });
+  if (error) throw error;
 }
 
 export async function listarConvites(companyId) {
