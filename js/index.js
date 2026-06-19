@@ -6,7 +6,7 @@
 //  Carregado no index.html com <script type="module" src="js/index.js">.
 // ============================================================================
 
-import { $, $$, el, toast, openModal, closeModal, ICON } from "./ui.js";
+import { $, $$, el, toast, openModal, closeModal } from "./ui.js";
 import { state, empresaAtiva } from "./state.js";
 import { formatDate } from "./money.js";
 import { initTheme } from "./theme.js";
@@ -16,7 +16,7 @@ const AVISO_VENC_DIAS = 7;
 import { getUser, signOut, onAuthChange, onPasswordRecovery } from "./auth.js";
 import {
   getMinhaEmpresa, souAdmin, processarRecorrencias, meusConvites, aceitarConvite,
-  setEmpresaAtiva, minhasEmpresas,
+  setEmpresaAtiva, minhasEmpresas, listarCategorias,
 } from "./api.js";
 
 import { renderAuth, renderOnboarding, renderBloqueado, renderRedefinir, renderConvites } from "./views/auth.js";
@@ -72,6 +72,14 @@ async function iniciar() {
     if (!state.isAdmin && !empresaAtiva(state.company)) {
       mostrarBloqueado();
       return;
+    }
+
+    // Pré-carrega as categorias (pra Lançamentos/Contas abrirem na hora, sem
+    // aquele instante de tela anterior). Não-fatal.
+    try {
+      state.categorias = await listarCategorias(state.company.id);
+    } catch (err) {
+      console.error("Categorias:", err);
     }
 
     // Gera os lançamentos recorrentes que já venceram (não-fatal).
@@ -145,50 +153,51 @@ function mostrarApp() {
   // Mostra o item "Admin" no menu só pra quem é admin.
   $$(".nav__admin").forEach((b) => { b.hidden = !state.isAdmin; });
   mostrarAvisoVencimento();
-  mostrarNotificacoes();
+  configurarNotificacoes();
   configurarSeletorEmpresa();
   irPara("dashboard");
 }
 
-// Banner de notificação de convites recebidos (pra quem já está logado).
-async function mostrarNotificacoes() {
-  const slot = $("#notif-banner");
-  if (!slot) return;
-  slot.innerHTML = "";
+// Sininho de notificações no topo (aparece só quando há convites recebidos).
+async function configurarNotificacoes() {
+  const btn = $("#btn-notif");
+  if (!btn) return;
   let convites = [];
-  try { convites = await meusConvites(); } catch (err) { return; }
-  // Não mostra convite da empresa em que já estou.
+  try { convites = await meusConvites(); } catch (err) { btn.hidden = true; return; }
   convites = convites.filter((c) => c.company_id !== state.company.id);
-  if (!convites.length) return;
-  if (sessionStorage.getItem("notif-dismiss") === String(convites.length)) return;
+  if (!convites.length) { btn.hidden = true; return; }
 
-  const c = convites[0];
-  const extra = convites.length > 1 ? ` (+${convites.length - 1})` : "";
-  const btn = el("button", { class: "btn btn--tiny btn--primary" }, "Aceitar");
-  btn.addEventListener("click", async () => {
-    btn.disabled = true; btn.textContent = "Entrando...";
-    try {
-      await aceitarConvite(c.id);
-      setEmpresaAtiva(c.company_id);
-      await iniciar();
-    } catch (err) {
-      console.error(err);
-      toast("Não foi possível aceitar", "erro");
-      btn.disabled = false; btn.textContent = "Aceitar";
-    }
-  });
-  slot.append(
-    el("div", { class: "notif-banner" },
-      el("span", { class: "notif-banner__icon", html: ICON.bell }),
-      el("span", { class: "notif-banner__text" },
-        `Você foi convidado para entrar em ${c.company_name}${extra}.`),
-      btn,
-      el("button", {
-        class: "notif-banner__close", "aria-label": "Dispensar",
-        onclick: () => { slot.innerHTML = ""; sessionStorage.setItem("notif-dismiss", String(convites.length)); },
-      }, "×")
-    )
-  );
+  btn.hidden = false;
+  $("#notif-count").textContent = String(convites.length);
+  btn.onclick = () => abrirNotificacoes(convites);
+}
+
+function abrirNotificacoes(convites) {
+  const lista = el("div", {});
+  for (const c of convites) {
+    const btn = el("button", { class: "btn btn--primary btn--block", style: "margin-top:6px" }, "Entrar nesta empresa");
+    btn.addEventListener("click", async () => {
+      btn.disabled = true; btn.textContent = "Entrando...";
+      try {
+        await aceitarConvite(c.id);
+        setEmpresaAtiva(c.company_id);
+        closeModal();
+        await iniciar();
+      } catch (err) {
+        console.error(err);
+        toast("Não foi possível aceitar", "erro");
+        btn.disabled = false; btn.textContent = "Entrar nesta empresa";
+      }
+    });
+    lista.append(
+      el("div", { class: "notif-item" },
+        el("div", { class: "notif-item__nome" }, c.company_name),
+        el("div", { class: "notif-item__sub" }, "Você foi convidado para entrar nesta empresa."),
+        btn
+      )
+    );
+  }
+  openModal("Convites recebidos", lista);
 }
 
 // Deixa o badge da empresa trocar de empresa (se o usuário participa de várias).
@@ -263,8 +272,13 @@ function irPara(nome) {
     b.classList.toggle("is-active", b.dataset.tela === nome)
   );
 
-  // Animação de entrada da view
+  // Limpa o conteúdo ANTES de desenhar a nova tela. Sem isso, telas que fazem
+  // await (ex.: carregar categorias) deixavam a página anterior aparecendo por
+  // um instante durante o fetch.
   const view = $("#view");
+  view.innerHTML = "";
+
+  // Animação de entrada da view
   view.classList.remove("is-entering");
   void view.offsetWidth; // força reflow para reiniciar a animação
   view.classList.add("is-entering");

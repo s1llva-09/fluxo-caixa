@@ -79,32 +79,37 @@ html { overflow-x: clip; }
 }
 .sub-banner__close:hover { opacity: 1; }
 
-/* Banner de notificação (ex.: convite recebido) --------------------------- */
-.notif-banner {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 24px;
-  background: var(--c-primary-glow);
-  color: var(--c-primary-ink);
-  border-bottom: 1px solid var(--c-border);
-  font-size: 13.5px;
-  font-weight: 500;
-}
-.notif-banner__icon { line-height: 0; flex-shrink: 0; }
-.notif-banner__text { flex: 1; line-height: 1.4; }
-.notif-banner__close {
+/* Sininho de notificações ---------------------------------------------------- */
+.topbar__notif {
+  position: relative;
+  flex-shrink: 0;
   background: none;
   border: none;
-  color: inherit;
-  font-size: 20px;
-  line-height: 1;
+  color: var(--c-muted);
+  padding: 7px;
+  border-radius: var(--radius-sm);
+  line-height: 0;
   cursor: pointer;
-  padding: 0 4px;
-  opacity: 0.7;
-  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
 }
-.notif-banner__close:hover { opacity: 1; }
+.topbar__notif:hover { background: var(--c-bg); color: var(--c-ink); }
+.topbar__notif:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
+.topbar__notif-badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background: var(--c-saida);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  border: 2px solid var(--c-topbar-bg);
+}
 
 /* Badge da empresa quando dá pra trocar de empresa */
 .topbar__empresa--switch { cursor: pointer; }
