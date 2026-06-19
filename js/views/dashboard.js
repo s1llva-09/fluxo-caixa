@@ -45,7 +45,9 @@ export async function renderDashboard(root) {
   const mesAno = new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
 
   root.innerHTML = "";
-  root.append(
+  // .filter(Boolean): o root.append nativo transforma null em texto "null";
+  // por isso filtramos os blocos opcionais (ex.: "Em aberto") antes.
+  root.append(...[
     el("header", { class: "page-head page-head--row" },
       el("div", {},
         el("h1", { class: "page-title" }, saudacao()),
@@ -97,7 +99,7 @@ export async function renderDashboard(root) {
       ),
       listaRecentes(todos.slice(0, 8))
     )
-  );
+  ].filter(Boolean));
 
   desenharGrafico(todos);
 }
