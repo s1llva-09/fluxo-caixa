@@ -7,6 +7,7 @@ import { state } from "../state.js";
 import {
   atualizarEmpresa,
   convidar, enviarEmailConvite, listarConvites, revogarConvite, listarMembros, removerMembro,
+  meusConvites, aceitarConvite,
 } from "../api.js";
 import { updateEmail, updatePassword, signOut } from "../auth.js";
 import { getTheme, setTheme } from "../theme.js";
@@ -43,6 +44,36 @@ function secaoEquipe() {
       console.error(err);
       box.append(el("p", { class: "admin-pay__vazio" }, "Não foi possível carregar a equipe."));
       return;
+    }
+
+    // Convites que EU recebi (de outras empresas) — sempre visível.
+    let recebidos = [];
+    try { recebidos = await meusConvites(); } catch (e) { /* migração pode não ter rodado */ }
+    recebidos = recebidos.filter((r) => r.company_id !== state.company.id);
+    if (recebidos.length) {
+      const ulr = el("ul", { class: "rec-list" });
+      for (const r of recebidos) {
+        const bAcc = el("button", { class: "btn btn--tiny btn--primary" }, "Aceitar");
+        bAcc.addEventListener("click", async () => {
+          bAcc.disabled = true; bAcc.textContent = "Aceitando...";
+          try {
+            await aceitarConvite(r.id);
+            toast("Convite aceito! Troque de empresa no topo pra acessá-la.", "ok");
+            location.reload();
+          } catch (err) {
+            console.error(err); toast("Não foi possível aceitar", "erro");
+            bAcc.disabled = false; bAcc.textContent = "Aceitar";
+          }
+        });
+        ulr.append(el("li", { class: "rec" },
+          el("div", { class: "rec__main" },
+            el("span", { class: "rec__desc" }, r.company_name),
+            el("span", { class: "rec__meta" }, "Você foi convidado")
+          ),
+          el("div", { class: "rec__actions" }, bAcc)
+        ));
+      }
+      box.append(el("h3", { class: "admin-pay__titulo" }, "Convites recebidos"), ulr);
     }
 
     // Membros
