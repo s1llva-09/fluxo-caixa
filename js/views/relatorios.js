@@ -5,7 +5,7 @@
 //  período escolhido, e deixa exportar tudo pra uma planilha (CSV).
 // ============================================================================
 
-import { el, $, emptyState, errorState, ICONS, skeletonList } from "../ui.js";
+import { el, $, emptyState, errorState, ICONS, ICON, skeletonList } from "../ui.js";
 import { state, mesAtual } from "../state.js";
 import { listarLancamentos } from "../api.js";
 import { formatBRL, formatDate } from "../money.js";
@@ -24,7 +24,7 @@ export async function renderRelatorios(root) {
         el("p", { class: "page-sub" }, "Entradas e saídas agrupadas por categoria")
       ),
       el("div", { class: "page-head__acoes" },
-        el("button", { class: "btn btn--ghost", onclick: () => window.print(), "data-tip": "Gerar PDF / imprimir o relatório" }, "🖨 PDF"),
+        el("button", { class: "btn btn--ghost", onclick: () => window.print(), "data-tip": "Gerar PDF / imprimir o relatório", html: ICON.printer + "<span>PDF</span>" }),
         el("button", { class: "btn btn--ghost", onclick: exportar, "data-tip": "Baixar planilha com os lançamentos do período" }, "↓ Exportar planilha")
       )
     ),

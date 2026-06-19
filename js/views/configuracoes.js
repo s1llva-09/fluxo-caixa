@@ -4,7 +4,10 @@
 
 import { el, $, toast, senhaInput } from "../ui.js";
 import { state } from "../state.js";
-import { atualizarEmpresa } from "../api.js";
+import {
+  atualizarEmpresa,
+  convidar, listarConvites, revogarConvite, listarMembros, removerMembro,
+} from "../api.js";
 import { updateEmail, updatePassword, signOut } from "../auth.js";
 import { getTheme, setTheme } from "../theme.js";
 
@@ -17,10 +20,117 @@ export function renderConfiguracoes(root) {
     ),
     secaoAparencia(),
     secaoEmpresa(),
+    secaoEquipe(),
     secaoEmail(),
     secaoSenha(),
     secaoSair()
   );
+}
+
+// ── Seção: Equipe (membros + convites) ────────────────────────────────────────
+
+function secaoEquipe() {
+  const ehDono = state.company?.owner_id === state.user?.id;
+  const box = el("div", {}, el("div", { class: "loading" }, "Carregando..."));
+
+  async function carregar() {
+    box.innerHTML = "";
+    let membros = [], convites = [];
+    try {
+      membros = await listarMembros(state.company.id);
+      if (ehDono) convites = await listarConvites(state.company.id);
+    } catch (err) {
+      console.error(err);
+      box.append(el("p", { class: "admin-pay__vazio" }, "Não foi possível carregar a equipe."));
+      return;
+    }
+
+    // Membros
+    const ul = el("ul", { class: "rec-list" });
+    for (const m of membros) {
+      const acoes = el("div", { class: "rec__actions" });
+      if (ehDono && m.user_id !== state.user.id && m.role !== "owner") {
+        const bRem = el("button", { class: "btn btn--tiny btn--ghost" }, "Remover");
+        bRem.addEventListener("click", async () => {
+          bRem.disabled = true;
+          try { await removerMembro(state.company.id, m.user_id); carregar(); }
+          catch (err) { console.error(err); toast("Erro ao remover", "erro"); bRem.disabled = false; }
+        });
+        acoes.append(bRem);
+      }
+      ul.append(el("li", { class: "rec" },
+        el("div", { class: "rec__main" },
+          el("span", { class: "rec__desc" }, m.email + (m.user_id === state.user.id ? " (você)" : "")),
+          el("span", { class: "rec__meta" }, m.role === "owner" ? "Dono" : "Membro")
+        ),
+        acoes
+      ));
+    }
+    box.append(el("h3", { class: "admin-pay__titulo" }, "Membros"), ul);
+
+    // Convites pendentes (só o dono)
+    if (ehDono && convites.length) {
+      const ulc = el("ul", { class: "rec-list" });
+      for (const cv of convites) {
+        const bRev = el("button", { class: "btn btn--tiny btn--ghost" }, "Revogar");
+        bRev.addEventListener("click", async () => {
+          bRev.disabled = true;
+          try { await revogarConvite(cv.id); carregar(); }
+          catch (err) { console.error(err); toast("Erro", "erro"); bRev.disabled = false; }
+        });
+        ulc.append(el("li", { class: "rec" },
+          el("div", { class: "rec__main" },
+            el("span", { class: "rec__desc" }, cv.email),
+            el("span", { class: "rec__meta" }, "Convite pendente")
+          ),
+          el("div", { class: "rec__actions" }, bRev)
+        ));
+      }
+      box.append(el("h3", { class: "admin-pay__titulo", style: "margin-top:18px" }, "Convites pendentes"), ulc);
+    }
+  }
+
+  const filhos = [
+    el("p", { class: "config__hint" }, ehDono
+      ? "Convide pessoas pra acessar esta empresa (sócio, contador…). Elas precisam ter conta com o mesmo email."
+      : "Pessoas com acesso a esta empresa."),
+    box,
+  ];
+
+  if (ehDono) {
+    const email = el("input", { class: "input", type: "email", placeholder: "email@pessoa.com" });
+    const btn = el("button", { class: "btn btn--primary" }, "Convidar");
+    async function convidarFn() {
+      const e = email.value.trim();
+      if (!e) { toast("Digite o email", "erro"); return; }
+      btn.disabled = true; btn.textContent = "Convidando...";
+      try {
+        await convidar(state.company.id, e);
+        email.value = "";
+        toast("Convite criado", "ok");
+        carregar();
+      } catch (err) {
+        console.error(err);
+        const dup = /duplicate|already|unique/i.test(err?.message || "");
+        toast(dup ? "Já existe um convite para esse email" : "Não foi possível convidar", "erro");
+      } finally {
+        btn.disabled = false; btn.textContent = "Convidar";
+      }
+    }
+    btn.addEventListener("click", convidarFn);
+    email.addEventListener("keydown", (ev) => { if (ev.key === "Enter") convidarFn(); });
+
+    filhos.push(
+      el("hr", { class: "admin-conta__sep" }),
+      el("label", { class: "field" },
+        el("span", { class: "field__label" }, "Convidar por email"), email),
+      el("div", { class: "form__actions" }, btn)
+    );
+  }
+
+  const card = secao("Equipe", ...filhos);
+  carregar();
+  return card;
 }
 
 // ── Seção: Aparência (tema) ───────────────────────────────────────────────────

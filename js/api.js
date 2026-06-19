@@ -10,20 +10,80 @@ import { supabase } from "./supabaseClient.js";
 
 // -------- EMPRESAS --------
 
-// Pega a empresa do usuário logado (no MVP cada dono tem uma).
-// IMPORTANTE: filtra por owner_id. O admin enxerga TODAS as empresas pela RLS,
-// então sem esse filtro ele pegaria a empresa de outro cliente por engano.
+// Pega a empresa do usuário logado — a que ele é MEMBRO (dono ou convidado).
+// Busca pela company_members (não por owner_id) pra funcionar com equipe; e o
+// admin enxerga todas pela RLS, então filtrar pela membership evita pegar a de
+// outro cliente por engano.
 export async function getMinhaEmpresa() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
+  const { data: mem, error: e1 } = await supabase
+    .from("company_members")
+    .select("company_id, role")
+    .eq("user_id", user.id)
+    .order("role", { ascending: true }) // 'owner' antes de 'member'
+    .limit(1)
+    .maybeSingle();
+  if (e1) throw e1;
+  if (!mem) return null;
   const { data, error } = await supabase
     .from("companies")
     .select("*")
-    .eq("owner_id", user.id)
-    .limit(1)
+    .eq("id", mem.company_id)
     .maybeSingle();
   if (error) throw error;
-  return data; // null se ainda não criou nenhuma
+  return data;
+}
+
+// -------- EQUIPE (convidar / membros) --------
+
+export async function convidar(companyId, email, role = "member") {
+  const { data, error } = await supabase
+    .from("invites")
+    .insert({ company_id: companyId, email: email.trim().toLowerCase(), role })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function listarConvites(companyId) {
+  const { data, error } = await supabase
+    .from("invites")
+    .select("*")
+    .eq("company_id", companyId)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function revogarConvite(id) {
+  const { error } = await supabase.from("invites").update({ status: "revoked" }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function listarMembros(companyId) {
+  const { data, error } = await supabase.rpc("team_members", { p_company_id: companyId });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function removerMembro(companyId, userId) {
+  const { error } = await supabase.rpc("remover_membro", { p_company_id: companyId, p_user_id: userId });
+  if (error) throw error;
+}
+
+export async function meusConvites() {
+  const { data, error } = await supabase.rpc("meus_convites");
+  if (error) throw error;
+  return data || [];
+}
+
+export async function aceitarConvite(id) {
+  const { data, error } = await supabase.rpc("aceitar_convite", { p_id: id });
+  if (error) throw error;
+  return data;
 }
 
 // Cria a empresa (chama a função do banco que também cria o vínculo de dono).

@@ -225,6 +225,46 @@ export function renderAuth(root, onSuccess) {
   root.append(tela());
 }
 
+// ---- Tela de convites recebidos (usuário sem empresa, mas convidado) -------
+// acoes: { onAceitar(id), onCriarPropria() }
+export function renderConvites(root, convites, acoes) {
+  const lista = el("div", { class: "auth__convites" });
+  for (const c of convites) {
+    const btn = el("button", { class: "btn btn--primary btn--block" }, "Entrar nesta empresa");
+    btn.addEventListener("click", async () => {
+      btn.disabled = true; btn.textContent = "Entrando...";
+      try {
+        await acoes.onAceitar(c.id);
+      } catch (err) {
+        toast("Não foi possível aceitar o convite", "erro");
+        btn.disabled = false; btn.textContent = "Entrar nesta empresa";
+      }
+    });
+    lista.append(
+      el("div", { class: "auth__convite" },
+        el("div", { class: "auth__convite-nome" }, c.company_name || "Empresa"),
+        el("div", { class: "auth__convite-papel" }, c.role === "owner" ? "Convidado como dono" : "Convidado como membro"),
+        btn
+      )
+    );
+  }
+
+  root.innerHTML = "";
+  root.append(
+    el("div", { class: "auth" },
+      el("div", { class: "auth__card card" },
+        el("h1", { class: "auth__title" }, "Você foi convidado"),
+        el("p", { class: "auth__sub" }, "Aceite para entrar na empresa — ou crie a sua própria."),
+        lista,
+        el("button", {
+          type: "button", class: "btn btn--ghost btn--block", style: "margin-top:6px",
+          onclick: acoes.onCriarPropria,
+        }, "Criar minha própria empresa")
+      )
+    )
+  );
+}
+
 // ---- Tela de criar nova senha (quando volta pelo link de redefinição) ------
 // onDone: função chamada após salvar a nova senha com sucesso.
 export function renderRedefinir(root, onDone) {

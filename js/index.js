@@ -14,9 +14,9 @@ import { initTheme } from "./theme.js";
 // Janela (dias) para avisar o cliente que a mensalidade está perto de vencer.
 const AVISO_VENC_DIAS = 7;
 import { getUser, signOut, onAuthChange, onPasswordRecovery } from "./auth.js";
-import { getMinhaEmpresa, souAdmin, processarRecorrencias } from "./api.js";
+import { getMinhaEmpresa, souAdmin, processarRecorrencias, meusConvites, aceitarConvite } from "./api.js";
 
-import { renderAuth, renderOnboarding, renderBloqueado, renderRedefinir } from "./views/auth.js";
+import { renderAuth, renderOnboarding, renderBloqueado, renderRedefinir, renderConvites } from "./views/auth.js";
 import { renderDashboard } from "./views/dashboard.js";
 import { renderLancamentos } from "./views/lancamentos.js";
 import { renderContas } from "./views/contas.js";
@@ -56,6 +56,10 @@ async function iniciar() {
 
     state.company = await getMinhaEmpresa();
     if (!state.company) {
+      // Sem empresa: se tem convite pendente, mostra pra aceitar; senão, cria a sua.
+      let convites = [];
+      try { convites = await meusConvites(); } catch (err) { console.error(err); }
+      if (convites.length) { mostrarConvites(convites); return; }
       mostrarOnboarding();
       return;
     }
@@ -91,6 +95,16 @@ function mostrarOnboarding() {
   $("#app-shell").hidden = true;
   $("#auth-root").hidden = false;
   renderOnboarding($("#auth-root"), iniciar);
+}
+
+// Tela de convites recebidos (quando o usuário ainda não tem empresa).
+function mostrarConvites(convites) {
+  $("#app-shell").hidden = true;
+  $("#auth-root").hidden = false;
+  renderConvites($("#auth-root"), convites, {
+    onAceitar: async (id) => { await aceitarConvite(id); await iniciar(); },
+    onCriarPropria: () => mostrarOnboarding(),
+  });
 }
 
 // Tela de criar nova senha (quando a pessoa volta pelo link de redefinição).

@@ -2,7 +2,7 @@
 //  views/lancamentos.js — Lista, cadastro e estorno de lançamentos
 // ============================================================================
 
-import { el, $, toast, openModal, closeModal, emptyState, errorState, ICONS, skeletonList } from "../ui.js";
+import { el, $, toast, openModal, closeModal, emptyState, errorState, ICONS, ICON, skeletonList } from "../ui.js";
 import { state, mesAtual } from "../state.js";
 import {
   listarLancamentos,
@@ -48,7 +48,7 @@ export async function renderLancamentos(root) {
         el("p", { class: "page-sub" }, "Registre entradas e saídas do seu negócio")
       ),
       el("div", { class: "page-head__acoes" },
-        el("button", { class: "btn btn--ghost", onclick: abrirRecorrentes }, "🔁 Recorrentes"),
+        el("button", { class: "btn btn--ghost", onclick: abrirRecorrentes, html: ICON.repeat + "<span>Recorrentes</span>" }),
         el("button", { class: "btn btn--primary", onclick: () => abrirFormulario() }, "+ Novo lançamento")
       )
     ),
@@ -253,9 +253,9 @@ function renderLista() {
     const anexo = comprovantesMap[t.id];
     const btnAnexo = anexo
       ? el("button", { class: "btn btn--tiny btn--ghost", title: "Ver comprovante",
-          onclick: () => verComprovante(anexo) }, "📎 Ver")
-      : el("button", { class: "btn btn--tiny btn--ghost", title: "Anexar comprovante",
-          onclick: () => anexarA(t) }, "📎");
+          onclick: () => verComprovante(anexo), html: ICON.clip + "<span>Ver</span>" })
+      : el("button", { class: "btn btn--tiny btn--ghost", "aria-label": "Anexar comprovante",
+          title: "Anexar comprovante", onclick: () => anexarA(t), html: ICON.clip });
 
     lista.append(
       el("li", { class: `tx tx--${t.kind} ${t.is_reversed ? "is-reversed" : ""}` },
