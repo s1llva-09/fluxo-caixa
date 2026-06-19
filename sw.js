@@ -6,7 +6,7 @@
 //  fontes do Google e módulos do esm.sh passam direto pra rede.
 // ============================================================================
 
-const CACHE = "fluxo-caixa-v1";
+const CACHE = "fluxo-caixa-v2";
 
 // Arquivos essenciais pra casca abrir offline.
 const ASSETS = [
@@ -15,6 +15,9 @@ const ASSETS = [
   "./css/index.css",
   "./favicon.svg",
   "./icon.svg",
+  "./icon-192.png",
+  "./icon-512.png",
+  "./icon-180.png",
   "./manifest.webmanifest",
 ];
 
