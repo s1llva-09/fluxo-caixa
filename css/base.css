@@ -168,11 +168,11 @@
 /* ── Tokens comuns (independentes de tema) ─────────────────────────────────── */
 :root {
   /* ── Tipografia ──────────────────────────────────────────────────────────────
-     Uma família só (Inter). Os três aliases apontam todos pra ela, então o
-     código existente que usa --font-display / --font-mono continua funcionando.
-     Alinhamento de números vem de font-feature-settings, não de fonte mono. */
+     Par display + texto (igual à landing/login): Sora carrega a personalidade
+     nos títulos e números-herói; Inter cuida do texto e dos valores em lista
+     (numerais tabulares alinham as colunas). --font-mono continua sendo Inter. */
   --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: var(--font-sans);
+  --font-display: 'Sora', 'Inter', system-ui, sans-serif;
   --font-body:    var(--font-sans);
   --font-mono:    var(--font-sans);
 
@@ -219,12 +219,12 @@ body, .topbar, .nav, .bottom-nav, .card, .saldo, .stat, .input, .modal {
   transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 }
 
-/* Títulos — Inter pesada e bem fechada, estilo Stripe/Linear */
+/* Títulos — Sora, pesada e bem fechada (mesmo display da landing/login) */
 h1, h2, h3 {
   font-family: var(--font-display);
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
   color: var(--c-ink);
 }
 
