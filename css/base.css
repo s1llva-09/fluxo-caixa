@@ -59,8 +59,8 @@
   /* Topbar (translúcida com blur) */
   --c-topbar-bg: rgba(255, 255, 255, 0.80);
 
-  /* Fundo da tela de login — slate profundo, em ambos os temas */
-  --c-auth-bg: #1A1F36;
+  /* Fundo da tela de login — charcoal neutro profundo (sem cast azulado) */
+  --c-auth-bg: #0E1015;
 
   /* Cartões de saldo — tinte bem sutil (lean) */
   --c-saldo-pos-bg:     linear-gradient(155deg, #EDF8F3 0%, #F7FBF9 46%, #FFFFFF 78%);
@@ -137,8 +137,8 @@
   /* Topbar */
   --c-topbar-bg: rgba(11, 14, 20, 0.78);
 
-  /* Login (um tom abaixo do bg) */
-  --c-auth-bg: #07090D;
+  /* Login — charcoal neutro quase preto */
+  --c-auth-bg: #090A0E;
 
   /* Cartões de saldo */
   --c-saldo-pos-bg:     linear-gradient(155deg, rgba(52,211,153,0.14) 0%, rgba(52,211,153,0.04) 46%, var(--c-surface) 80%);
