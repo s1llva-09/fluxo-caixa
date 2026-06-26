@@ -16,6 +16,48 @@ const CATEGORIAS_PADRAO = [
   ["Contas (água/luz/internet)", "saida"],
 ];
 
+// SVG do "$" da marca, reaproveitado em vários lugares.
+const MARK_SVG = `<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><text x="10" y="10" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="800" fill="white" font-family="system-ui,-apple-system,sans-serif">$</text></svg>`;
+const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+function marca(extra = "") {
+  return el("div", { class: `brand brand--lg ${extra}` },
+    el("span", { class: "brand__mark", "aria-hidden": "true", html: MARK_SVG }),
+    el("span", { class: "brand__name" }, "Fluxo de Caixa")
+  );
+}
+
+function tick(texto) {
+  return el("li", { class: "auth__tick" },
+    el("span", { class: "auth__tick-ic", "aria-hidden": "true", html: CHECK_SVG }),
+    texto
+  );
+}
+
+// Layout compartilhado: painel de marca à esquerda + card do formulário à direita.
+// No mobile o painel some e sobra só o card, centralizado.
+function authShell(...cardChildren) {
+  return el("div", { class: "auth" },
+    el("aside", { class: "auth__aside", "aria-hidden": "true" },
+      el("div", { class: "brand auth__aside-brand" },
+        el("span", { class: "brand__mark", html: MARK_SVG }),
+        el("span", { class: "brand__name" }, "Fluxo de Caixa")
+      ),
+      el("div", { class: "auth__aside-mid" },
+        el("h2", { class: "auth__aside-title" },
+          "Controle ", el("span", { class: "hl" }, "o caixa do seu negócio"), " num lugar só."),
+        el("ul", { class: "auth__ticks" },
+          tick("Entradas e saídas em segundos"),
+          tick("Contas a pagar e saldo projetado"),
+          tick("Relatórios, equipe e no celular")
+        )
+      ),
+      el("div", { class: "auth__aside-foot" }, "Feito para pequenos negócios")
+    ),
+    el("div", { class: "auth__card card" }, ...cardChildren)
+  );
+}
+
 // ---- Tela de login / cadastro ----------------------------------------------
 // Recebe onSuccess: função chamada quando o usuário entra com sucesso.
 export function renderAuth(root, onSuccess) {
@@ -119,24 +161,14 @@ export function renderAuth(root, onSuccess) {
       }, trocar)
     );
 
-    return el(
-      "div",
-      { class: "auth" },
-      el(
-        "div",
-        { class: "auth__card card" },
-        el("div", { class: "brand brand--lg" },
-          el("span", { class: "brand__mark", "aria-hidden": "true",
-            html: `<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><text x="10" y="10" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="800" fill="white" font-family="system-ui,-apple-system,sans-serif">$</text></svg>` }),
-          el("span", { class: "brand__name" }, "Fluxo de Caixa")
-        ),
-        el("p", { class: "auth__sub" },
-          modo === "login"
-            ? "Bem-vindo de volta. Acesse sua conta."
-            : "Crie sua conta e comece a controlar seu caixa."),
-        el("h2", { class: "auth__title", style: "margin-bottom:22px" }, titulo),
-        form
-      )
+    return authShell(
+      marca(),
+      el("p", { class: "auth__sub" },
+        modo === "login"
+          ? "Bem-vindo de volta. Acesse sua conta."
+          : "Crie sua conta e comece a controlar seu caixa."),
+      el("h2", { class: "auth__title", style: "margin-bottom:22px" }, titulo),
+      form
     );
   }
 
@@ -154,18 +186,16 @@ export function renderAuth(root, onSuccess) {
 
     root.innerHTML = "";
     root.append(
-      el("div", { class: "auth" },
-        el("div", { class: "auth__card card" },
-          el("div", { class: "auth__lock auth__lock--ok", "aria-hidden": "true",
-            html: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6 12 13 2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>` }),
-          el("h1", { class: "auth__title" }, "Confirme seu email"),
-          el("p", { class: "auth__sub" },
-            "Enviamos um link de confirmação para ", el("strong", {}, email),
-            ". Abra o email e clique no link para ativar sua conta — depois é só entrar."),
-          el("p", { class: "auth__contato" },
-            "Não recebeu? Verifique a caixa de spam."),
-          voltar
-        )
+      authShell(
+        el("div", { class: "auth__lock auth__lock--ok", "aria-hidden": "true",
+          html: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 6 12 13 2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>` }),
+        el("h1", { class: "auth__title" }, "Confirme seu email"),
+        el("p", { class: "auth__sub" },
+          "Enviamos um link de confirmação para ", el("strong", {}, email),
+          ". Abra o email e clique no link para ativar sua conta — depois é só entrar."),
+        el("p", { class: "auth__contato" },
+          "Não recebeu? Verifique a caixa de spam."),
+        voltar
       )
     );
   }
@@ -193,17 +223,15 @@ export function renderAuth(root, onSuccess) {
         // Mensagem genérica de propósito (não revela se o email tem conta).
         root.innerHTML = "";
         root.append(
-          el("div", { class: "auth" },
-            el("div", { class: "auth__card card" },
-              el("div", { class: "auth__lock auth__lock--ok", "aria-hidden": "true",
-                html: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 6 12 13 2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>` }),
-              el("h1", { class: "auth__title" }, "Link enviado"),
-              el("p", { class: "auth__sub" },
-                "Se existe uma conta com ", el("strong", {}, v),
-                ", enviamos um link para você criar uma nova senha. Abra o email e clique no link."),
-              el("p", { class: "auth__contato" }, "Não recebeu? Verifique a caixa de spam."),
-              el("button", { type: "button", class: "btn btn--ghost btn--block", onclick: voltarLogin }, "Voltar ao login")
-            )
+          authShell(
+            el("div", { class: "auth__lock auth__lock--ok", "aria-hidden": "true",
+              html: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 6 12 13 2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>` }),
+            el("h1", { class: "auth__title" }, "Link enviado"),
+            el("p", { class: "auth__sub" },
+              "Se existe uma conta com ", el("strong", {}, v),
+              ", enviamos um link para você criar uma nova senha. Abra o email e clique no link."),
+            el("p", { class: "auth__contato" }, "Não recebeu? Verifique a caixa de spam."),
+            el("button", { type: "button", class: "btn btn--ghost btn--block", onclick: voltarLogin }, "Voltar ao login")
           )
         );
       } catch (err) {
@@ -217,16 +245,15 @@ export function renderAuth(root, onSuccess) {
 
     root.innerHTML = "";
     root.append(
-      el("div", { class: "auth" },
-        el("div", { class: "auth__card card" },
-          el("h1", { class: "auth__title" }, "Recuperar senha"),
-          el("p", { class: "auth__sub" },
-            "Digite seu email e enviamos um link para você criar uma nova senha."),
-          el("label", { class: "field" },
-            el("span", { class: "field__label" }, "Email"), email),
-          btn,
-          el("button", { type: "button", class: "btn btn--ghost btn--block", onclick: voltarLogin }, "Voltar ao login")
-        )
+      authShell(
+        marca(),
+        el("h1", { class: "auth__title" }, "Recuperar senha"),
+        el("p", { class: "auth__sub" },
+          "Digite seu email e enviamos um link para você criar uma nova senha."),
+        el("label", { class: "field" },
+          el("span", { class: "field__label" }, "Email"), email),
+        btn,
+        el("button", { type: "button", class: "btn btn--ghost btn--block", onclick: voltarLogin }, "Voltar ao login")
       )
     );
   }
@@ -261,16 +288,15 @@ export function renderConvites(root, convites, acoes) {
 
   root.innerHTML = "";
   root.append(
-    el("div", { class: "auth" },
-      el("div", { class: "auth__card card" },
-        el("h1", { class: "auth__title" }, "Você foi convidado"),
-        el("p", { class: "auth__sub" }, "Aceite para entrar na empresa — ou crie a sua própria."),
-        lista,
-        el("button", {
-          type: "button", class: "btn btn--ghost btn--block", style: "margin-top:6px",
-          onclick: acoes.onCriarPropria,
-        }, "Criar minha própria empresa")
-      )
+    authShell(
+      marca(),
+      el("h1", { class: "auth__title" }, "Você foi convidado"),
+      el("p", { class: "auth__sub" }, "Aceite para entrar na empresa — ou crie a sua própria."),
+      lista,
+      el("button", {
+        type: "button", class: "btn btn--ghost btn--block", style: "margin-top:6px",
+        onclick: acoes.onCriarPropria,
+      }, "Criar minha própria empresa")
     )
   );
 }
@@ -299,21 +325,15 @@ export function renderRedefinir(root, onDone) {
 
   root.innerHTML = "";
   root.append(
-    el("div", { class: "auth" },
-      el("div", { class: "auth__card card" },
-        el("div", { class: "brand brand--lg", style: "margin-bottom:20px" },
-          el("span", { class: "brand__mark", "aria-hidden": "true",
-            html: `<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><text x="10" y="10" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="800" fill="white" font-family="system-ui,-apple-system,sans-serif">$</text></svg>` }),
-          el("span", { class: "brand__name" }, "Fluxo de Caixa")
-        ),
-        el("h1", { class: "auth__title" }, "Criar nova senha"),
-        el("p", { class: "auth__sub" }, "Escolha uma nova senha para sua conta."),
-        el("label", { class: "field" },
-          el("span", { class: "field__label" }, "Nova senha"), w1),
-        el("label", { class: "field" },
-          el("span", { class: "field__label" }, "Confirmar nova senha"), w2),
-        btn
-      )
+    authShell(
+      marca(),
+      el("h1", { class: "auth__title" }, "Criar nova senha"),
+      el("p", { class: "auth__sub" }, "Escolha uma nova senha para sua conta."),
+      el("label", { class: "field" },
+        el("span", { class: "field__label" }, "Nova senha"), w1),
+      el("label", { class: "field" },
+        el("span", { class: "field__label" }, "Confirmar nova senha"), w2),
+      btn
     )
   );
 }
@@ -356,23 +376,13 @@ export function renderOnboarding(root, onDone) {
 
   root.innerHTML = "";
   root.append(
-    el(
-      "div",
-      { class: "auth" },
-      el(
-        "div",
-        { class: "auth__card card" },
-        el("div", { class: "brand brand--lg", style: "margin-bottom:20px" },
-          el("span", { class: "brand__mark", "aria-hidden": "true",
-            html: `<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><text x="10" y="10" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="800" fill="white" font-family="system-ui,-apple-system,sans-serif">$</text></svg>` }),
-          el("span", { class: "brand__name" }, "Fluxo de Caixa")
-        ),
-        el("h1", { class: "auth__title" }, "Quase pronto"),
-        el("p", { class: "auth__sub" }, "Qual é o nome do seu negócio?"),
-        el("label", { class: "field" },
-          el("span", { class: "field__label" }, "Nome da empresa"), nome),
-        btnCriar
-      )
+    authShell(
+      marca(),
+      el("h1", { class: "auth__title" }, "Quase pronto"),
+      el("p", { class: "auth__sub" }, "Qual é o nome do seu negócio?"),
+      el("label", { class: "field" },
+        el("span", { class: "field__label" }, "Nome da empresa"), nome),
+      btnCriar
     )
   );
 }
@@ -389,17 +399,15 @@ export function renderBloqueado(root, onSair) {
 
   root.innerHTML = "";
   root.append(
-    el("div", { class: "auth" },
-      el("div", { class: "auth__card card" },
-        el("div", { class: "auth__lock", "aria-hidden": "true",
-          html: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>` }),
-        el("h1", { class: "auth__title" }, "Acesso suspenso"),
-        el("p", { class: "auth__sub" },
-          "Sua assinatura está vencida ou o acesso foi suspenso. " +
-          "Regularize o pagamento para liberar novamente o sistema."),
-        el("p", { class: "auth__contato" }, "Em caso de dúvida, entre em contato com o suporte."),
-        btnSair
-      )
+    authShell(
+      el("div", { class: "auth__lock", "aria-hidden": "true",
+        html: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>` }),
+      el("h1", { class: "auth__title" }, "Acesso suspenso"),
+      el("p", { class: "auth__sub" },
+        "Sua assinatura está vencida ou o acesso foi suspenso. " +
+        "Regularize o pagamento para liberar novamente o sistema."),
+      el("p", { class: "auth__contato" }, "Em caso de dúvida, entre em contato com o suporte."),
+      btnSair
     )
   );
 }

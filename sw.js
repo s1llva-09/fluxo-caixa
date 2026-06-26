@@ -6,20 +6,22 @@
 //  fontes do Google e módulos do esm.sh passam direto pra rede.
 // ============================================================================
 
-const CACHE = "fluxo-caixa-v4";
+const CACHE = "fluxo-caixa-v5";
 
 // Arquivos essenciais pra casca abrir offline.
+// Obs.: usamos URLs "limpas" (/ e /app) porque o Vercel está com cleanUrls,
+// então /index.html e /app.html respondem com redirect — e cache.addAll quebra
+// se um asset vier redirecionado.
 const ASSETS = [
-  "./",
-  "./index.html",
-  "./app.html",
-  "./css/index.css",
-  "./favicon.svg",
-  "./icon.svg",
-  "./icon-192.png",
-  "./icon-512.png",
-  "./icon-180.png",
-  "./manifest.webmanifest",
+  "/",
+  "/app",
+  "/css/index.css",
+  "/favicon.svg",
+  "/icon.svg",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/icon-180.png",
+  "/manifest.webmanifest",
 ];
 
 self.addEventListener("install", (e) => {
@@ -55,7 +57,7 @@ self.addEventListener("fetch", (e) => {
       })
       .catch(() =>
         caches.match(e.request).then((cached) =>
-          cached || (e.request.mode === "navigate" ? caches.match("./app.html") : undefined)
+          cached || (e.request.mode === "navigate" ? caches.match("/app") : undefined)
         )
       )
   );
