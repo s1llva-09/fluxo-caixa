@@ -212,6 +212,17 @@ export async function criarConta(companyId, dados) {
   return data;
 }
 
+export async function atualizarConta(id, dados) {
+  const { data, error } = await supabase
+    .from("scheduled")
+    .update(dados)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 // Marca como paga: cria o lançamento real e linka. paidOn em "YYYY-MM-DD".
 export async function pagarConta(id, paidOn) {
   const { data, error } = await supabase.rpc("pagar_conta", {

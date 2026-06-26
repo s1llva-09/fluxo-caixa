@@ -9,7 +9,7 @@
 import { el, $, toast, openModal, closeModal, confirmar, errorState, skeletonList } from "../ui.js";
 import { state } from "../state.js";
 import {
-  listarContas, criarConta, pagarConta, cancelarConta, apagarConta,
+  listarContas, criarConta, atualizarConta, pagarConta, cancelarConta, apagarConta,
   listarLancamentos, listarCategorias,
 } from "../api.js";
 import { formatBRL, formatDate, parseToCents, todayISO } from "../money.js";
@@ -30,7 +30,7 @@ export async function renderContas(root) {
         el("h1", { class: "page-title" }, "Contas"),
         el("p", { class: "page-sub" }, "A pagar, a receber e saldo projetado")
       ),
-      el("button", { class: "btn btn--primary", onclick: () => abrirNova() }, "+ Nova conta")
+      el("button", { class: "btn btn--primary", onclick: () => abrirForm() }, "+ Nova conta")
     ),
     el("section", { id: "contas-resumo", class: "stats admin-resumo" }),
     el("div", { id: "contas-filtros", class: "admin-filtros" }),
@@ -137,6 +137,8 @@ function contaItem(c) {
   if (c.status === "pending") {
     const bPagar = el("button", { class: "btn btn--tiny btn--primary" }, "Marcar pago");
     bPagar.addEventListener("click", () => abrirPagar(c));
+    const bEditar = el("button", { class: "btn btn--tiny btn--ghost" }, "Editar");
+    bEditar.addEventListener("click", () => abrirForm(c));
     const bApagar = el("button", { class: "btn btn--tiny btn--ghost" }, "Apagar");
     bApagar.addEventListener("click", () => {
       confirmar({
@@ -145,7 +147,7 @@ function contaItem(c) {
         confirmar: "Apagar", perigo: true,
       }, async () => { await apagarConta(c.id); await carregar(); });
     });
-    acoes.append(bPagar, bApagar);
+    acoes.append(bPagar, bEditar, bApagar);
   }
 
   return el("li", { class: `rec ${c.status !== "pending" ? "is-pausada" : ""}` },
@@ -180,22 +182,25 @@ function vencInfo(c) {
   return { badge: el("span", { class: "conta__venc" }, "Vence " + formatDate(c.due_on)) };
 }
 
-// ---- nova conta (modal) ----------------------------------------------------
+// ---- nova / editar conta (modal) -------------------------------------------
 
-function abrirNova() {
-  let kind = "saida"; // padrão: a pagar
-  const segPagar = el("button", { class: "seg seg--on", type: "button" }, "A pagar");
-  const segReceber = el("button", { class: "seg", type: "button" }, "A receber");
+function abrirForm(conta = null) {
+  const editando = !!conta;
+  let kind = conta ? conta.kind : "saida"; // padrão: a pagar
+  const segPagar = el("button", { class: `seg ${kind === "saida" ? "seg--on" : ""}`, type: "button" }, "A pagar");
+  const segReceber = el("button", { class: `seg ${kind === "entrada" ? "seg--on" : ""}`, type: "button" }, "A receber");
   segPagar.onclick = () => { kind = "saida"; segPagar.classList.add("seg--on"); segReceber.classList.remove("seg--on"); };
   segReceber.onclick = () => { kind = "entrada"; segReceber.classList.add("seg--on"); segPagar.classList.remove("seg--on"); };
 
-  const valor = el("input", { class: "input", placeholder: "0,00", inputmode: "decimal" });
-  const venc = el("input", { class: "input", type: "date", value: todayISO() });
-  const desc = el("input", { class: "input", placeholder: "Ex.: Fornecedor, conta de luz, cliente X…" });
+  const valorPadrao = conta ? (conta.amount_cents / 100).toFixed(2).replace(".", ",") : "";
+  const valor = el("input", { class: "input", placeholder: "0,00", inputmode: "decimal", value: valorPadrao });
+  const venc = el("input", { class: "input", type: "date", value: conta ? conta.due_on : todayISO() });
+  const desc = el("input", { class: "input", placeholder: "Ex.: Fornecedor, conta de luz, cliente X…", value: conta ? conta.description : "" });
   const cat = el("select", { class: "input" },
     el("option", { value: "" }, "Sem categoria"),
     ...state.categorias.map((c) => el("option", { value: c.id }, c.name))
   );
+  if (conta && conta.category_id) cat.value = conta.category_id;
   const btn = el("button", { class: "btn btn--primary" }, "Salvar");
 
   async function salvar() {
@@ -203,13 +208,12 @@ function abrirNova() {
     if (!cents || cents <= 0) { toast("Digite um valor válido", "erro"); return; }
     if (!venc.value) { toast("Escolha o vencimento", "erro"); return; }
     btn.disabled = true; btn.textContent = "Salvando...";
+    const dados = { kind, amount_cents: cents, description: desc.value.trim(), category_id: cat.value || null, due_on: venc.value };
     try {
-      await criarConta(state.company.id, {
-        kind, amount_cents: cents, description: desc.value.trim(),
-        category_id: cat.value || null, due_on: venc.value,
-      });
+      if (editando) await atualizarConta(conta.id, dados);
+      else await criarConta(state.company.id, dados);
       closeModal();
-      toast("Conta criada", "ok");
+      toast(editando ? "Conta atualizada" : "Conta criada", "ok");
       await carregar();
     } catch (err) {
       console.error(err);
@@ -219,7 +223,7 @@ function abrirNova() {
   }
   btn.addEventListener("click", salvar);
 
-  openModal("Nova conta",
+  openModal(editando ? "Editar conta" : "Nova conta",
     el("div", { class: "form" },
       el("div", { class: "seg-group" }, segPagar, segReceber),
       el("div", { class: "admin-pay__row" },

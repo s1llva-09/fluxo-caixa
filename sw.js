@@ -6,7 +6,7 @@
 //  fontes do Google e módulos do esm.sh passam direto pra rede.
 // ============================================================================
 
-const CACHE = "fluxo-caixa-v2";
+const CACHE = "fluxo-caixa-v3";
 
 // Arquivos essenciais pra casca abrir offline.
 const ASSETS = [
@@ -40,25 +40,22 @@ self.addEventListener("fetch", (e) => {
   // Só cuidamos de GET do próprio site. O resto (API, fontes, CDN) vai pra rede.
   if (e.request.method !== "GET" || url.origin !== location.origin) return;
 
-  // Navegações (abrir o app): rede primeiro, cai pro cache se offline.
-  if (e.request.mode === "navigate") {
-    e.respondWith(
-      fetch(e.request).catch(() => caches.match("./index.html"))
-    );
-    return;
-  }
-
-  // Estáticos (css/js/imagens): cache primeiro, atualiza em segundo plano.
+  // REDE PRIMEIRO: o código (js/css/html) fica sempre atualizado quando online.
+  // O cache é só reserva pra abrir offline. (Antes era cache-first, o que fazia
+  // o app continuar rodando JS antigo mesmo depois de um deploy.)
   e.respondWith(
-    caches.match(e.request).then((cached) => {
-      const rede = fetch(e.request).then((res) => {
+    fetch(e.request)
+      .then((res) => {
         if (res && res.status === 200) {
           const copia = res.clone();
           caches.open(CACHE).then((c) => c.put(e.request, copia));
         }
         return res;
-      }).catch(() => cached);
-      return cached || rede;
-    })
+      })
+      .catch(() =>
+        caches.match(e.request).then((cached) =>
+          cached || (e.request.mode === "navigate" ? caches.match("./index.html") : undefined)
+        )
+      )
   );
 });
