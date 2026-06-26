@@ -6,13 +6,38 @@
 //  Isso evita erros de arredondamento do ponto flutuante.
 // ============================================================================
 
-// Formata centavos para texto em Real. Ex.: 123456 -> "R$ 1.234,56"
+// ── Moeda configurável ───────────────────────────────────────────────────────
+// Os valores SEMPRE são guardados em centavos; a moeda só muda como é exibido.
+// Preferência por dispositivo (localStorage). Trocada em Configurações.
+const MOEDAS = {
+  BRL: { locale: "pt-BR", nome: "Real brasileiro (R$)" },
+  USD: { locale: "en-US", nome: "Dólar americano ($)" },
+  EUR: { locale: "pt-PT", nome: "Euro (€)" },
+  GBP: { locale: "en-GB", nome: "Libra esterlina (£)" },
+  ARS: { locale: "es-AR", nome: "Peso argentino ($)" },
+  PYG: { locale: "es-PY", nome: "Guarani (₲)" },
+  CLP: { locale: "es-CL", nome: "Peso chileno ($)" },
+};
+export const MOEDAS_LISTA = Object.entries(MOEDAS).map(([code, m]) => ({ code, nome: m.nome }));
+
+let _moeda = "BRL";
+try {
+  const m = localStorage.getItem("fc-moeda");
+  if (m && MOEDAS[m]) _moeda = m;
+} catch (e) { /* ignore */ }
+
+export function getMoeda() { return _moeda; }
+export function setMoeda(code) {
+  if (!MOEDAS[code]) return;
+  _moeda = code;
+  try { localStorage.setItem("fc-moeda", code); } catch (e) { /* ignore */ }
+}
+
+// Formata centavos na moeda escolhida. Ex.: 123456 -> "R$ 1.234,56" / "$1,234.56"
 export function formatBRL(cents) {
-  const reais = (cents || 0) / 100;
-  return reais.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
+  const valor = (cents || 0) / 100;
+  const { locale } = MOEDAS[_moeda] || MOEDAS.BRL;
+  return valor.toLocaleString(locale, { style: "currency", currency: _moeda });
 }
 
 // Converte o que o usuário digitou (ex.: "1.234,56" ou "1234,56" ou "1234.56")

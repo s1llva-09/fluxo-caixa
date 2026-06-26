@@ -11,6 +11,7 @@ import {
 } from "../api.js";
 import { updateEmail, updatePassword, signOut } from "../auth.js";
 import { getTheme, setTheme } from "../theme.js";
+import { MOEDAS_LISTA, getMoeda, setMoeda } from "../money.js";
 
 export function renderConfiguracoes(root) {
   root.innerHTML = "";
@@ -20,11 +21,32 @@ export function renderConfiguracoes(root) {
       el("p", { class: "page-sub" }, "Empresa, conta e preferências")
     ),
     secaoAparencia(),
+    secaoMoeda(),
     secaoEmpresa(),
     secaoEquipe(),
     secaoEmail(),
     secaoSenha(),
     secaoSair()
+  );
+}
+
+// ── Seção: Moeda ──────────────────────────────────────────────────────────────
+
+function secaoMoeda() {
+  const sel = el("select", { class: "input" },
+    ...MOEDAS_LISTA.map((m) => el("option", { value: m.code }, m.nome))
+  );
+  sel.value = getMoeda();
+  sel.addEventListener("change", () => {
+    setMoeda(sel.value);
+    toast("Moeda atualizada", "ok");
+    location.reload(); // re-renderiza tudo com o novo formato
+  });
+  return secao("Moeda",
+    el("p", { class: "config__hint" },
+      "Símbolo e formato dos valores no app. A preferência fica salva neste dispositivo."),
+    el("label", { class: "field" },
+      el("span", { class: "field__label" }, "Moeda"), sel)
   );
 }
 
