@@ -165,7 +165,7 @@ async function montar() {
 function exportar() {
   if (itensCache.length === 0) return;
 
-  const cabecalho = ["Data", "Tipo", "Categoria", "Descrição", "Valor (R$)"];
+  const cabecalho = ["Data", "Tipo", "Categoria", "Descrição", "Valor (na sua moeda)"];
   const linhas = itensCache.map((t) => [
     formatDate(t.occurred_on),
     t.kind === "entrada" ? "Entrada" : "Saída",

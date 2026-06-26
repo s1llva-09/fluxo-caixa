@@ -227,7 +227,7 @@ function abrirForm(conta = null) {
     el("div", { class: "form" },
       el("div", { class: "seg-group" }, segPagar, segReceber),
       el("div", { class: "admin-pay__row" },
-        el("label", { class: "field" }, el("span", { class: "field__label" }, "Valor (R$)"), valor),
+        el("label", { class: "field" }, el("span", { class: "field__label" }, "Valor"), valor),
         el("label", { class: "field" }, el("span", { class: "field__label" }, "Vencimento"), venc)
       ),
       el("label", { class: "field" }, el("span", { class: "field__label" }, "Descrição"), desc),

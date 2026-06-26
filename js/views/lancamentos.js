@@ -362,7 +362,7 @@ function abrirFormulario() {
   openModal("Novo lançamento",
     el("div", { class: "form" },
       el("div", { class: "seg-group" }, btnEntrada, btnSaida),
-      el("label", { class: "field" }, el("span", { class: "field__label" }, "Valor (R$)"), valor),
+      el("label", { class: "field" }, el("span", { class: "field__label" }, "Valor"), valor),
       el("label", { class: "field" }, el("span", { class: "field__label" }, "Data"), data),
       el("label", { class: "field" }, el("span", { class: "field__label" }, "Descrição"), desc),
       el("label", { class: "field" }, el("span", { class: "field__label" }, "Categoria"), cat),
@@ -490,7 +490,7 @@ function abrirRecorrentes() {
       el("h3", { class: "admin-pay__titulo" }, "Nova recorrência"),
       el("div", { class: "seg-group", style: "margin-bottom:14px" }, segE, segS),
       el("div", { class: "admin-pay__row" },
-        el("label", { class: "field" }, el("span", { class: "field__label" }, "Valor (R$)"), valor),
+        el("label", { class: "field" }, el("span", { class: "field__label" }, "Valor"), valor),
         el("label", { class: "field" }, el("span", { class: "field__label" }, "Dia do mês"), dia)
       ),
       el("label", { class: "field" }, el("span", { class: "field__label" }, "Descrição"), desc),

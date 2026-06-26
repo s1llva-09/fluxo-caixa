@@ -489,7 +489,7 @@ function gerenciar(c) {
   // ---- plano e anotações ----
   const valorPadrao = c.plan_value_cents != null
     ? (c.plan_value_cents / 100).toFixed(2).replace(".", ",") : "";
-  const planValorInput = el("input", { class: "input", inputmode: "decimal", placeholder: "R$ por mês (opcional)", value: valorPadrao });
+  const planValorInput = el("input", { class: "input", inputmode: "decimal", placeholder: "Valor por mês (opcional)", value: valorPadrao });
   const notasInput = el("textarea", { class: "input admin-notas", rows: "3", placeholder: "Anotações sobre o cliente (só você vê)" }, c.notes || "");
   const btnDados = el("button", { class: "btn btn--primary" }, "Salvar plano e anotações");
   async function salvarDados() {
@@ -512,7 +512,7 @@ function gerenciar(c) {
 
   // ---- pagamentos ----
   const baseVenc = (c.plan_until && c.plan_until >= todayISO()) ? c.plan_until : todayISO();
-  const valorInput = el("input", { class: "input", inputmode: "decimal", placeholder: "R$ (opcional)", value: valorPadrao });
+  const valorInput = el("input", { class: "input", inputmode: "decimal", placeholder: "Valor (opcional)", value: valorPadrao });
   const dataPagInput = el("input", { class: "input", type: "date", value: todayISO() });
   const renovarInput = el("input", { class: "input", type: "date", value: addUmMes(baseVenc) });
   const renovarRapido = el("div", { class: "admin-renew" },

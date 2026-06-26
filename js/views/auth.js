@@ -4,7 +4,17 @@
 
 import { el, $, toast, senhaInput } from "../ui.js";
 import { signIn, signUp, resetPassword, updatePassword } from "../auth.js";
-import { criarEmpresa } from "../api.js";
+import { criarEmpresa, criarCategoria } from "../api.js";
+
+// Categorias que já vêm prontas quando a empresa é criada (pra não nascer vazia).
+const CATEGORIAS_PADRAO = [
+  ["Vendas", "entrada"],
+  ["Serviços", "entrada"],
+  ["Fornecedores", "saida"],
+  ["Aluguel", "saida"],
+  ["Salários", "saida"],
+  ["Contas (água/luz/internet)", "saida"],
+];
 
 // ---- Tela de login / cadastro ----------------------------------------------
 // Recebe onSuccess: função chamada quando o usuário entra com sucesso.
@@ -326,7 +336,11 @@ export function renderOnboarding(root, onDone) {
     btnCriar.disabled = true;
     btnCriar.textContent = "Criando...";
     try {
-      await criarEmpresa(nome.value.trim());
+      const empresa = await criarEmpresa(nome.value.trim());
+      // Já cria algumas categorias úteis (não-fatal se alguma falhar).
+      try {
+        await Promise.all(CATEGORIAS_PADRAO.map(([n, k]) => criarCategoria(empresa.id, n, k)));
+      } catch (e) { console.error(e); }
       toast("Empresa criada!", "ok");
       onDone();
     } catch (err) {
