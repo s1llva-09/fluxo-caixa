@@ -19,6 +19,7 @@ const CATEGORIAS_PADRAO = [
 // SVG do "$" da marca, reaproveitado em vários lugares.
 const MARK_SVG = `<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><text x="10" y="10" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="800" fill="white" font-family="system-ui,-apple-system,sans-serif">$</text></svg>`;
 const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+const BACK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`;
 
 function marca(extra = "") {
   return el("div", { class: `brand brand--lg ${extra}` },
@@ -34,12 +35,41 @@ function tick(texto) {
   );
 }
 
+// Mini dashboard decorativo que "flutua" no painel — mostra o produto de verdade.
+function asideMock() {
+  const arrowUp = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>`;
+  const barras = [40, 56, 48, 72, 60, 94];
+  return el("div", { class: "auth__mock", "aria-hidden": "true" },
+    el("div", { class: "auth__mock-bar" },
+      el("i", {}), el("i", {}), el("i", {}),
+      el("span", { class: "auth__mock-url" }, "app · Fluxo de Caixa")
+    ),
+    el("div", { class: "auth__mock-body" },
+      el("div", { class: "auth__mock-label" }, "Saldo total acumulado"),
+      el("div", { class: "auth__mock-saldo" }, "R$ 12.480,00"),
+      el("div", { class: "auth__mock-delta" }, "▲ 18% em relação ao mês passado"),
+      el("div", { class: "auth__mock-bars" },
+        ...barras.map((h, i) =>
+          el("i", { style: `height:${h}%;animation-delay:${0.05 + i * 0.07}s` }))
+      ),
+      el("div", { class: "auth__mock-tx" },
+        el("span", { class: "auth__mock-ic", html: arrowUp }),
+        el("span", { class: "auth__mock-tx-main" },
+          el("b", {}, "Venda — Cliente Souza"),
+          el("span", {}, "Hoje · Vendas")
+        ),
+        el("span", { class: "auth__mock-v" }, "+ R$ 1.250")
+      )
+    )
+  );
+}
+
 // Layout compartilhado: painel de marca à esquerda + card do formulário à direita.
 // No mobile o painel some e sobra só o card, centralizado.
 function authShell(...cardChildren) {
   return el("div", { class: "auth" },
     el("aside", { class: "auth__aside", "aria-hidden": "true" },
-      el("div", { class: "brand auth__aside-brand" },
+      el("a", { class: "brand auth__aside-brand", href: "/" },
         el("span", { class: "brand__mark", html: MARK_SVG }),
         el("span", { class: "brand__name" }, "Fluxo de Caixa")
       ),
@@ -51,9 +81,14 @@ function authShell(...cardChildren) {
           tick("Contas a pagar e saldo projetado"),
           tick("Relatórios, equipe e no celular")
         )
-      )
+      ),
+      asideMock()
     ),
-    el("div", { class: "auth__card card" }, ...cardChildren)
+    el("div", { class: "auth__card card" },
+      el("a", { class: "auth__back", href: "/", "aria-label": "Voltar para a página inicial" },
+        el("span", { html: BACK_SVG }), "Voltar ao site"),
+      ...cardChildren
+    )
   );
 }
 

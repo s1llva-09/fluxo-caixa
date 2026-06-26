@@ -39,25 +39,126 @@
 }
 
 /* Painel de marca (esquerda) — só no desktop, ecoa a landing.
-   Fundo: glow indigo + um gráfico de fluxo em ascensão (SVG embutido). */
+   Marca fixada no topo; headline + mock de produto centralizados. */
 .auth__aside {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  gap: 44px;
-  padding: 60px 60px 56px;
-  background:
-    radial-gradient(130% 95% at -8% 118%, rgba(79, 70, 229, 0.22), transparent 56%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 360' preserveAspectRatio='xMidYMax slice'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%236366f1' stop-opacity='0.30'/%3E%3Cstop offset='1' stop-color='%236366f1' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 250 L90 220 L180 242 L270 168 L360 196 L450 120 L540 142 L640 58 L640 360 L0 360 Z' fill='url(%23g)'/%3E%3Cpath d='M0 250 L90 220 L180 242 L270 168 L360 196 L450 120 L540 142 L640 58' fill='none' stroke='%23818cf8' stroke-opacity='0.55' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='270' cy='168' r='4' fill='%23818cf8'/%3E%3Ccircle cx='450' cy='120' r='4' fill='%23818cf8'/%3E%3Ccircle cx='640' cy='58' r='4.5' fill='%235eead4'/%3E%3C/svg%3E");
-  background-repeat: no-repeat, no-repeat;
-  background-position: left bottom, left bottom;
-  background-size: auto, 116% auto;
+  justify-content: center;
+  gap: 38px;
+  padding: 56px 60px;
+  overflow: hidden;
 }
-.auth__aside-brand { display: flex; align-items: center; gap: 11px; }
+/* glows de profundidade no painel */
+.auth__aside::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(46% 38% at 84% 16%, rgba(99, 102, 241, 0.28), transparent 60%),
+    radial-gradient(50% 45% at 6% 112%, rgba(79, 70, 229, 0.22), transparent 58%);
+}
+.auth__aside > * { position: relative; z-index: 1; }
+
+.auth__aside-brand {
+  position: absolute;
+  top: 52px; left: 60px;
+  display: flex; align-items: center; gap: 11px;
+  z-index: 2;
+}
 .auth__aside-brand .brand__name { color: #fff; font-size: 18px; letter-spacing: -0.02em; }
-.auth__aside-mid { max-width: 460px; margin: auto 0; }
+.auth__aside-mid { max-width: 440px; }
+
+/* Botão "voltar ao site" no topo do card */
+.auth__back {
+  position: absolute;
+  top: 18px; left: 18px;
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 500; color: var(--c-muted);
+  padding: 7px 11px 7px 9px; border-radius: 10px;
+  transition: color 0.15s, background 0.15s, transform 0.15s;
+}
+.auth__back svg { width: 15px; height: 15px; }
+.auth__back:hover { color: var(--c-ink); background: var(--c-bg); }
+.auth__back:hover svg { transform: translateX(-2px); }
+.auth__back:focus-visible {
+  outline: none; color: var(--c-ink);
+  box-shadow: 0 0 0 3px var(--c-primary-glow);
+}
+
+/* ── Mini dashboard flutuante (a "assinatura" do painel) ─────────────────── */
+.auth__mock {
+  width: 100%;
+  max-width: 420px;
+  background: #0F131B;
+  border: 1px solid #232a37;
+  border-radius: 18px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 28px 56px -24px rgba(0, 0, 0, 0.7),
+    0 12px 28px -18px rgba(79, 70, 229, 0.5);
+  overflow: hidden;
+  animation: auth-float 7s cubic-bezier(0.45, 0, 0.55, 1) infinite,
+             auth-mock-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes auth-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@keyframes auth-mock-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; } }
+
+.auth__mock-bar {
+  display: flex; align-items: center; gap: 7px;
+  padding: 12px 15px;
+  background: #0C0F16;
+  border-bottom: 1px solid #1c232e;
+}
+.auth__mock-bar i { width: 10px; height: 10px; border-radius: 50%; background: #2c3543; }
+.auth__mock-bar i:nth-child(1) { background: #ef5f5f; }
+.auth__mock-bar i:nth-child(2) { background: #f6b73c; }
+.auth__mock-bar i:nth-child(3) { background: #3fcf68; }
+.auth__mock-url {
+  margin-left: 8px; font-size: 11px; color: #6b7689;
+  background: #141a24; border: 1px solid #222a37; border-radius: 6px; padding: 3px 11px;
+}
+.auth__mock-body { padding: 18px; }
+.auth__mock-label {
+  font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase;
+  color: #7f8aa3; font-weight: 700;
+}
+.auth__mock-saldo {
+  font-family: var(--font-display);
+  font-size: 32px; font-weight: 700; color: #fff;
+  letter-spacing: -0.025em; margin: 5px 0 2px;
+}
+.auth__mock-delta { font-size: 12px; color: #34d399; font-weight: 600; margin-bottom: 16px; }
+.auth__mock-bars {
+  display: flex; align-items: flex-end; gap: 8px; height: 64px;
+  padding-bottom: 14px; margin-bottom: 12px; border-bottom: 1px solid #1c232e;
+}
+.auth__mock-bars i {
+  flex: 1; border-radius: 4px 4px 2px 2px;
+  background: linear-gradient(180deg, #6366f1, #4f46e5);
+  transform: scaleY(0); transform-origin: bottom;
+  animation: auth-grow 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.auth__mock-bars i:last-child { background: linear-gradient(180deg, #5eead4, #10b981); }
+@keyframes auth-grow { to { transform: scaleY(1); } }
+.auth__mock-tx { display: flex; align-items: center; gap: 11px; }
+.auth__mock-ic {
+  width: 30px; height: 30px; flex: 0 0 auto; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(16, 185, 129, 0.14); color: #34d399;
+}
+.auth__mock-ic svg { width: 15px; height: 15px; }
+.auth__mock-tx-main { flex: 1; min-width: 0; }
+.auth__mock-tx-main b { display: block; font-size: 12.5px; font-weight: 600; color: #e6e9f0; }
+.auth__mock-tx-main span { font-size: 11px; color: #7f8aa3; }
+.auth__mock-v { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: #34d399; }
+
+@media (prefers-reduced-motion: reduce) {
+  .auth__mock, .auth__mock-bars i { animation: none; }
+  .auth__mock-bars i { transform: scaleY(1); }
+}
 .auth__aside-title {
   font-family: var(--font-display);
   font-size: clamp(27px, 2.7vw, 37px);
