@@ -6,12 +6,13 @@
 //  fontes do Google e módulos do esm.sh passam direto pra rede.
 // ============================================================================
 
-const CACHE = "fluxo-caixa-v3";
+const CACHE = "fluxo-caixa-v4";
 
 // Arquivos essenciais pra casca abrir offline.
 const ASSETS = [
   "./",
   "./index.html",
+  "./app.html",
   "./css/index.css",
   "./favicon.svg",
   "./icon.svg",
@@ -54,7 +55,7 @@ self.addEventListener("fetch", (e) => {
       })
       .catch(() =>
         caches.match(e.request).then((cached) =>
-          cached || (e.request.mode === "navigate" ? caches.match("./index.html") : undefined)
+          cached || (e.request.mode === "navigate" ? caches.match("./app.html") : undefined)
         )
       )
   );

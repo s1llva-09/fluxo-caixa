@@ -3,7 +3,7 @@
   "short_name": "Fluxo",
   "description": "Controle de entradas e saídas do seu negócio.",
   "lang": "pt-BR",
-  "start_url": "./",
+  "start_url": "app.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
