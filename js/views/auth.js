@@ -51,8 +51,7 @@ function authShell(...cardChildren) {
           tick("Contas a pagar e saldo projetado"),
           tick("Relatórios, equipe e no celular")
         )
-      ),
-      el("div", { class: "auth__aside-foot" }, "Feito para pequenos negócios")
+      )
     ),
     el("div", { class: "auth__card card" }, ...cardChildren)
   );
