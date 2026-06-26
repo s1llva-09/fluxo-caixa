@@ -269,33 +269,42 @@ function abrirNotificacoes(notifs) {
   openModal("Notificações", lista);
 }
 
-// Deixa o badge da empresa trocar de empresa (se o usuário participa de várias).
+// Deixa trocar de empresa (badge no topo + atalho no menu), se participa de várias.
 async function configurarSeletorEmpresa() {
   const badge = $("#empresa-nome");
-  if (!badge) return;
   let empresas = [];
   try { empresas = await minhasEmpresas(); } catch (err) { return; }
-  if (empresas.length <= 1) return;
+  const tem = empresas.length > 1;
 
-  badge.classList.add("topbar__empresa--switch");
-  badge.onclick = () => {
-    const lista = el("div", {});
-    for (const e of empresas) {
-      const atual = e.id === state.company.id;
-      const item = el("button", {
-        class: `btn btn--ghost btn--block troca-empresa ${atual ? "is-atual" : ""}`,
-        style: "justify-content:space-between; margin-bottom:8px;",
-        onclick: async () => {
-          if (atual) { closeModal(); return; }
-          setEmpresaAtiva(e.id);
-          closeModal();
-          await iniciar();
-        },
-      }, el("span", {}, e.name), el("span", { class: "troca-empresa__papel" }, atual ? "atual" : (e.role === "owner" ? "dono" : "membro")));
-      lista.append(item);
-    }
-    openModal("Trocar de empresa", lista);
-  };
+  if (badge) {
+    badge.classList.toggle("topbar__empresa--switch", tem);
+    badge.onclick = tem ? () => abrirTrocaEmpresa(empresas) : null;
+  }
+  // Item "Trocar empresa" no menu lateral — só aparece com mais de uma empresa.
+  $$(".nav__trocar").forEach((b) => {
+    b.hidden = !tem;
+    b.onclick = tem ? () => abrirTrocaEmpresa(empresas) : null;
+  });
+}
+
+function abrirTrocaEmpresa(empresas) {
+  $("#app-shell").classList.remove("nav-open");
+  const lista = el("div", {});
+  for (const e of empresas) {
+    const atual = e.id === state.company.id;
+    const item = el("button", {
+      class: `btn btn--ghost btn--block troca-empresa ${atual ? "is-atual" : ""}`,
+      style: "justify-content:space-between; margin-bottom:8px;",
+      onclick: async () => {
+        if (atual) { closeModal(); return; }
+        setEmpresaAtiva(e.id);
+        closeModal();
+        await iniciar();
+      },
+    }, el("span", {}, e.name), el("span", { class: "troca-empresa__papel" }, atual ? "atual" : (e.role === "owner" ? "dono" : "membro")));
+    lista.append(item);
+  }
+  openModal("Trocar de empresa", lista);
 }
 
 // Banner de "mensalidade vencendo" no topo do app (só pro cliente, não pro admin).

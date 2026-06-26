@@ -45,7 +45,7 @@ export async function renderAdmin(root) {
     el("section", { class: "card chart-card" },
       el("div", { class: "card__head" },
         el("h2", { class: "card__title" }, "Receita — últimos 6 meses"),
-        el("span", { class: "card__hint" }, "Soma das mensalidades recebidas por mês")
+        el("span", { class: "card__hint", id: "rec-comp" }, "Soma das mensalidades recebidas por mês")
       ),
       el("div", { class: "chart-wrap" }, el("canvas", { id: "chart-receita" }))
     ),
@@ -190,6 +190,21 @@ function desenharGraficoReceita(serie) {
   const labels = serie.map((p) =>
     new Date(p.mes + "T00:00:00").toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""));
   const valores = serie.map((p) => (p.total || 0) / 100);
+
+  // Comparativo: este mês vs mês passado (no hint do card).
+  const hint = $("#rec-comp");
+  if (hint && serie.length) {
+    const atual = serie[serie.length - 1].total || 0;
+    const anterior = serie.length > 1 ? (serie[serie.length - 2].total || 0) : 0;
+    let txt = `Este mês: ${formatBRL(atual)}`;
+    if (anterior > 0) {
+      const pct = Math.round(((atual - anterior) / anterior) * 100);
+      txt += ` · ${pct >= 0 ? "+" : "−"}${Math.abs(pct)}% vs mês passado (${formatBRL(anterior)})`;
+    } else {
+      txt += ` · mês passado: ${formatBRL(anterior)}`;
+    }
+    hint.textContent = txt;
+  }
 
   const css = getComputedStyle(document.documentElement);
   const v = (nome, fb) => (css.getPropertyValue(nome).trim() || fb);
