@@ -314,7 +314,7 @@ html { overflow-x: clip; }
 
 /* ── Responsivo: mobile ──────────────────────────────────────────────────── */
 /* btn-menu oculto: a bottom nav já cobre toda a navegação no mobile          */
-@media (max-width: 760px) {
+@media (max-width: 860px) {
   .body-grid { display: block; }
   .body-grid::before { display: none; }
 
@@ -448,6 +448,6 @@ html { overflow-x: clip; }
 .content.is-entering > *:nth-child(6) { animation-delay: 0.27s; }
 .content.is-entering > *:nth-child(n+7) { animation-delay: 0.30s; }
 
-@media (max-width: 760px) {
+@media (max-width: 860px) {
   .bottom-nav { display: flex; }
 }

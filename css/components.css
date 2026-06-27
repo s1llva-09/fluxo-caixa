@@ -377,7 +377,7 @@ select.input {
   color: var(--c-muted);
 }
 
-@media (max-width: 760px) {
+@media (max-width: 860px) {
   .saldo { padding: 28px 24px; }
   .saldo__value { font-size: 44px; }
 }
@@ -468,7 +468,7 @@ select.input {
 .stat--entrada .stat__value { color: var(--c-entrada); }
 .stat--saida .stat__value   { color: var(--c-saida); }
 
-@media (max-width: 760px) {
+@media (max-width: 860px) {
   /* Todos os 3 cards em coluna única — sem risco de overflow */
   .stats {
     grid-template-columns: 1fr;
