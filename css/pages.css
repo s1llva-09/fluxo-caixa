@@ -73,19 +73,17 @@
 .auth__aside-brand .brand__name { color: #fff; font-size: 18px; letter-spacing: -0.02em; }
 .auth__aside-mid { max-width: 440px; }
 
-/* Botão "voltar ao site" — chip ghost discreto no topo do card */
+/* Botão "voltar ao site" — chip ghost no topo do card, em fluxo (com respiro) */
 .auth__back {
-  position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + 16px);
-  left: 16px;
-  z-index: 3;
+  align-self: flex-start;
   display: inline-flex; align-items: center; gap: 7px;
+  margin: 0 0 26px;
   font-size: 13px; font-weight: 600; color: var(--c-muted);
   text-decoration: none;
   padding: 7px 13px 7px 10px;
   border-radius: var(--radius-full);
   border: 1px solid var(--c-border);
-  background: var(--c-surface);
+  background: var(--c-bg);
   box-shadow: var(--shadow-xs);
   transition: color 0.18s var(--ease, ease), border-color 0.18s, background 0.18s,
               box-shadow 0.18s, transform 0.18s;
@@ -208,7 +206,9 @@
   width: 100%;
   max-width: 408px;
   margin: auto;
-  padding: 48px 44px;
+  padding: 40px 44px 44px;
+  display: flex;
+  flex-direction: column;
   background: var(--c-surface);
   border-radius: 24px;
   box-shadow:
@@ -374,7 +374,7 @@
     border-radius: 0;
     min-height: 100vh;
     min-height: 100dvh;
-    padding: calc(env(safe-area-inset-top, 0px) + 68px) 28px 40px;
+    padding: calc(env(safe-area-inset-top, 0px) + 28px) 28px 40px;
     box-shadow: none;
     animation: card-appear-mobile 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
