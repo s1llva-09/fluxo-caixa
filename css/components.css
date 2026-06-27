@@ -352,10 +352,29 @@ select.input {
 }
 .saldo.is-pos .saldo__value { color: var(--c-entrada); }
 .saldo.is-neg .saldo__value { color: var(--c-saida); }
+.saldo__foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.saldo__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  padding: 5px 11px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+.saldo__delta.is-up   { background: var(--c-entrada-soft); color: var(--c-entrada); }
+.saldo__delta.is-down { background: var(--c-saida-soft);   color: var(--c-saida); }
 .saldo__hint {
   font-size: 13.5px;
   color: var(--c-muted);
-  margin-top: 6px;
 }
 
 @media (max-width: 760px) {

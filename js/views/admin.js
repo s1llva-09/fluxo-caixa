@@ -28,7 +28,7 @@ export async function renderAdmin(root) {
     el("header", { class: "page-head page-head--row" },
       el("div", {},
         el("h1", { class: "page-title" }, "Painel do Admin"),
-        el("p", { class: "page-sub" }, "Clientes do Fluxo de Caixa e controle de assinatura")
+        el("p", { class: "page-sub" }, "Clientes do Fluxo e controle de assinatura")
       ),
       el("button", { class: "btn btn--ghost", onclick: exportarCSV,
         "data-tip": "Baixar a lista de clientes em planilha" }, "↓ Exportar clientes")

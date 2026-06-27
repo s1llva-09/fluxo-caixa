@@ -24,7 +24,7 @@ const BACK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 function marca(extra = "") {
   return el("div", { class: `brand brand--lg ${extra}` },
     el("span", { class: "brand__mark", "aria-hidden": "true", html: MARK_SVG }),
-    el("span", { class: "brand__name" }, "Fluxo de Caixa")
+    el("span", { class: "brand__name" }, "Fluxo")
   );
 }
 
@@ -42,7 +42,7 @@ function asideMock() {
   return el("div", { class: "auth__mock", "aria-hidden": "true" },
     el("div", { class: "auth__mock-bar" },
       el("i", {}), el("i", {}), el("i", {}),
-      el("span", { class: "auth__mock-url" }, "app · Fluxo de Caixa")
+      el("span", { class: "auth__mock-url" }, "app · Fluxo")
     ),
     el("div", { class: "auth__mock-body" },
       el("div", { class: "auth__mock-label" }, "Saldo total acumulado"),
@@ -71,7 +71,7 @@ function authShell(...cardChildren) {
     el("aside", { class: "auth__aside", "aria-hidden": "true" },
       el("a", { class: "brand auth__aside-brand", href: "/" },
         el("span", { class: "brand__mark", html: MARK_SVG }),
-        el("span", { class: "brand__name" }, "Fluxo de Caixa")
+        el("span", { class: "brand__name" }, "Fluxo")
       ),
       el("div", { class: "auth__aside-mid" },
         el("h2", { class: "auth__aside-title" },
@@ -95,7 +95,14 @@ function authShell(...cardChildren) {
 // ---- Tela de login / cadastro ----------------------------------------------
 // Recebe onSuccess: função chamada quando o usuário entra com sucesso.
 export function renderAuth(root, onSuccess) {
+  // Abre direto no cadastro quando vem dos CTAs da landing (/app?signup=1).
   let modo = "login"; // "login" ou "cadastro"
+  try {
+    const sp = new URLSearchParams(location.search);
+    if (sp.get("signup") === "1" || sp.get("cadastro") === "1" || location.hash === "#criar") {
+      modo = "cadastro";
+    }
+  } catch (e) { /* ignore */ }
 
   function tela() {
     const titulo = modo === "login" ? "Entrar" : "Criar conta";

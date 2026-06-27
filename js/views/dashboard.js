@@ -52,16 +52,23 @@ export async function renderDashboard(root) {
       el("div", {},
         el("h1", { class: "page-title" }, saudacao()),
         el("p", { class: "page-sub" }, `Resumo de ${mesAno}`)
-      )
+      ),
+      el("button", {
+        class: "btn btn--primary",
+        onclick: () => document.querySelector('[data-tela="lancamentos"]')?.click(),
+      }, "+ Novo lançamento")
     ),
 
     el("section", { class: `saldo ${saldo >= 0 ? "is-pos" : "is-neg"}` },
       el("span", { class: "saldo__label" }, "Saldo total acumulado"),
       el("span", { class: "saldo__value num" }, formatBRL(saldo)),
-      el("span", { class: "saldo__hint" },
-        saldo > 0 ? "Seu negócio está no azul — continue assim!"
-        : saldo === 0 ? "Comece registrando suas entradas e saídas."
-        : "Fique de olho nas saídas para voltar ao positivo.")
+      el("div", { class: "saldo__foot" }, ...[
+        deltaBadge(resultadoMes),
+        el("span", { class: "saldo__hint" },
+          saldo > 0 ? "Seu negócio está no azul — continue assim!"
+          : saldo === 0 ? "Comece registrando suas entradas e saídas."
+          : "Fique de olho nas saídas para voltar ao positivo."),
+      ].filter(Boolean))
     ),
 
     el("section", { class: "stats" },
@@ -141,6 +148,14 @@ const STAT_ICONS = {
   entrada: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>`,
   saida:   `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>`,
 };
+
+// Selo de variação do mês (resultado = entradas − saídas do mês corrente).
+function deltaBadge(cents) {
+  if (!cents) return null;
+  const pos = cents > 0;
+  return el("span", { class: `saldo__delta num ${pos ? "is-up" : "is-down"}` },
+    `${pos ? "▲" : "▼"} ${formatBRL(Math.abs(cents))} este mês`);
+}
 
 function statCard(label, cents, tipo) {
   return el("div", { class: `card stat stat--${tipo}` },

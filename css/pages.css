@@ -76,7 +76,9 @@
 /* Botão "voltar ao site" — chip ghost discreto no topo do card */
 .auth__back {
   position: absolute;
-  top: 16px; left: 16px;
+  top: calc(env(safe-area-inset-top, 0px) + 16px);
+  left: 16px;
+  z-index: 3;
   display: inline-flex; align-items: center; gap: 7px;
   font-size: 13px; font-weight: 600; color: var(--c-muted);
   text-decoration: none;
@@ -347,7 +349,7 @@
     border-radius: 0;
     min-height: 100vh;
     min-height: 100dvh;
-    padding: 52px 28px 40px;
+    padding: calc(env(safe-area-inset-top, 0px) + 68px) 28px 40px;
     box-shadow: none;
     animation: card-appear-mobile 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
