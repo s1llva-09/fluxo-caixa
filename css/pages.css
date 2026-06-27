@@ -328,7 +328,7 @@
   font-weight: 600;
   border-color: var(--c-border);
   background: transparent;
-  margin-top: 4px;
+  margin-top: 14px;
 }
 .auth__card .btn--ghost:hover {
   background: var(--c-bg);
