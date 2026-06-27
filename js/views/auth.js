@@ -119,6 +119,14 @@ export function renderAuth(root, onSuccess) {
       placeholder: modo === "login" ? "Sua senha" : "Mínimo 6 caracteres",
       autocomplete: modo === "login" ? "current-password" : "new-password",
     });
+    // No cadastro pedimos a confirmação da senha (evita erro de digitação).
+    let senha2Wrap = null, senha2 = null;
+    if (modo === "cadastro") {
+      ({ wrap: senha2Wrap, input: senha2 } = senhaInput({
+        placeholder: "Repita a senha",
+        autocomplete: "new-password",
+      }));
+    }
     const btnSubmit = el("button", { class: "btn btn--primary btn--block" }, titulo);
 
     function setCarregando(carregando) {
@@ -134,9 +142,21 @@ export function renderAuth(root, onSuccess) {
         toast("Preencha email e senha", "erro");
         return;
       }
-      if (modo === "cadastro" && senhaVal.length < 6) {
-        toast("A senha precisa ter pelo menos 6 caracteres", "erro");
+      // Email com formato válido (além do type=email do navegador).
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+        toast("Digite um email válido", "erro");
         return;
+      }
+      if (modo === "cadastro") {
+        if (senhaVal.length < 6) {
+          toast("A senha precisa ter pelo menos 6 caracteres", "erro");
+          return;
+        }
+        if (senhaVal !== senha2.value) {
+          toast("As senhas não coincidem", "erro");
+          senha2.focus();
+          return;
+        }
       }
 
       setCarregando(true);
@@ -183,6 +203,10 @@ export function renderAuth(root, onSuccess) {
         el("span", { class: "field__label" }, "Email"), email),
       el("label", { class: "field" },
         el("span", { class: "field__label" }, "Senha"), senhaWrap),
+      modo === "cadastro"
+        ? el("label", { class: "field" },
+            el("span", { class: "field__label" }, "Confirmar senha"), senha2Wrap)
+        : null,
       modo === "login"
         ? el("button", {
             type: "button",

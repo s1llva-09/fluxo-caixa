@@ -321,19 +321,44 @@
   letter-spacing: -0.4px;
 }
 
-/* Botão ghost como link de alternância */
+/* Botão secundário (alternar login/cadastro) — outline definido */
 .auth__card .btn--ghost {
-  color: var(--c-muted);
-  font-size: 14px;
-  font-weight: 500;
-  border-color: transparent;
+  color: var(--c-ink-2);
+  font-size: 14.5px;
+  font-weight: 600;
+  border-color: var(--c-border);
+  background: transparent;
   margin-top: 4px;
 }
 .auth__card .btn--ghost:hover {
   background: var(--c-bg);
   color: var(--c-ink);
-  border-color: var(--c-border);
+  border-color: var(--c-border-strong);
 }
+
+/* ── Polish dos campos do card de auth (escopado — não toca os inputs do app) */
+.auth__form { margin-top: 2px; }
+.auth .field { margin-bottom: 18px; }
+.auth .field__label {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+/* Campo "rebaixado": fundo afundado vs. a superfície do card */
+.auth .input {
+  padding: 13px 15px;
+  border-radius: var(--radius);
+  background: var(--c-bg);
+  font-size: 15px;
+}
+.auth .input:focus {
+  background: var(--c-surface);
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 3.5px var(--c-primary-glow);
+}
+.auth .input-pass .input { padding-right: 48px; }
+.auth__form .btn--block { padding: 13px 18px; font-size: 15px; }
+.auth__form .btn--primary { margin-top: 8px; }
 
 /* Tablet/menor — esconde o painel e centraliza só o card */
 @media (max-width: 900px) {
