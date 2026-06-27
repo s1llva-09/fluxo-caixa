@@ -393,10 +393,21 @@ function ligarEventos() {
     }
   });
 
-  // Abrir/fechar menu no celular
-  $("#btn-menu")?.addEventListener("click", () =>
-    $("#app-shell").classList.toggle("nav-open")
-  );
+  // Botão de menu: no desktop recolhe/expande a sidebar (estado salvo);
+  // no celular abre/fecha o drawer lateral.
+  const COLLAPSE_KEY = "fc-sidebar-collapsed";
+  if (localStorage.getItem(COLLAPSE_KEY) === "1") {
+    $("#app-shell").classList.add("nav-collapsed");
+  }
+  $("#btn-menu")?.addEventListener("click", () => {
+    const shell = $("#app-shell");
+    if (window.matchMedia("(min-width: 761px)").matches) {
+      const colapsada = shell.classList.toggle("nav-collapsed");
+      try { localStorage.setItem(COLLAPSE_KEY, colapsada ? "1" : "0"); } catch {}
+    } else {
+      shell.classList.toggle("nav-open");
+    }
+  });
 
   // Fechar menu ao clicar no overlay escuro (mobile)
   document.addEventListener("click", (e) => {

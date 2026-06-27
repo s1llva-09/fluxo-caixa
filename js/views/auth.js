@@ -24,7 +24,7 @@ const BACK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 function marca(extra = "") {
   return el("div", { class: `brand brand--lg ${extra}` },
     el("span", { class: "brand__mark", "aria-hidden": "true", html: MARK_SVG }),
-    el("span", { class: "brand__name" }, "Fluxo")
+    el("span", { class: "brand__name" }, "Monetta")
   );
 }
 
@@ -42,7 +42,7 @@ function asideMock() {
   return el("div", { class: "auth__mock", "aria-hidden": "true" },
     el("div", { class: "auth__mock-bar" },
       el("i", {}), el("i", {}), el("i", {}),
-      el("span", { class: "auth__mock-url" }, "app · Fluxo")
+      el("span", { class: "auth__mock-url" }, "app · Monetta")
     ),
     el("div", { class: "auth__mock-body" },
       el("div", { class: "auth__mock-label" }, "Saldo total acumulado"),
@@ -71,7 +71,7 @@ function authShell(...cardChildren) {
     el("aside", { class: "auth__aside", "aria-hidden": "true" },
       el("a", { class: "brand auth__aside-brand", href: "/" },
         el("span", { class: "brand__mark", html: MARK_SVG }),
-        el("span", { class: "brand__name" }, "Fluxo")
+        el("span", { class: "brand__name" }, "Monetta")
       ),
       el("div", { class: "auth__aside-mid" },
         el("h2", { class: "auth__aside-title" },

@@ -98,7 +98,7 @@ email e de uma Edge Function agendada.
 - [ ] Definir os segredos:
   ```bash
   supabase secrets set RESEND_API_KEY=re_xxx
-  supabase secrets set EMAIL_FROM="Fluxo <avisos@seu-dominio.com>"
+  supabase secrets set EMAIL_FROM="Monetta <avisos@seu-dominio.com>"
   ```
 - [ ] Deploy da função:
   ```bash

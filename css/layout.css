@@ -128,6 +128,10 @@ html { overflow-x: clip; }
 }
 .btn-menu:hover { background: var(--c-bg); color: var(--c-ink); }
 .btn-menu:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
+/* No desktop o hamburger vira o botão de recolher/expandir a sidebar */
+@media (min-width: 761px) {
+  .btn-menu { display: inline-flex; align-items: center; justify-content: center; }
+}
 
 /* Marca -------------------------------------------------------------------- */
 .brand {
@@ -279,8 +283,28 @@ html { overflow-x: clip; }
 /* Área de conteúdo --------------------------------------------------------- */
 .content {
   padding: 48px 56px;
-  max-width: 1100px;
+  max-width: 1160px;
   width: 100%;
+  margin-inline: auto; /* centraliza na coluna — equilibra o respiro lateral */
+}
+
+/* Sidebar retrátil no desktop ------------------------------------------------
+   O botão de menu (hamburger) recolhe/expande a barra lateral; o conteúdo
+   reaproveita o espaço. O estado fica salvo no localStorage. */
+.nav {
+  transition: width 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.18s ease, padding 0.24s ease;
+}
+.app-shell.nav-collapsed { --sidebar-w: 0px; }
+.app-shell.nav-collapsed .nav {
+  width: 0;
+  min-width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  border-right-color: transparent;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
 }
 
 /* ── Responsivo: tablet ──────────────────────────────────────────────────── */

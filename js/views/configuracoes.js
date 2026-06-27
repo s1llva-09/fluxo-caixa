@@ -130,7 +130,7 @@ function secaoEquipe() {
         const bCopy = el("button", { class: "btn btn--tiny btn--ghost" }, "Copiar convite");
         bCopy.addEventListener("click", async () => {
           const msg =
-            `Você foi convidado para acessar "${state.company.name}" no Fluxo.\n` +
+            `Você foi convidado para acessar "${state.company.name}" no Monetta.\n` +
             `Crie sua conta (ou entre) com o email ${cv.email} e aceite o convite.\n` +
             `Acesse: ${window.location.origin}`;
           try {
