@@ -1,4 +1,4 @@
-# Fluxo de Caixa
+# Fluxo
 
 Sistema simples de controle de entradas e saídas de caixa para pequenos negócios.
 Feito com **HTML + CSS + JavaScript puro** (sem framework, sem build) e **Supabase**
