@@ -471,17 +471,23 @@ export async function criarLancamento({
   description,
   categoryId,
   occurredOn,
+  partyId,
 }) {
+  // Só incluímos party_id quando há contato escolhido — assim continua
+  // funcionando mesmo se a migração clientes-link.sql ainda não rodou.
+  const row = {
+    company_id: companyId,
+    kind,
+    amount_cents: amountCents,
+    description: description || "",
+    category_id: categoryId || null,
+    occurred_on: occurredOn,
+  };
+  if (partyId) row.party_id = partyId;
+
   const { data, error } = await supabase
     .from("transactions")
-    .insert({
-      company_id: companyId,
-      kind,
-      amount_cents: amountCents,
-      description: description || "",
-      category_id: categoryId || null,
-      occurred_on: occurredOn,
-    })
+    .insert(row)
     .select()
     .single();
   if (error) throw error;

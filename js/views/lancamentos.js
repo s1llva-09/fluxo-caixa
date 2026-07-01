@@ -17,6 +17,7 @@ import {
   listarComprovantes,
   uploadComprovante,
   urlComprovante,
+  listarClientes,
 } from "../api.js";
 import { formatBRL, formatDate, parseToCents, todayISO } from "../money.js";
 
@@ -28,6 +29,8 @@ let itensCarregados = [];
 let termoBusca = "";
 // Mapa transaction_id -> anexo (comprovante)
 let comprovantesMap = {};
+// Clientes/fornecedores (pra vincular no lançamento)
+let clientes = [];
 
 export async function renderLancamentos(root) {
   if (state.categorias.length === 0) {
@@ -38,6 +41,14 @@ export async function renderLancamentos(root) {
     } catch (err) {
       console.error(err);
     }
+  }
+
+  // Contatos (não-fatal: se a migração de clientes não rodou, segue sem eles).
+  try {
+    clientes = await listarClientes(state.company.id);
+  } catch (err) {
+    console.error("Clientes:", err);
+    clientes = [];
   }
 
   root.innerHTML = "";
@@ -266,7 +277,7 @@ function renderLista() {
             t.reverses_id  ? el("span", { class: "badge badge--muted" }, "estorno")   : null
           ),
           el("span", { class: "tx__meta" },
-            `${formatDate(t.occurred_on)}${t.categories?.name ? " · " + t.categories.name : ""}`)
+            `${formatDate(t.occurred_on)}${t.categories?.name ? " · " + t.categories.name : ""}${t.party_name ? " · " + t.party_name : ""}`)
         ),
         el("div", { class: "tx__right" },
           el("span", { class: "tx__value num" },
@@ -315,6 +326,11 @@ function abrirFormulario() {
     el("option", { value: "" }, "Sem categoria"),
     ...state.categorias.map((c) => el("option", { value: c.id }, c.name))
   );
+  const contato = el("select", { class: "input" },
+    el("option", { value: "" }, "Sem cliente/fornecedor"),
+    ...clientes.map((c) => el("option", { value: c.id },
+      c.name + (c.kind === "cliente" ? " (cliente)" : c.kind === "fornecedor" ? " (fornecedor)" : "")))
+  );
 
   const comprovante = el("input", { type: "file", class: "input input--file", accept: "image/*,application/pdf" });
   const btnSalvar = el("button", { class: "btn btn--primary" }, "Salvar");
@@ -335,6 +351,7 @@ function abrirFormulario() {
         description: desc.value.trim(),
         categoryId:  cat.value || null,
         occurredOn:  data.value || todayISO(),
+        partyId:     contato.value || null,
       });
       // Anexa o comprovante, se houver (falha aqui não desfaz o lançamento).
       const file = comprovante.files && comprovante.files[0];
@@ -366,6 +383,7 @@ function abrirFormulario() {
       el("label", { class: "field" }, el("span", { class: "field__label" }, "Data"), data),
       el("label", { class: "field" }, el("span", { class: "field__label" }, "Descrição"), desc),
       el("label", { class: "field" }, el("span", { class: "field__label" }, "Categoria"), cat),
+      el("label", { class: "field" }, el("span", { class: "field__label" }, "Cliente / Fornecedor"), contato),
       el("label", { class: "field" }, el("span", { class: "field__label" }, "Comprovante (opcional)"), comprovante),
       el("div", { class: "form__actions" },
         el("button", { class: "btn btn--ghost", onclick: closeModal }, "Cancelar"),
