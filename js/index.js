@@ -24,6 +24,7 @@ import { renderDashboard } from "./views/dashboard.js";
 import { renderLancamentos } from "./views/lancamentos.js";
 import { renderContas } from "./views/contas.js";
 import { renderCategorias } from "./views/categorias.js";
+import { renderClientes } from "./views/clientes.js";
 import { renderRelatorios } from "./views/relatorios.js";
 import { renderConfiguracoes } from "./views/configuracoes.js";
 import { renderAdmin } from "./views/admin.js";
@@ -34,6 +35,7 @@ const telas = {
   lancamentos: renderLancamentos,
   contas: renderContas,
   categorias: renderCategorias,
+  clientes: renderClientes,
   relatorios: renderRelatorios,
   configuracoes: renderConfiguracoes,
   admin: renderAdmin,

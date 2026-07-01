@@ -397,6 +397,44 @@ export async function apagarCategoria(id) {
   if (error) throw error;
 }
 
+// -------- CLIENTES / FORNECEDORES (módulo ERP) --------
+
+export async function listarClientes(companyId) {
+  const { data, error } = await supabase
+    .from("parties")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("name");
+  if (error) throw error;
+  return data || [];
+}
+
+export async function criarCliente(companyId, dados) {
+  const { data, error } = await supabase
+    .from("parties")
+    .insert({ company_id: companyId, ...dados })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function atualizarCliente(id, dados) {
+  const { data, error } = await supabase
+    .from("parties")
+    .update(dados)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function apagarCliente(id) {
+  const { error } = await supabase.from("parties").delete().eq("id", id);
+  if (error) throw error;
+}
+
 // -------- LANÇAMENTOS --------
 
 // Lista lançamentos com filtros opcionais de período, tipo e categoria.
