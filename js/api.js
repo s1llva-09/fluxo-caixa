@@ -435,6 +435,62 @@ export async function apagarCliente(id) {
   if (error) throw error;
 }
 
+// -------- VENDAS (módulo ERP) --------
+
+export async function listarVendas(companyId) {
+  const { data, error } = await supabase
+    .from("sales")
+    .select("*, parties(name)")
+    .eq("company_id", companyId)
+    .order("occurred_on", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+// Registra uma venda: gera a ENTRADA no caixa e grava a venda vinculada a ela.
+export async function criarVenda(companyId, { partyId, amountCents, description, occurredOn, categoryId }) {
+  const tx = await criarLancamento({
+    companyId,
+    kind: "entrada",
+    amountCents,
+    description: description || "Venda",
+    categoryId: categoryId || null,
+    occurredOn,
+    partyId: partyId || null,
+  });
+  const { data, error } = await supabase
+    .from("sales")
+    .insert({
+      company_id: companyId,
+      party_id: partyId || null,
+      transaction_id: tx?.id || null,
+      description: description || "",
+      amount_cents: amountCents,
+      occurred_on: occurredOn,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// Cancela a venda: estorna a entrada gerada e marca a venda como cancelada.
+export async function cancelarVenda(venda) {
+  if (venda.transaction_id) {
+    try {
+      await supabase.rpc("reverse_transaction", { p_id: venda.transaction_id });
+    } catch (e) {
+      console.error("estorno da venda:", e);
+    }
+  }
+  const { error } = await supabase
+    .from("sales")
+    .update({ status: "cancelada" })
+    .eq("id", venda.id);
+  if (error) throw error;
+}
+
 // -------- LANÇAMENTOS --------
 
 // Lista lançamentos com filtros opcionais de período, tipo e categoria.
