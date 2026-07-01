@@ -491,6 +491,44 @@ export async function cancelarVenda(venda) {
   if (error) throw error;
 }
 
+// -------- ESTOQUE / PRODUTOS (módulo ERP) --------
+
+export async function listarProdutos(companyId) {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("name");
+  if (error) throw error;
+  return data || [];
+}
+
+export async function criarProduto(companyId, dados) {
+  const { data, error } = await supabase
+    .from("products")
+    .insert({ company_id: companyId, ...dados })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function atualizarProduto(id, dados) {
+  const { data, error } = await supabase
+    .from("products")
+    .update(dados)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function apagarProduto(id) {
+  const { error } = await supabase.from("products").delete().eq("id", id);
+  if (error) throw error;
+}
+
 // -------- LANÇAMENTOS --------
 
 // Lista lançamentos com filtros opcionais de período, tipo e categoria.
