@@ -448,34 +448,64 @@ export async function listarVendas(companyId) {
   return data || [];
 }
 
-// Registra uma venda: gera a ENTRADA no caixa e grava a venda vinculada a ela.
-export async function criarVenda(companyId, { partyId, amountCents, description, occurredOn, categoryId }) {
+// Registra uma venda: gera a ENTRADA no caixa e grava a venda. Se vierem
+// `items` (produtos), o total é calculado a partir deles, os itens são
+// gravados e o estoque recebe baixa. Sem items, usa o total manual (amountCents).
+// items: [{ productId, productName, qty, unitPriceCents, stockAtual }]
+export async function criarVenda(companyId, { partyId, amountCents, description, occurredOn, categoryId, items }) {
+  const temItens = Array.isArray(items) && items.length > 0;
+  const total = temItens
+    ? items.reduce((s, it) => s + Math.round(Number(it.qty) * Number(it.unitPriceCents)), 0)
+    : amountCents;
+
   const tx = await criarLancamento({
     companyId,
     kind: "entrada",
-    amountCents,
+    amountCents: total,
     description: description || "Venda",
     categoryId: categoryId || null,
     occurredOn,
     partyId: partyId || null,
   });
-  const { data, error } = await supabase
+
+  const { data: sale, error } = await supabase
     .from("sales")
     .insert({
       company_id: companyId,
       party_id: partyId || null,
       transaction_id: tx?.id || null,
       description: description || "",
-      amount_cents: amountCents,
+      amount_cents: total,
       occurred_on: occurredOn,
     })
     .select()
     .single();
   if (error) throw error;
-  return data;
+
+  if (temItens) {
+    const rows = items.map((it) => ({
+      company_id: companyId,
+      sale_id: sale.id,
+      product_id: it.productId || null,
+      product_name: it.productName || null,
+      qty: Number(it.qty),
+      unit_price_cents: Number(it.unitPriceCents),
+    }));
+    const { error: e2 } = await supabase.from("sale_items").insert(rows);
+    if (e2) console.error("itens da venda:", e2);
+
+    // Baixa de estoque (usa o estoque conhecido no momento da venda).
+    for (const it of items) {
+      if (!it.productId) continue;
+      const novo = Number(it.stockAtual) - Number(it.qty);
+      const { error: e3 } = await supabase.from("products").update({ stock_qty: novo }).eq("id", it.productId);
+      if (e3) console.error("baixa de estoque:", e3);
+    }
+  }
+  return sale;
 }
 
-// Cancela a venda: estorna a entrada gerada e marca a venda como cancelada.
+// Cancela a venda: estorna a entrada, devolve o estoque dos itens e marca cancelada.
 export async function cancelarVenda(venda) {
   if (venda.transaction_id) {
     try {
@@ -484,6 +514,27 @@ export async function cancelarVenda(venda) {
       console.error("estorno da venda:", e);
     }
   }
+
+  // Devolve o estoque dos itens (não-fatal se a tabela de itens não existir).
+  try {
+    const { data: itens } = await supabase
+      .from("sale_items")
+      .select("product_id, qty")
+      .eq("sale_id", venda.id);
+    for (const it of itens || []) {
+      if (!it.product_id) continue;
+      const { data: prod } = await supabase
+        .from("products").select("stock_qty").eq("id", it.product_id).single();
+      if (prod) {
+        await supabase.from("products")
+          .update({ stock_qty: Number(prod.stock_qty) + Number(it.qty) })
+          .eq("id", it.product_id);
+      }
+    }
+  } catch (e) {
+    console.error("devolver estoque:", e);
+  }
+
   const { error } = await supabase
     .from("sales")
     .update({ status: "cancelada" })
