@@ -17,7 +17,7 @@ const CATEGORIAS_PADRAO = [
 ];
 
 // SVG do "$" da marca, reaproveitado em vários lugares.
-const MARK_SVG = `<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><text x="10" y="10" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="800" fill="white" font-family="system-ui,-apple-system,sans-serif">$</text></svg>`;
+const MARK_SVG = `<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#fff" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><polyline points="3.4,15.5 3.4,6 10,12.2 16.6,6 16.6,15.5"/></svg>`;
 const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
 const BACK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`;
 
