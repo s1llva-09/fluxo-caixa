@@ -175,7 +175,7 @@
     .faq .ans{padding:0 22px 20px;color:var(--muted);font-size:15px;line-height:1.7}
 
     /* ---- planos / preços -------------------------------------------------- */
-    .planos{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:start}
+    .planos{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;align-items:start;max-width:780px;margin:0 auto}
     .plano{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:32px 28px;box-shadow:var(--sh-sm);display:flex;flex-direction:column;transition:transform .28s var(--ease),box-shadow .28s var(--ease),border-color .28s var(--ease)}
     .plano:hover{transform:translateY(-4px);box-shadow:var(--sh-md);border-color:var(--n300)}
     .plano__nome{font-family:'Sora';font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
@@ -381,40 +381,28 @@
     <div class="section-head reveal">
       <div class="eyebrow">Planos</div>
       <h2>Um plano pra cada momento do negócio</h2>
-      <p class="sub">Comece de graça e evolua conforme sua empresa cresce. Sem fidelidade — cancele quando quiser.</p>
+      <p class="sub">Escolha o plano que acompanha o tamanho do seu negócio. Sem fidelidade — cancele quando quiser.</p>
     </div>
     <div class="planos">
-      <div class="plano reveal" data-d="1">
-        <div class="plano__nome">Grátis</div>
-        <div class="plano__preco"><span class="plano__cifra">R$</span>0<span class="plano__mes">/mês</span></div>
-        <p class="plano__desc">Pra começar a organizar o caixa hoje.</p>
-        <a class="btn btn--ghost-dark plano__cta" href="/app?signup=1">Começar grátis</a>
-        <ul class="plano__lista">
-          <li>Caixa: entradas e saídas</li>
-          <li>Categorias e relatórios</li>
-          <li>Exportar CSV e PDF</li>
-          <li>1 usuário · 1 empresa</li>
-        </ul>
-      </div>
-
-      <div class="plano plano--destaque reveal" data-d="2">
+      <div class="plano plano--destaque reveal" data-d="1">
         <div class="plano__tag">Mais popular</div>
         <div class="plano__nome">Pro</div>
         <div class="plano__preco"><span class="plano__cifra">R$</span>49<span class="plano__mes">/mês</span></div>
         <p class="plano__desc">A gestão completa do dia a dia.</p>
         <a class="btn btn--light plano__cta" href="/app?signup=1">Assinar o Pro</a>
         <ul class="plano__lista">
-          <li><b>Tudo do Grátis, mais:</b></li>
-          <li>Vendas + baixa de estoque</li>
+          <li>Caixa: entradas e saídas</li>
           <li>Contas a pagar e receber</li>
+          <li>Vendas + baixa de estoque</li>
           <li>Clientes e fornecedores</li>
+          <li>Categorias, relatórios e exportação</li>
           <li>Recorrências e comprovantes</li>
           <li>Equipe (até 3 usuários)</li>
           <li>Multi-moeda</li>
         </ul>
       </div>
 
-      <div class="plano reveal" data-d="3">
+      <div class="plano reveal" data-d="2">
         <div class="plano__nome">Empresarial</div>
         <div class="plano__preco"><span class="plano__cifra">R$</span>99<span class="plano__mes">/mês</span></div>
         <p class="plano__desc">Pra quem quer escalar com estrutura.</p>
@@ -429,7 +417,7 @@
         </ul>
       </div>
     </div>
-    <p class="planos__nota reveal">Você começa no Grátis e faz upgrade quando quiser, dentro do sistema.</p>
+    <p class="planos__nota reveal">Sem fidelidade — faça upgrade, downgrade ou cancele quando quiser, dentro do sistema.</p>
   </div></section>
 
   <section class="block" id="perguntas" style="background:var(--surface);border-top:1px solid var(--border)"><div class="wrap">
