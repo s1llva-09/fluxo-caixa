@@ -79,7 +79,7 @@ function desenharLista() {
     return;
   }
 
-  const ul = el("ul", { class: "cat-list" });
+  const ul = el("ul", { class: "rec-list" });
   for (const c of itens) ul.append(item(c));
   box.append(ul);
 }
@@ -93,15 +93,20 @@ function rotulo(kind) {
 function item(c) {
   const [txt, badgeClass] = rotulo(c.kind);
   const detalhes = [c.doc, c.phone, c.email].filter(Boolean).join(" · ");
-  return el("li", { class: "cat" },
-    el("span", { class: `cat__dot ${c.kind === "fornecedor" ? "cat__dot--saida" : c.kind === "cliente" ? "cat__dot--entrada" : "cat__dot--ambos"}` }),
-    el("div", { class: "rec__main" },
-      el("span", { class: "cat__name" }, c.name),
-      detalhes ? el("span", { class: "rec__meta" }, detalhes) : null
-    ),
-    el("span", { class: badgeClass }, txt),
+  const acoes = el("div", { class: "rec__actions" },
     el("button", { class: "btn btn--tiny btn--ghost", onclick: () => abrirForm(c) }, "Editar"),
     el("button", { class: "btn btn--tiny btn--ghost", onclick: () => confirmarApagar(c) }, "Apagar")
+  );
+  return el("li", { class: "rec" },
+    el("span", { class: `cat__dot ${c.kind === "fornecedor" ? "cat__dot--saida" : c.kind === "cliente" ? "cat__dot--entrada" : "cat__dot--ambos"}` }),
+    el("div", { class: "rec__main" },
+      el("span", { class: "rec__desc" }, c.name),
+      detalhes ? el("span", { class: "rec__meta" }, detalhes) : null
+    ),
+    el("div", { class: "rec__right" },
+      el("span", { class: badgeClass }, txt),
+      acoes
+    )
   );
 }
 
