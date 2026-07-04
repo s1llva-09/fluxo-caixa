@@ -632,6 +632,10 @@ select.input {
   background: var(--c-alerta-soft);
   color: var(--c-alerta);
 }
+.badge--info {
+  background: var(--c-info-soft);
+  color: var(--c-info);
+}
 
 /* ── Tabela (relatórios) ──────────────────────────────────────────────────── */
 .tabela-wrap {
@@ -1294,7 +1298,7 @@ select.input {
 /* Fundos fixos (texto sempre branco) — escuros o bastante nos dois temas */
 .toast--ok   { background: #0A8C69; }
 .toast--erro { background: #C0392B; }
-.toast--info { background: #1E293B; }
+.toast--info { background: #2563EB; }
 .toast--out {
   opacity: 0;
   transform: translateX(14px);

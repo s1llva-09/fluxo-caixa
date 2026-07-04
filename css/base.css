@@ -53,8 +53,12 @@
   --c-saida-soft:   #FCEAEE;
   --c-saida-mid:    rgba(223, 27, 65, 0.08);
   --c-danger:       #DF1B41;
-  --c-alerta:       #B45309;
-  --c-alerta-soft:  #FCEFD9;
+  /* Alerta = laranja (avisos: vencimento, estoque baixo, mensalidade) */
+  --c-alerta:       #EA580C;
+  --c-alerta-soft:  #FFEDD5;
+  /* Informação = azul (neutro informativo: notificações, dicas, status) */
+  --c-info:         #2563EB;
+  --c-info-soft:    #E0EDFF;
 
   /* Topbar (translúcida com blur) */
   --c-topbar-bg: rgba(255, 255, 255, 0.80);
@@ -131,8 +135,10 @@
   --c-saida-soft:   rgba(251, 113, 133, 0.13);
   --c-saida-mid:    rgba(251, 113, 133, 0.15);
   --c-danger:       #FB7185;
-  --c-alerta:       #FBBF24;
-  --c-alerta-soft:  rgba(251, 191, 36, 0.15);
+  --c-alerta:       #FB923C;
+  --c-alerta-soft:  rgba(251, 146, 60, 0.16);
+  --c-info:         #60A5FA;
+  --c-info-soft:    rgba(96, 165, 250, 0.16);
 
   /* Topbar */
   --c-topbar-bg: rgba(11, 14, 20, 0.78);

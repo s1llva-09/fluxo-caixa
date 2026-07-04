@@ -70,7 +70,7 @@ function desenharResumo() {
   box.append(
     card("Produtos", String(produtos.length)),
     card("Valor em estoque", formatBRL(Math.round(valor))),
-    card("Abaixo do mínimo", String(nBaixo), nBaixo > 0 ? "saida" : "")
+    card("Abaixo do mínimo", String(nBaixo), nBaixo > 0 ? "alerta" : "")
   );
 }
 
@@ -128,7 +128,7 @@ function item(p) {
       el("span", { class: "rec__meta" }, meta)
     ),
     el("div", { class: "rec__right" },
-      baixo(p) ? el("span", { class: "badge badge--saida" }, "Estoque baixo") : null,
+      baixo(p) ? el("span", { class: "badge badge--alerta" }, "Estoque baixo") : null,
       acoes
     )
   );

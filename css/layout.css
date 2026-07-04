@@ -103,7 +103,7 @@ html { overflow-x: clip; }
   height: 16px;
   padding: 0 4px;
   border-radius: var(--radius-full);
-  background: var(--c-saida);
+  background: var(--c-info);
   color: #fff;
   font-size: 10px;
   font-weight: 700;
