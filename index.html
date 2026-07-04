@@ -174,6 +174,39 @@
     .faq summary:focus-visible{outline:none;box-shadow:inset 0 0 0 2px rgba(129,140,248,.6)}
     .faq .ans{padding:0 22px 20px;color:var(--muted);font-size:15px;line-height:1.7}
 
+    /* ---- planos / preços -------------------------------------------------- */
+    .planos{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:start}
+    .plano{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:32px 28px;box-shadow:var(--sh-sm);display:flex;flex-direction:column;transition:transform .28s var(--ease),box-shadow .28s var(--ease),border-color .28s var(--ease)}
+    .plano:hover{transform:translateY(-4px);box-shadow:var(--sh-md);border-color:var(--n300)}
+    .plano__nome{font-family:'Sora';font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+    .plano__preco{font-family:'Sora';font-weight:800;font-size:46px;line-height:1;letter-spacing:-.03em;color:var(--ink);margin:8px 0 4px}
+    .plano__cifra{font-size:22px;font-weight:700;color:var(--muted);margin-right:3px;vertical-align:12px}
+    .plano__mes{font-size:15px;font-weight:600;color:var(--muted)}
+    .plano__desc{color:var(--muted);font-size:14.5px;line-height:1.55;margin-bottom:22px;min-height:42px}
+    .plano__cta{width:100%;justify-content:center;margin-bottom:24px}
+    .plano__lista{list-style:none;display:flex;flex-direction:column;gap:12px;margin:0}
+    .plano__lista li{position:relative;padding-left:26px;font-size:14.5px;color:var(--ink-2);line-height:1.4}
+    .plano__lista li::before{content:"✓";position:absolute;left:0;top:0;color:var(--indigo);font-weight:800}
+    .plano__lista li b{color:var(--ink);font-weight:700}
+    .btn--ghost-dark{background:var(--surface);color:var(--ink);border:1px solid var(--border);box-shadow:var(--sh-sm)}
+    .btn--ghost-dark:hover{transform:translateY(-2px);border-color:var(--indigo);color:var(--indigo)}
+    /* card em destaque (Pro) */
+    .plano--destaque{background:linear-gradient(160deg,var(--indigo) 0%,var(--indigo-2) 100%);border-color:transparent;color:#fff;box-shadow:var(--sh-lg);transform:scale(1.03)}
+    .plano--destaque:hover{transform:scale(1.03) translateY(-4px);box-shadow:var(--sh-lg)}
+    .plano--destaque .plano__nome{color:rgba(255,255,255,.82)}
+    .plano--destaque .plano__preco,.plano--destaque .plano__lista li b{color:#fff}
+    .plano--destaque .plano__cifra,.plano--destaque .plano__mes,.plano--destaque .plano__desc{color:rgba(255,255,255,.9)}
+    .plano--destaque .plano__lista li{color:rgba(255,255,255,.96)}
+    .plano--destaque .plano__lista li::before{color:#fff}
+    .plano__tag{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:#fff;color:var(--indigo);font-size:12px;font-weight:700;padding:5px 15px;border-radius:999px;box-shadow:var(--sh-md);white-space:nowrap}
+    .planos__nota{text-align:center;color:var(--muted);font-size:14px;margin-top:28px}
+    @media (max-width:860px){
+      .planos{grid-template-columns:1fr;max-width:420px;margin:0 auto}
+      .plano--destaque{transform:none;order:-1}
+      .plano--destaque:hover{transform:translateY(-4px)}
+      .plano__desc{min-height:0}
+    }
+
     /* ---- cta band --------------------------------------------------------- */
     .cta-wrap{padding:0 24px 112px}
     .cta{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--indigo) 0%,#5B54E8 45%,var(--indigo-2) 100%);color:#fff;text-align:center;border-radius:var(--r-xl);padding:72px 28px;max-width:1140px;margin:0 auto;box-shadow:var(--sh-lg)}
@@ -238,6 +271,7 @@
     <div class="nav__links">
       <a class="lnk" href="#recursos">Recursos</a>
       <a class="lnk" href="#como">Como funciona</a>
+      <a class="lnk" href="#precos">Preços</a>
       <a class="lnk" href="#perguntas">Dúvidas</a>
     </div>
     <div class="nav__right">
@@ -341,6 +375,61 @@
       <div class="card reveal" data-d="2"><div class="card__ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/></svg></div><h3>Tema claro e escuro</h3><p>Escolha claro, escuro ou deixe acompanhar o seu sistema automaticamente.</p></div>
       <div class="card reveal" data-d="3"><div class="card__ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div><h3>Instala como app</h3><p>Adicione à tela inicial e abra como um aplicativo, com ícone próprio.</p></div>
     </div>
+  </div></section>
+
+  <section class="block" id="precos" style="background:var(--surface);border-top:1px solid var(--border)"><div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">Planos</div>
+      <h2>Um plano pra cada momento do negócio</h2>
+      <p class="sub">Comece de graça e evolua conforme sua empresa cresce. Sem fidelidade — cancele quando quiser.</p>
+    </div>
+    <div class="planos">
+      <div class="plano reveal" data-d="1">
+        <div class="plano__nome">Grátis</div>
+        <div class="plano__preco"><span class="plano__cifra">R$</span>0<span class="plano__mes">/mês</span></div>
+        <p class="plano__desc">Pra começar a organizar o caixa hoje.</p>
+        <a class="btn btn--ghost-dark plano__cta" href="/app?signup=1">Começar grátis</a>
+        <ul class="plano__lista">
+          <li>Caixa: entradas e saídas</li>
+          <li>Categorias e relatórios</li>
+          <li>Exportar CSV e PDF</li>
+          <li>1 usuário · 1 empresa</li>
+        </ul>
+      </div>
+
+      <div class="plano plano--destaque reveal" data-d="2">
+        <div class="plano__tag">Mais popular</div>
+        <div class="plano__nome">Pro</div>
+        <div class="plano__preco"><span class="plano__cifra">R$</span>49<span class="plano__mes">/mês</span></div>
+        <p class="plano__desc">A gestão completa do dia a dia.</p>
+        <a class="btn btn--light plano__cta" href="/app?signup=1">Assinar o Pro</a>
+        <ul class="plano__lista">
+          <li><b>Tudo do Grátis, mais:</b></li>
+          <li>Vendas + baixa de estoque</li>
+          <li>Contas a pagar e receber</li>
+          <li>Clientes e fornecedores</li>
+          <li>Recorrências e comprovantes</li>
+          <li>Equipe (até 3 usuários)</li>
+          <li>Multi-moeda</li>
+        </ul>
+      </div>
+
+      <div class="plano reveal" data-d="3">
+        <div class="plano__nome">Empresarial</div>
+        <div class="plano__preco"><span class="plano__cifra">R$</span>99<span class="plano__mes">/mês</span></div>
+        <p class="plano__desc">Pra quem quer escalar com estrutura.</p>
+        <a class="btn btn--ghost-dark plano__cta" href="mailto:monetta.erp@gmail.com?subject=Plano%20Empresarial">Falar com a gente</a>
+        <ul class="plano__lista">
+          <li><b>Tudo do Pro, mais:</b></li>
+          <li>Múltiplas empresas</li>
+          <li>Funcionários</li>
+          <li>Nota fiscal (em breve)</li>
+          <li>Usuários ilimitados</li>
+          <li>Suporte prioritário</li>
+        </ul>
+      </div>
+    </div>
+    <p class="planos__nota reveal">Você começa no Grátis e faz upgrade quando quiser, dentro do sistema.</p>
   </div></section>
 
   <section class="block" id="perguntas" style="background:var(--surface);border-top:1px solid var(--border)"><div class="wrap">
