@@ -411,6 +411,29 @@ export function renderOnboarding(root, onDone) {
     placeholder: "Ex.: Auto Center São José",
     autofocus: "",
   });
+  // Ramos de atividade (sugeridos pela Carol). value limpo p/ lógica futura
+  // (multi-setor/modular); rótulo com emoji só pra exibir.
+  const RAMOS = [
+    ["Comércio", "🛒 Comércio"],
+    ["Clínica / Consultório", "🏥 Clínica / Consultório"],
+    ["Restaurante / Lanchonete", "🍽️ Restaurante / Lanchonete"],
+    ["Hotel / Hospedagem", "🏨 Hotel / Hospedagem"],
+    ["Imobiliária", "🏠 Imobiliária"],
+    ["Construção Civil", "🏗️ Construção Civil"],
+    ["Transporte / Logística", "🚚 Transporte / Logística"],
+    ["Prestação de Serviços", "💼 Prestação de Serviços"],
+    ["Indústria", "🏭 Indústria"],
+    ["Educação", "📚 Educação"],
+    ["Tecnologia", "💻 Tecnologia"],
+    ["Agronegócio", "🌾 Agronegócio"],
+    ["Distribuidora", "📦 Distribuidora"],
+    ["Outro", "✨ Outro"],
+  ];
+  const ramo = el("select", { class: "input" },
+    el("option", { value: "" }, "Selecione o ramo…"),
+    ...RAMOS.map(([val, label]) => el("option", { value: val }, label))
+  );
+
   const btnCriar = el("button", { class: "btn btn--primary btn--block" }, "Criar e continuar");
 
   async function criar() {
@@ -421,7 +444,7 @@ export function renderOnboarding(root, onDone) {
     btnCriar.disabled = true;
     btnCriar.textContent = "Criando...";
     try {
-      const empresa = await criarEmpresa(nome.value.trim());
+      const empresa = await criarEmpresa(nome.value.trim(), ramo.value || null);
       // Já cria algumas categorias úteis (não-fatal se alguma falhar).
       try {
         await Promise.all(CATEGORIAS_PADRAO.map(([n, k]) => criarCategoria(empresa.id, n, k)));
@@ -443,10 +466,12 @@ export function renderOnboarding(root, onDone) {
   root.append(
     authShell(
       marca(),
-      el("h1", { class: "auth__title" }, "Quase pronto"),
-      el("p", { class: "auth__sub" }, "Qual é o nome do seu negócio?"),
+      el("h1", { class: "auth__title" }, "Bem-vindo à Monetta"),
+      el("p", { class: "auth__sub" }, "Conte um pouco sobre a sua empresa pra começar."),
       el("label", { class: "field" },
         el("span", { class: "field__label" }, "Nome da empresa"), nome),
+      el("label", { class: "field" },
+        el("span", { class: "field__label" }, "Ramo de atividade"), ramo),
       btnCriar
     )
   );

@@ -120,11 +120,20 @@ export async function aceitarConvite(id) {
 }
 
 // Cria a empresa (chama a função do banco que também cria o vínculo de dono).
-export async function criarEmpresa(nome) {
+export async function criarEmpresa(nome, sector) {
   const { data, error } = await supabase.rpc("create_company", {
     p_name: nome,
   });
   if (error) throw error;
+  // Ramo de atividade é gravado à parte (não-fatal: se a coluna `sector` ainda
+  // não existe, a criação da empresa não quebra).
+  if (sector && data?.id) {
+    try {
+      await supabase.from("companies").update({ sector }).eq("id", data.id);
+    } catch (e) {
+      console.error("ramo de atividade:", e);
+    }
+  }
   return data;
 }
 
