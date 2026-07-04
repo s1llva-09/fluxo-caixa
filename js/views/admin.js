@@ -8,7 +8,8 @@
 
 import Chart from "https://esm.sh/chart.js@4/auto";
 import { el, $, toast, openModal, closeModal, errorState, skeletonList, senhaInput } from "../ui.js";
-import { listarClientesAdmin, definirStatusCliente, atualizarDadosCliente, registrarPagamento, listarPagamentos, receitaPeriodo, receitaMensal } from "../api.js";
+import { listarClientesAdmin, definirStatusCliente, atualizarDadosCliente, definirPlanoEmpresa, registrarPagamento, listarPagamentos, receitaPeriodo, receitaMensal } from "../api.js";
+import { nomePlano } from "../planos.js";
 import { updateEmail, updatePassword } from "../auth.js";
 import { state, mesAtual } from "../state.js";
 import { formatDate, formatBRL, parseToCents, todayISO } from "../money.js";
@@ -491,12 +492,23 @@ function gerenciar(c) {
     ? (c.plan_value_cents / 100).toFixed(2).replace(".", ",") : "";
   const planValorInput = el("input", { class: "input", inputmode: "decimal", placeholder: "Valor por mês (opcional)", value: valorPadrao });
   const notasInput = el("textarea", { class: "input admin-notas", rows: "3", placeholder: "Anotações sobre o cliente (só você vê)" }, c.notes || "");
+  const planoSel = el("select", { class: "input" },
+    el("option", { value: "trial" }, "Trial (acesso total)"),
+    el("option", { value: "pro" }, "Pro"),
+    el("option", { value: "empresarial" }, "Empresarial")
+  );
+  planoSel.value = c.plan || "trial";
   const btnDados = el("button", { class: "btn btn--primary" }, "Salvar plano e anotações");
   async function salvarDados() {
     const cents = parseToCents(planValorInput.value); // null se vazio
     btnDados.disabled = true; btnDados.textContent = "Salvando...";
     try {
       const at = await atualizarDadosCliente(c.id, cents, notasInput.value.trim());
+      // Plano/tier (libera módulos no app do cliente) — RPC própria.
+      if (planoSel.value !== (c.plan || "trial")) {
+        await definirPlanoEmpresa(c.id, planoSel.value);
+        c.plan = planoSel.value;
+      }
       Object.assign(c, { plan_value_cents: at.plan_value_cents, notes: at.notes });
       toast("Dados atualizados", "ok");
       desenharResumo();
@@ -594,6 +606,8 @@ function gerenciar(c) {
       el("hr", { class: "admin-conta__sep" }),
 
       el("h3", { class: "admin-pay__titulo" }, "Plano e anotações"),
+      el("label", { class: "field" },
+        el("span", { class: "field__label" }, "Plano (libera módulos)"), planoSel),
       el("label", { class: "field" },
         el("span", { class: "field__label" }, "Valor da mensalidade"), planValorInput),
       el("label", { class: "field" },

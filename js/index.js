@@ -7,6 +7,7 @@
 // ============================================================================
 
 import { $, $$, el, toast, openModal, closeModal } from "./ui.js";
+import { moduloLiberado, planoDe, MODULOS_GATED } from "./planos.js";
 import { state, empresaAtiva } from "./state.js";
 import { formatDate, todayISO } from "./money.js";
 import { initTheme } from "./theme.js";
@@ -161,6 +162,12 @@ function mostrarApp() {
   badge.setAttribute("title", state.company.name);
   // Mostra o item "Admin" no menu só pra quem é admin.
   $$(".nav__admin").forEach((b) => { b.hidden = !state.isAdmin; });
+  // Gating por plano: esconde os módulos que o plano da empresa não libera.
+  const plano = planoDe(state.company);
+  for (const tela of MODULOS_GATED) {
+    const ok = moduloLiberado(plano, tela);
+    $$(`[data-tela="${tela}"]`).forEach((b) => { b.hidden = !ok; });
+  }
   mostrarAvisoVencimento();
   configurarNotificacoes();
   configurarSeletorEmpresa();
@@ -353,6 +360,11 @@ function mostrarAvisoVencimento() {
 // ---- navegação entre as telas ----------------------------------------------
 
 function irPara(nome) {
+  // Bloqueia telas fora do plano (ex.: link direto/atalho).
+  if (!moduloLiberado(planoDe(state.company), nome)) {
+    toast("Esse módulo não está no seu plano.", "info");
+    nome = "dashboard";
+  }
   // Marca o item ativo no menu lateral e na bottom nav
   $$(".nav__item, .bottom-nav__item").forEach((b) =>
     b.classList.toggle("is-active", b.dataset.tela === nome)

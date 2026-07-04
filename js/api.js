@@ -316,6 +316,15 @@ export async function definirStatusCliente(companyId, status, planUntil) {
   return data;
 }
 
+// Define o plano/tier da empresa ('trial' | 'pro' | 'empresarial') — só admin.
+export async function definirPlanoEmpresa(companyId, plan) {
+  const { error } = await supabase.rpc("admin_set_plan", {
+    p_company_id: companyId,
+    p_plan: plan,
+  });
+  if (error) throw error;
+}
+
 // Atualiza campos administrativos do cliente: valor da mensalidade e anotações.
 export async function atualizarDadosCliente(companyId, planValueCents, notes) {
   const { data, error } = await supabase.rpc("admin_update_company", {

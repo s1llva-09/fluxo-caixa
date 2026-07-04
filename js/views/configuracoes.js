@@ -12,6 +12,7 @@ import {
 import { updateEmail, updatePassword, signOut } from "../auth.js";
 import { getTheme, setTheme } from "../theme.js";
 import { MOEDAS_LISTA, getMoeda, setMoeda } from "../money.js";
+import { planoDe, nomePlano } from "../planos.js";
 
 export function renderConfiguracoes(root) {
   root.innerHTML = "";
@@ -20,6 +21,7 @@ export function renderConfiguracoes(root) {
       el("h1", { class: "page-title" }, "Configurações"),
       el("p", { class: "page-sub" }, "Empresa, conta e preferências")
     ),
+    secaoPlano(),
     secaoAparencia(),
     secaoMoeda(),
     secaoEmpresa(),
@@ -429,6 +431,27 @@ function secaoSair() {
 }
 
 // ── Utilitários ──────────────────────────────────────────────────────────────
+
+// ── Seção: Plano ──────────────────────────────────────────────────────────────
+
+function secaoPlano() {
+  const plano = planoDe(state.company);
+  const nome = nomePlano(plano);
+  const badgeClass = plano === "trial" ? "badge badge--muted" : "badge badge--info";
+  const modulos = {
+    trial: "Todos os módulos liberados pra você experimentar.",
+    pro: "Financeiro, Vendas, Estoque e Clientes.",
+    empresarial: "Tudo do Pro + Funcionários e múltiplas empresas.",
+  };
+  return secao("Seu plano",
+    el("div", { style: "display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px" },
+      el("span", { style: "font-family:var(--font-display);font-weight:700;font-size:22px;color:var(--c-ink)" }, nome),
+      el("span", { class: badgeClass }, plano === "trial" ? "Acesso total" : "Ativo")
+    ),
+    el("p", { class: "config__hint" }, modulos[plano] || modulos.trial),
+    el("a", { class: "btn btn--ghost", href: "mailto:monetta.erp@gmail.com?subject=Planos%20Monetta" }, "Falar sobre planos")
+  );
+}
 
 function secao(titulo, ...filhos) {
   return el("section", { class: "card config-secao" },
