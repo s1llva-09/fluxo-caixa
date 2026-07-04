@@ -6,7 +6,7 @@
 //  fontes do Google e módulos do esm.sh passam direto pra rede.
 // ============================================================================
 
-const CACHE = "fluxo-caixa-v6";
+const CACHE = "fluxo-caixa-v7";
 
 // Arquivos essenciais pra casca abrir offline.
 // Obs.: usamos URLs "limpas" (/ e /app) porque o Vercel está com cleanUrls,
