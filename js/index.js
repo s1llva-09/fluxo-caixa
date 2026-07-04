@@ -27,6 +27,7 @@ import { renderCategorias } from "./views/categorias.js";
 import { renderVendas } from "./views/vendas.js";
 import { renderEstoque } from "./views/estoque.js";
 import { renderClientes } from "./views/clientes.js";
+import { renderFuncionarios } from "./views/funcionarios.js";
 import { renderRelatorios } from "./views/relatorios.js";
 import { renderConfiguracoes } from "./views/configuracoes.js";
 import { renderAdmin } from "./views/admin.js";
@@ -40,6 +41,7 @@ const telas = {
   vendas: renderVendas,
   estoque: renderEstoque,
   clientes: renderClientes,
+  funcionarios: renderFuncionarios,
   relatorios: renderRelatorios,
   configuracoes: renderConfiguracoes,
   admin: renderAdmin,

@@ -580,6 +580,44 @@ export async function apagarProduto(id) {
   if (error) throw error;
 }
 
+// -------- FUNCIONÁRIOS (módulo ERP) --------
+
+export async function listarFuncionarios(companyId) {
+  const { data, error } = await supabase
+    .from("employees")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("full_name");
+  if (error) throw error;
+  return data || [];
+}
+
+export async function criarFuncionario(companyId, dados) {
+  const { data, error } = await supabase
+    .from("employees")
+    .insert({ company_id: companyId, ...dados })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function atualizarFuncionario(id, dados) {
+  const { data, error } = await supabase
+    .from("employees")
+    .update(dados)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function apagarFuncionario(id) {
+  const { error } = await supabase.from("employees").delete().eq("id", id);
+  if (error) throw error;
+}
+
 // -------- LANÇAMENTOS --------
 
 // Lista lançamentos com filtros opcionais de período, tipo e categoria.
