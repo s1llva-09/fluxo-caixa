@@ -143,6 +143,33 @@ function secaoEquipe() {
     }
     box.append(el("h3", { class: "admin-pay__titulo" }, "Membros"), ul);
 
+    // Histórico de alterações de papéis
+    try {
+      const api = await import('../api.js');
+      const audit = await api.listarMemberRoleAudit(state.company.id, 50);
+      if (audit && audit.length) {
+        const ulh = el('ul', { class: 'rec-list' });
+        for (const a of audit) {
+          ulh.append(el('li', { class: 'rec' },
+            el('div', { class: 'rec__main' },
+              el('span', { class: 'rec__desc' }, a.user_email || a.user_id),
+              el('span', { class: 'rec__meta' }, `${a.old_role || '-'} → ${a.new_role || '-'}`)
+            ),
+            el('div', { class: 'rec__right' }, new Date(a.changed_at).toLocaleString())
+          ));
+        }
+        const btnExport = el('button', { class: 'btn btn--ghost', onclick: async () => {
+          try {
+            const csv = await api.exportMemberRoleAuditCSV(state.company.id);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `company_${state.company.id}_members_audit.csv`; a.click(); URL.revokeObjectURL(url);
+          } catch (e) { console.error(e); toast('Erro ao exportar CSV','erro'); }
+        } }, 'Exportar CSV');
+        box.append(el('h3', { class: 'admin-pay__titulo', style: 'margin-top:18px' }, 'Histórico de papéis'), btnExport, ulh);
+      }
+    } catch (e) { console.error('hist role fetch', e); }
+
     // Convites pendentes (só o dono)
     if (ehDono && convites.length) {
       const ulc = el("ul", { class: "rec-list" });

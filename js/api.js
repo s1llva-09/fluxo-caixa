@@ -102,10 +102,37 @@ export async function listarMembros(companyId) {
   return data || [];
 }
 
+export async function listarMembrosEmpresa(companyId) {
+  // alias para compatibilidade com o painel de permissões
+  return listarMembros(companyId);
+}
+
 export async function setMemberRole(companyId, userId, role) {
   const { data, error } = await supabase.rpc('set_member_role', { p_company_id: companyId, p_user_id: userId, p_role: role });
   if (error) throw error;
   return data;
+}
+
+export async function listarMemberRoleAudit(companyId, limit = 50, offset = 0, userId = null) {
+  const { data, error } = await supabase.rpc('company_members_audit_with_emails', {
+    p_company_id: companyId,
+    p_user_id: userId,
+    p_limit: limit,
+    p_offset: offset,
+  });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function exportMemberRoleAuditCSV(companyId, userId = null, limit = 1000, offset = 0) {
+  const rows = await listarMemberRoleAudit(companyId, limit, offset, userId);
+  const cols = ['changed_at','user_email','user_id','old_role','new_role','changed_by_email','changed_by','company_id'];
+  const csv = [cols.join(',')];
+  for (const r of rows) {
+    const line = cols.map(c => `"${String(r[c] ?? '').replace(/"/g,'""')}"`).join(',');
+    csv.push(line);
+  }
+  return csv.join('\n');
 }
 
 export async function removerMembro(companyId, userId) {

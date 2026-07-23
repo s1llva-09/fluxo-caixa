@@ -12,6 +12,7 @@ import { listarClientesAdmin, definirStatusCliente, atualizarDadosCliente, defin
 import { nomePlano } from "../planos.js";
 import { updateEmail, updatePassword } from "../auth.js";
 import { state, mesAtual } from "../state.js";
+import { renderAdminPermissoes } from "./admin_permissoes.js";
 import { formatDate, formatBRL, parseToCents, todayISO } from "../money.js";
 
 // Janela (em dias) para o aviso de "mensalidade vencendo em breve".
@@ -31,9 +32,11 @@ export async function renderAdmin(root) {
         el("h1", { class: "page-title" }, "Painel do Admin"),
         el("p", { class: "page-sub" }, "Clientes do Monetta e controle de assinatura")
       ),
-      el("button", { class: "btn btn--ghost", onclick: exportarCSV,
-        "data-tip": "Baixar a lista de clientes em planilha" }, "↓ Exportar clientes")
-    ),
+      el("div", {},
+        el("button", { class: "btn btn--ghost", onclick: () => renderAdminPermissoes(root, renderAdmin) }, "Equipe: Permissões"),
+        el("button", { class: "btn btn--ghost", onclick: exportarCSV,
+          "data-tip": "Baixar a lista de clientes em planilha" }, "↓ Exportar clientes")
+      ),
     el("section", { id: "admin-resumo", class: "stats admin-resumo" }),
     el("section", { class: "card" },
       el("div", { class: "card__head" },
