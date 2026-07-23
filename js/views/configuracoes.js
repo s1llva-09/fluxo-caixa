@@ -7,6 +7,7 @@ import { state } from "../state.js";
 import {
   atualizarEmpresa,
   convidar, enviarEmailConvite, listarConvites, revogarConvite, listarMembros, removerMembro,
+  setMemberRole,
   meusConvites, aceitarConvite,
 } from "../api.js";
 import { updateEmail, updatePassword, signOut } from "../auth.js";
@@ -105,6 +106,23 @@ function secaoEquipe() {
     for (const m of membros) {
       const acoes = el("div", { class: "rec__actions" });
       if (ehDono && m.user_id !== state.user.id && m.role !== "owner") {
+        // select para alterar papel
+        const sel = el('select', { class: 'input input--tiny' },
+          el('option', { value: 'member' }, 'Membro'),
+          el('option', { value: 'manager' }, 'Manager'),
+          el('option', { value: 'admin' }, 'Admin')
+        );
+        sel.value = m.role || 'member';
+        sel.addEventListener('change', async () => {
+          try {
+            sel.disabled = true;
+            await setMemberRole(state.company.id, m.user_id, sel.value);
+            toast('Papel atualizado', 'ok');
+            carregar();
+          } catch (e) { console.error(e); toast('Não foi possível alterar o papel', 'erro'); sel.disabled = false; }
+        });
+        acoes.append(sel);
+
         const bRem = el("button", { class: "btn btn--tiny btn--ghost" }, "Remover");
         bRem.addEventListener("click", () => {
           confirmar({

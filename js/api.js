@@ -102,6 +102,12 @@ export async function listarMembros(companyId) {
   return data || [];
 }
 
+export async function setMemberRole(companyId, userId, role) {
+  const { data, error } = await supabase.rpc('set_member_role', { p_company_id: companyId, p_user_id: userId, p_role: role });
+  if (error) throw error;
+  return data;
+}
+
 export async function removerMembro(companyId, userId) {
   const { error } = await supabase.rpc("remover_membro", { p_company_id: companyId, p_user_id: userId });
   if (error) throw error;
@@ -287,6 +293,53 @@ export async function urlComprovante(path) {
   const { data, error } = await supabase.storage.from("comprovantes").createSignedUrl(path, 120);
   if (error) throw error;
   return data.signedUrl;
+}
+
+// Envia um anexo associado a um funcionário
+export async function uploadEmployeeAttachment(companyId, employeeId, file) {
+  const safe = (file.name || "arquivo").replace(/[^\w.\-]/g, "_");
+  const path = `${companyId}/employees/${employeeId}-${Date.now()}-${safe}`;
+  const up = await supabase.storage.from("comprovantes").upload(path, file, { upsert: false });
+  if (up.error) throw up.error;
+  const { data, error } = await supabase
+    .from("attachments")
+    .insert({ company_id: companyId, employee_id: employeeId, path, filename: file.name || safe })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function listarEmployeeAttachments(companyId, employeeId) {
+  const { data, error } = await supabase
+    .from("attachments")
+    .select("*")
+    .eq("company_id", companyId)
+    .eq("employee_id", employeeId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function deleteAttachment(id, path) {
+  // remove do storage (não-fatal) e depois do registro
+  try {
+    await supabase.storage.from("comprovantes").remove([path]);
+  } catch (e) {
+    console.error('storage remove failed', e);
+  }
+  const { error } = await supabase.from("attachments").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function listarEmployeeAudit(employeeId) {
+  const { data, error } = await supabase
+    .from('employees_audit')
+    .select('*')
+    .eq('employee_id', employeeId)
+    .order('changed_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
 }
 
 // -------- ADMIN (painel — só o admin consegue usar) --------
@@ -632,8 +685,14 @@ export async function atualizarFuncionario(id, dados) {
 }
 
 export async function apagarFuncionario(id) {
-  const { error } = await supabase.from("employees").delete().eq("id", id);
+  const { data, error } = await supabase
+    .from("employees")
+    .update({ active: false, status: "inactive", terminated_on: null, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single();
   if (error) throw error;
+  return data;
 }
 
 // -------- LANÇAMENTOS --------

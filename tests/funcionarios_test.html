@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Testes - Funcionários</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body>
+  <h1>Testes automáticos - Funcionários</h1>
+  <div id="log"></div>
+  <script type="module">
+    import { supabase } from '../js/supabaseClient.js';
+    import * as api from '../js/api.js';
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../js/config.js';
+
+    const logger = (text) => {
+      console.log(text);
+      document.getElementById('log').innerHTML += `<div>${text}</div>`;
+    };
+
+    async function run() {
+      logger('Iniciando testes...');
+      const companyId = (await supabase.from('companies').select('id').limit(1).maybeSingle()).data?.id;
+      if (!companyId) { logger('Erro: não foi encontrada nenhuma company in DB.'); return; }
+
+      // Cria funcionário de teste
+      const dados = { full_name: 'Teste QA', cpf: '00000000191', role: 'Tester', sector: 'QA', salary_cents: 100000 };
+      let created;
+      try {
+        created = await api.criarFuncionario(companyId, dados);
+        logger('CREATE OK: ' + JSON.stringify(created));
+      } catch (e) { logger('CREATE FAIL: ' + e.message); return; }
+
+      // Atualiza
+      try {
+        const updated = await api.atualizarFuncionario(created.id, { role: 'Tester Senior' });
+        logger('UPDATE OK: ' + updated.role);
+      } catch (e) { logger('UPDATE FAIL: ' + e.message); }
+
+      // Upload anexo (usa um Blob simples)
+      try {
+        const blob = new Blob(['Teste de anexo'], { type: 'text/plain' });
+        const file = new File([blob], 'teste-anexo.txt', { type: 'text/plain' });
+        const att = await api.uploadEmployeeAttachment(companyId, created.id, file);
+        logger('UPLOAD OK: ' + att.id);
+      } catch (e) { logger('UPLOAD FAIL: ' + e.message); }
+
+      // Audit
+      try {
+        const logs = await api.listarEmployeeAudit(created.id);
+        logger('AUDIT ENTRIES: ' + logs.length);
+      } catch (e) { logger('AUDIT FAIL: ' + e.message); }
+
+      // Soft delete
+      try {
+          // remover anexos ligados ao funcionário
+          try {
+            const anexos = await api.listarEmployeeAttachments(companyId, created.id);
+            for (const a of anexos) {
+              try { await api.deleteAttachment(a.id, a.path); logger('ATT DELETE OK: ' + (a.filename||a.path)); } catch (e) { logger('ATT DELETE FAIL: ' + e.message); }
+            }
+          } catch (e) { logger('LIST ATT FAIL: ' + e.message); }
+          await api.apagarFuncionario(created.id);
+          logger('SOFT DELETE OK');
+      } catch (e) { logger('SOFT DELETE FAIL: ' + e.message); }
+
+      logger('Testes finalizados. Remova dados de teste manualmente se desejar.');
+    }
+
+    run();
+  </script>
+</body>
+</html>
