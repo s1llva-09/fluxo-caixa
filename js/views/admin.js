@@ -36,7 +36,8 @@ export async function renderAdmin(root) {
         el("button", { class: "btn btn--ghost", onclick: () => renderAdminPermissoes(root, renderAdmin) }, "Equipe: Permissões"),
         el("button", { class: "btn btn--ghost", onclick: exportarCSV,
           "data-tip": "Baixar a lista de clientes em planilha" }, "↓ Exportar clientes")
-      ),
+      )
+    ),
     el("section", { id: "admin-resumo", class: "stats admin-resumo" }),
     el("section", { class: "card" },
       el("div", { class: "card__head" },
