@@ -506,6 +506,65 @@ select.input {
   .chart-wrap { height: 200px; }
 }
 
+/* ── Dashboard: cards de resumo (metrics) ─────────────────────────────────── */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: var(--gap);
+}
+.metric { padding: 20px 22px; display: flex; flex-direction: column; gap: 8px; }
+.metric__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.metric__label { font-size: 13px; color: var(--c-muted); font-weight: 500; }
+.metric__icon {
+  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0; line-height: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--c-bg-2); color: var(--c-muted);
+}
+.metric__icon--entrada { background: var(--c-entrada-soft); color: var(--c-entrada); }
+.metric__icon--saida { background: var(--c-saida-soft); color: var(--c-saida); }
+.metric__value {
+  font-family: var(--font-display); font-weight: 700; font-size: 27px;
+  letter-spacing: -0.03em; line-height: 1.05; color: var(--c-ink);
+  font-variant-numeric: tabular-nums;
+}
+.metric--entrada .metric__value { color: var(--c-entrada); }
+.metric--saida .metric__value { color: var(--c-saida); }
+.metric__foot { font-size: 12.5px; color: var(--c-muted); font-weight: 500; }
+.metric__foot.is-up { color: var(--c-entrada); }
+.metric__foot.is-down { color: var(--c-saida); }
+.metric__foot--muted { color: var(--c-subtle); }
+
+/* ── Dashboard: grid gráfico + composição ─────────────────────────────────── */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1.7fr 1fr;
+  gap: var(--gap);
+  margin-bottom: var(--gap);
+  align-items: start;
+}
+
+/* ── Composição de despesas ───────────────────────────────────────────────── */
+.compo { display: flex; flex-direction: column; gap: 16px; }
+.compo__item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: "top top" "bar pct";
+  gap: 7px 10px;
+  align-items: center;
+}
+.compo__top { grid-area: top; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.compo__nome { font-size: 13.5px; color: var(--c-ink-2); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.compo__val { font-size: 13px; font-weight: 600; color: var(--c-ink); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.compo__bar { grid-area: bar; height: 7px; background: var(--c-bg-2); border-radius: 999px; overflow: hidden; }
+.compo__fill { height: 100%; background: linear-gradient(90deg, var(--c-primary), var(--c-primary-hover)); border-radius: 999px; }
+.compo__pct { grid-area: pct; font-size: 11.5px; color: var(--c-muted); font-weight: 600; min-width: 30px; text-align: right; }
+
+@media (max-width: 860px) {
+  .metrics, .metrics--3 { grid-template-columns: 1fr; gap: 10px; }
+  .dash-grid { grid-template-columns: 1fr; }
+}
+
 /* ── Lista de lançamentos ─────────────────────────────────────────────────── */
 .tx-list { list-style: none; }
 .tx {
