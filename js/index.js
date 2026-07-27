@@ -168,6 +168,11 @@ function mostrarApp() {
     const ok = moduloLiberado(plano, tela);
     $$(`[data-tela="${tela}"]`).forEach((b) => { b.hidden = !ok; });
   }
+  // Esconde o rótulo de grupos que ficaram sem nenhum item visível.
+  $$(".nav__group").forEach((g) => {
+    const temItem = [...g.querySelectorAll(".nav__item")].some((b) => !b.hidden);
+    g.hidden = !temItem;
+  });
   mostrarAvisoVencimento();
   configurarNotificacoes();
   configurarSeletorEmpresa();
