@@ -6,7 +6,7 @@
 //  fontes do Google e módulos do esm.sh passam direto pra rede.
 // ============================================================================
 
-const CACHE = "fluxo-caixa-v7";
+const CACHE = "fluxo-caixa-v8";
 
 // Arquivos essenciais pra casca abrir offline.
 // Obs.: usamos URLs "limpas" (/ e /app) porque o Vercel está com cleanUrls,
@@ -43,22 +43,24 @@ self.addEventListener("fetch", (e) => {
   // Só cuidamos de GET do próprio site. O resto (API, fontes, CDN) vai pra rede.
   if (e.request.method !== "GET" || url.origin !== location.origin) return;
 
-  // REDE PRIMEIRO: o código (js/css/html) fica sempre atualizado quando online.
-  // O cache é só reserva pra abrir offline. (Antes era cache-first, o que fazia
-  // o app continuar rodando JS antigo mesmo depois de um deploy.)
+  // STALE-WHILE-REVALIDATE: responde do cache NA HORA (reload instantâneo) e
+  // atualiza o cache por baixo pra o próximo load pegar o mais novo. Deploy novo
+  // muda o nome do CACHE (v8, v9...), o que apaga o cache velho no 'activate' e
+  // força buscar o código fresco — então não fica rodando JS antigo.
   e.respondWith(
-    fetch(e.request)
-      .then((res) => {
-        if (res && res.status === 200) {
-          const copia = res.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, copia));
-        }
-        return res;
+    caches.open(CACHE).then((cache) =>
+      cache.match(e.request).then((cached) => {
+        const rede = fetch(e.request)
+          .then((res) => {
+            if (res && res.status === 200) cache.put(e.request, res.clone());
+            return res;
+          })
+          .catch(() =>
+            cached || (e.request.mode === "navigate" ? cache.match("/app") : undefined)
+          );
+        // Se tem no cache, devolve já (rápido) e atualiza em segundo plano.
+        return cached || rede;
       })
-      .catch(() =>
-        caches.match(e.request).then((cached) =>
-          cached || (e.request.mode === "navigate" ? caches.match("/app") : undefined)
-        )
-      )
+    )
   );
 });
