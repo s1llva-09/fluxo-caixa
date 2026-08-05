@@ -154,6 +154,12 @@ function saudacao() {
 
 // ---- cards de resumo (metric) ----------------------------------------------
 
+// Ícones circulares dos lançamentos (↗ entrada / ↙ saída), estilo referência.
+const TX_ICONS = {
+  entrada: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>`,
+  saida:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>`,
+};
+
 const METRIC_ICONS = {
   saldo:   `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>`,
   entrada: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>`,
@@ -217,10 +223,10 @@ function composicaoDespesas(doMes) {
       el("div", { class: "compo__item" },
         el("div", { class: "compo__top" },
           el("span", { class: "compo__nome" }, nome),
-          el("span", { class: "compo__val num" }, formatBRL(valor))
+          el("span", { class: "compo__pct num" }, `${pct}%`)
         ),
         el("div", { class: "compo__bar" }, el("div", { class: "compo__fill", style: `width:${pct}%` })),
-        el("span", { class: "compo__pct" }, `${pct}%`)
+        el("span", { class: "compo__val num" }, formatBRL(valor))
       )
     );
   }
@@ -244,13 +250,16 @@ function listaRecentes(itens) {
   }
   const lista = el("ul", { class: "tx-list" });
   for (const t of itens) {
+    const cat = t.categories?.name;
     lista.append(
       el("li", { class: `tx tx--${t.kind} ${t.is_reversed ? "is-reversed" : ""}` },
+        el("span", { class: `tx__ic tx__ic--${t.kind}`, html: TX_ICONS[t.kind] }),
         el("div", { class: "tx__main" },
           el("span", { class: "tx__desc" }, el("span", {}, t.description || "(sem descrição)")),
           el("span", { class: "tx__meta" },
-            `${formatDate(t.occurred_on)}${t.categories?.name ? " · " + t.categories.name : ""}${t.party_name ? " · " + t.party_name : ""}`)
+            `${formatDate(t.occurred_on)}${t.party_name ? " · " + t.party_name : ""}`)
         ),
+        cat ? el("span", { class: "tx__cat" }, cat) : null,
         el("span", { class: "tx__value num" },
           (t.kind === "entrada" ? "+ " : "− ") + formatBRL(t.amount_cents))
       )

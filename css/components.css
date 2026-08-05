@@ -544,21 +544,15 @@ select.input {
   align-items: start;
 }
 
-/* ── Composição de despesas ───────────────────────────────────────────────── */
-.compo { display: flex; flex-direction: column; gap: 16px; }
-.compo__item {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-areas: "top top" "bar pct";
-  gap: 7px 10px;
-  align-items: center;
-}
-.compo__top { grid-area: top; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-.compo__nome { font-size: 13.5px; color: var(--c-ink-2); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.compo__val { font-size: 13px; font-weight: 600; color: var(--c-ink); flex-shrink: 0; font-variant-numeric: tabular-nums; }
-.compo__bar { grid-area: bar; height: 7px; background: var(--c-bg-2); border-radius: 999px; overflow: hidden; }
+/* ── Composição de despesas (nome + % em cima, barra, valor embaixo) ───────── */
+.compo { display: flex; flex-direction: column; gap: 18px; }
+.compo__item { display: flex; flex-direction: column; gap: 7px; }
+.compo__top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.compo__nome { font-size: 13.5px; color: var(--c-ink-2); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.compo__pct { font-size: 13px; color: var(--c-ink); font-weight: 700; flex-shrink: 0; }
+.compo__bar { height: 6px; background: var(--c-bg-2); border-radius: 999px; overflow: hidden; }
 .compo__fill { height: 100%; background: linear-gradient(90deg, var(--c-primary), var(--c-primary-hover)); border-radius: 999px; }
-.compo__pct { grid-area: pct; font-size: 11.5px; color: var(--c-muted); font-weight: 600; min-width: 30px; text-align: right; }
+.compo__val { font-size: 12.5px; color: var(--c-muted); font-weight: 500; }
 
 @media (max-width: 860px) {
   .metrics, .metrics--3 { grid-template-columns: 1fr; gap: 10px; }
@@ -632,6 +626,24 @@ select.input {
 .tx--saida .tx__value   { color: var(--c-saida); }
 .tx.is-reversed { opacity: 0.38; }
 .tx.is-reversed .tx__value { text-decoration: line-through; }
+
+/* Ícone circular + badge de categoria (estilo referência) */
+.tx__ic {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.tx__ic svg { width: 15px; height: 15px; }
+.tx__ic--entrada { background: var(--c-entrada-soft); color: var(--c-entrada); }
+.tx__ic--saida { background: var(--c-saida-soft); color: var(--c-saida); }
+/* quando há ícone, dispensa a barrinha lateral colorida */
+.tx:has(.tx__ic) { border-left-color: transparent; }
+.tx__cat {
+  font-size: 12px; font-weight: 600; color: var(--c-muted);
+  background: var(--c-bg-2); border: 1px solid var(--c-border);
+  padding: 3px 11px; border-radius: var(--radius-full);
+  white-space: nowrap; flex-shrink: 0;
+}
+@media (max-width: 560px) { .tx__cat { display: none; } }
 
 /* ── Lista de categorias ──────────────────────────────────────────────────── */
 .cat-list { list-style: none; }
