@@ -32,6 +32,12 @@ let comprovantesMap = {};
 // Clientes/fornecedores (pra vincular no lançamento)
 let clientes = [];
 
+// Ícones circulares (↗ entrada / ↙ saída) — mesmo visual do dashboard.
+const TX_ICONS = {
+  entrada: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>`,
+  saida:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>`,
+};
+
 export async function renderLancamentos(root) {
   if (state.categorias.length === 0) {
     // Não-fatal: se falhar, os filtros ficam sem categorias e a lista
@@ -270,6 +276,7 @@ function renderLista() {
 
     lista.append(
       el("li", { class: `tx tx--${t.kind} ${t.is_reversed ? "is-reversed" : ""}` },
+        el("span", { class: `tx__ic tx__ic--${t.kind}`, html: TX_ICONS[t.kind] }),
         el("div", { class: "tx__main" },
           el("span", { class: "tx__desc" },
             el("span", {}, t.description || "(sem descrição)"),
@@ -277,8 +284,9 @@ function renderLista() {
             t.reverses_id  ? el("span", { class: "badge badge--muted" }, "estorno")   : null
           ),
           el("span", { class: "tx__meta" },
-            `${formatDate(t.occurred_on)}${t.categories?.name ? " · " + t.categories.name : ""}${t.party_name ? " · " + t.party_name : ""}`)
+            `${formatDate(t.occurred_on)}${t.party_name ? " · " + t.party_name : ""}`)
         ),
+        t.categories?.name ? el("span", { class: "tx__cat" }, t.categories.name) : null,
         el("div", { class: "tx__right" },
           el("span", { class: "tx__value num" },
             (t.kind === "entrada" ? "+ " : "− ") + formatBRL(t.amount_cents)),
