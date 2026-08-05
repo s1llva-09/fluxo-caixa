@@ -405,6 +405,16 @@ export async function definirPlanoEmpresa(companyId, plan) {
   if (error) throw error;
 }
 
+// Cria a assinatura no Asaas (via Edge Function) e devolve o link de pagamento.
+export async function criarAssinatura({ companyId, plan, name, email, cpfCnpj }) {
+  const { data, error } = await supabase.functions.invoke("criar-assinatura", {
+    body: { company_id: companyId, plan, name, email, cpf_cnpj: cpfCnpj },
+  });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  return data; // { invoiceUrl, subscription_id }
+}
+
 // Atualiza campos administrativos do cliente: valor da mensalidade e anotações.
 export async function atualizarDadosCliente(companyId, planValueCents, notes) {
   const { data, error } = await supabase.rpc("admin_update_company", {

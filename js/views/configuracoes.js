@@ -2,13 +2,14 @@
 //  views/configuracoes.js — Configurações da empresa e da conta
 // ============================================================================
 
-import { el, $, toast, senhaInput, confirmar } from "../ui.js";
+import { el, $, toast, senhaInput, confirmar, openModal, closeModal } from "../ui.js";
 import { state } from "../state.js";
 import {
   atualizarEmpresa,
   convidar, enviarEmailConvite, listarConvites, revogarConvite, listarMembros, removerMembro,
   setMemberRole,
   meusConvites, aceitarConvite,
+  criarAssinatura,
 } from "../api.js";
 import { updateEmail, updatePassword, signOut } from "../auth.js";
 import { getTheme, setTheme } from "../theme.js";
@@ -494,8 +495,59 @@ function secaoPlano() {
       el("span", { class: badgeClass }, plano === "trial" ? "Acesso total" : "Ativo")
     ),
     el("p", { class: "config__hint" }, modulos[plano] || modulos.trial),
-    el("a", { class: "btn btn--primary", href: "mailto:monetta.erp@gmail.com?subject=Assinar%20ou%20renovar%20Monetta" },
-      plano === "trial" ? "Assinar um plano" : "Renovar / mudar plano")
+    el("div", { class: "form__actions", style: "justify-content:flex-start" },
+      el("button", { class: "btn btn--primary", onclick: abrirAssinatura },
+        plano === "trial" ? "Assinar um plano" : "Renovar / mudar plano"),
+      el("a", { class: "btn btn--ghost", href: "mailto:monetta.erp@gmail.com?subject=Planos%20Monetta" }, "Falar com a gente")
+    )
+  );
+}
+
+// Modal de assinatura: coleta os dados e abre o link de pagamento do Asaas.
+function abrirAssinatura() {
+  const planoSel = el("select", { class: "input" },
+    el("option", { value: "pro" }, "Pro — R$ 49/mês"),
+    el("option", { value: "empresarial" }, "Empresarial — R$ 99/mês")
+  );
+  planoSel.value = planoDe(state.company) === "empresarial" ? "empresarial" : "pro";
+  const nome = el("input", { class: "input", value: state.company?.name || "", placeholder: "Nome ou razão social" });
+  const email = el("input", { class: "input", type: "email", value: state.user?.email || "", placeholder: "Email de cobrança" });
+  const doc = el("input", { class: "input", placeholder: "CPF ou CNPJ" });
+  const btn = el("button", { class: "btn btn--primary" }, "Ir para o pagamento");
+
+  async function pagar() {
+    if (!doc.value.trim()) { toast("Informe o CPF ou CNPJ", "erro"); return; }
+    btn.disabled = true; btn.textContent = "Gerando...";
+    try {
+      const r = await criarAssinatura({
+        companyId: state.company.id,
+        plan: planoSel.value,
+        name: nome.value.trim(),
+        email: email.value.trim(),
+        cpfCnpj: doc.value.trim(),
+      });
+      closeModal();
+      if (r?.invoiceUrl) { window.open(r.invoiceUrl, "_blank", "noopener"); toast("Abrindo o pagamento…", "ok"); }
+      else toast("Assinatura criada. Verifique o pagamento no seu email.", "info");
+    } catch (err) {
+      console.error(err);
+      toast(err.message || "Não foi possível gerar o pagamento", "erro");
+      btn.disabled = false; btn.textContent = "Ir para o pagamento";
+    }
+  }
+  btn.addEventListener("click", pagar);
+
+  openModal("Assinar a Monetta",
+    el("div", { class: "form" },
+      el("p", { class: "config__note", style: "margin-top:0" },
+        "Você escolhe PIX, boleto ou cartão na tela de pagamento. A cobrança é mensal e você pode cancelar quando quiser."),
+      el("label", { class: "field" }, el("span", { class: "field__label" }, "Plano"), planoSel),
+      el("label", { class: "field" }, el("span", { class: "field__label" }, "Nome / razão social"), nome),
+      el("label", { class: "field" }, el("span", { class: "field__label" }, "Email de cobrança"), email),
+      el("label", { class: "field" }, el("span", { class: "field__label" }, "CPF / CNPJ"), doc),
+      el("div", { class: "form__actions" },
+        el("button", { class: "btn btn--ghost", onclick: closeModal }, "Cancelar"), btn)
+    )
   );
 }
 
