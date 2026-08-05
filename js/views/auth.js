@@ -496,7 +496,10 @@ export function renderBloqueado(root, onSair) {
       el("p", { class: "auth__sub" },
         "Sua assinatura está vencida ou o acesso foi suspenso. " +
         "Regularize o pagamento para liberar novamente o sistema."),
-      el("p", { class: "auth__contato" }, "Em caso de dúvida, entre em contato com o suporte."),
+      el("p", { class: "auth__contato" }, "Fale com a gente pra combinar o pagamento (PIX) e liberar o acesso na hora."),
+      el("a", { class: "btn btn--primary btn--block",
+        href: "mailto:monetta.erp@gmail.com?subject=Regularizar%20acesso%20Monetta",
+        style: "margin-bottom:8px" }, "Falar com o suporte"),
       btnSair
     )
   );

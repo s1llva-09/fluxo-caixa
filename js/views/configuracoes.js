@@ -494,7 +494,8 @@ function secaoPlano() {
       el("span", { class: badgeClass }, plano === "trial" ? "Acesso total" : "Ativo")
     ),
     el("p", { class: "config__hint" }, modulos[plano] || modulos.trial),
-    el("a", { class: "btn btn--ghost", href: "mailto:monetta.erp@gmail.com?subject=Planos%20Monetta" }, "Falar sobre planos")
+    el("a", { class: "btn btn--primary", href: "mailto:monetta.erp@gmail.com?subject=Assinar%20ou%20renovar%20Monetta" },
+      plano === "trial" ? "Assinar um plano" : "Renovar / mudar plano")
   );
 }
 
