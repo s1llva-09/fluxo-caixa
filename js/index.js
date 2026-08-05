@@ -8,6 +8,10 @@
 
 import { $, $$, el, toast, openModal, closeModal } from "./ui.js";
 import { moduloLiberado, planoDe, MODULOS_GATED } from "./planos.js";
+import { setTheme } from "./theme.js";
+
+const SUN_SVG = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`;
+const MOON_SVG = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
 import { state, empresaAtiva } from "./state.js";
 import { formatDate, todayISO } from "./money.js";
 import { initTheme } from "./theme.js";
@@ -160,6 +164,12 @@ function mostrarApp() {
   const badge = $("#empresa-nome");
   badge.textContent = state.company.name;
   badge.setAttribute("title", state.company.name);
+  // Mês atual na topbar (ex.: "Agosto 2026").
+  const mesEl = $("#topbar-mes");
+  if (mesEl) {
+    const m = new Date().toLocaleDateString("pt-BR", { month: "long" });
+    mesEl.textContent = `${m.charAt(0).toUpperCase()}${m.slice(1)} ${new Date().getFullYear()}`;
+  }
   // Mostra o item "Admin" no menu só pra quem é admin.
   $$(".nav__admin").forEach((b) => { b.hidden = !state.isAdmin; });
   // Gating por plano: esconde os módulos que o plano da empresa não libera.
@@ -433,6 +443,21 @@ function ligarEventos() {
       shell.classList.toggle("nav-open");
     }
   });
+
+  // Toggle de tema (claro/escuro) na topbar.
+  const btnTema = $("#btn-tema");
+  if (btnTema) {
+    const pintarTema = () => {
+      const dark = document.documentElement.getAttribute("data-theme") === "dark";
+      btnTema.innerHTML = dark ? SUN_SVG : MOON_SVG;
+    };
+    pintarTema();
+    btnTema.addEventListener("click", () => {
+      const dark = document.documentElement.getAttribute("data-theme") === "dark";
+      setTheme(dark ? "light" : "dark");
+      pintarTema();
+    });
+  }
 
   // Fechar menu ao clicar no overlay escuro (mobile)
   document.addEventListener("click", (e) => {
