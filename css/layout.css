@@ -321,15 +321,26 @@ html { overflow-x: clip; }
 
 /* Sidebar retrátil no desktop ------------------------------------------------
    O botão de menu (hamburger) recolhe/expande a barra lateral; o conteúdo
-   reaproveita o espaço. O estado fica salvo no localStorage. */
+   reaproveita o espaço. O estado fica salvo no localStorage.
+
+   Quem anima é a COLUNA do grid, não a largura da .nav. Antes o
+   `--sidebar-w: 0px` mudava `grid-template-columns` sem transição — o conteúdo
+   pulava para a largura cheia num quadro enquanto a .nav ainda encolhia por
+   240ms. Animando a coluna, a .nav acompanha por ser item do grid, e a largura
+   dela deixa de ser uma segunda fonte de verdade. */
+.body-grid {
+  transition: grid-template-columns 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.body-grid::before {
+  transition: width 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
 .nav {
-  transition: width 0.24s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.18s ease, padding 0.24s ease;
+  min-width: 0; /* deixa o item do grid encolher abaixo do conteúdo */
+  transition: opacity 0.18s ease,
+              padding 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .app-shell.nav-collapsed { --sidebar-w: 0px; }
 .app-shell.nav-collapsed .nav {
-  width: 0;
-  min-width: 0;
   padding-left: 0;
   padding-right: 0;
   border-right-color: transparent;
@@ -440,7 +451,8 @@ html { overflow-x: clip; }
 .bottom-nav__item svg {
   width: 21px;
   height: 21px;
-  transition: transform 0.2s cubic-bezier(0.34, 1.4, 0.64, 1);
+  /* Sem overshoot: é a troca de tela, a ação mais repetida do app. */
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .bottom-nav__item.is-active { color: var(--c-primary); }
@@ -482,3 +494,20 @@ html { overflow-x: clip; }
 @media (max-width: 860px) {
   .bottom-nav { display: flex; }
 }
+
+/* Feedback de toque nos pressionáveis que não são .btn (menu, bottom nav, ícones
+   da topbar). Sem isso, no celular — onde não existe hover — tocar no menu não
+   devolve nada. Imperceptível de propósito: é ação de dezenas de vezes ao dia. */
+.nav__item,
+.bottom-nav__item,
+.topbar__notif,
+.topbar__icon,
+.btn-menu {
+  transition: background 0.15s, color 0.15s,
+              transform 0.12s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nav__item:active,
+.bottom-nav__item:active,
+.topbar__notif:active,
+.topbar__icon:active,
+.btn-menu:active { transform: scale(0.985); }

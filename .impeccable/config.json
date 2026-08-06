@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "css/layout.css"
+        ],
+        "createdAt": "2026-08-06T03:45:26.494Z",
+        "reason": "Faixa de fundo do sidebar e position:absolute (z-index:-1), fora do fluxo: animar a largura nao reflui a pagina e ela precisa acompanhar a coluna do grid"
+      }
+    ]
+  }
+}

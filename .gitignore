@@ -54,3 +54,8 @@ tmp/
 temp/
 supabase/
 .supabase
+# ── graphify (grafo de conhecimento local) ───────────────────────────────────
+graphify-out/
+
+# ── skills instalados (npx skills add) ───────────────────────────────────────
+.claude/skills/

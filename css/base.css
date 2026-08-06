@@ -21,38 +21,37 @@
 :root[data-theme="light"] {
   color-scheme: light;
 
-  /* Superfícies */
-  --c-bg:              #F6F8FB;
-  --c-bg-2:            #EEF1F6;
+  /* Superfícies (paleta Monetta / referência Lovable) */
+  --c-bg:              #F7F7FA;
+  --c-bg-2:            #F1F1F5;
   --c-surface:         #FFFFFF;
   --c-surface-raised:  #FFFFFF;
-  --c-border:          #E6EAF0;
-  --c-border-strong:   #CFD6E0;
+  --c-border:          #E6E6EC;
+  --c-border-strong:   #D3D3DC;
 
-  /* Texto — escala slate da Stripe */
-  --c-ink:    #1A1F36;
-  --c-ink-2:  #3C4257;
-  --c-muted:  #697386;
-  --c-subtle: #8792A2;
-  --c-text-2: #697386;
+  /* Texto — dark com leve tinte violeta */
+  --c-ink:    #26243A;
+  --c-ink-2:  #3B3A52;
+  --c-muted:  #77757F;
+  --c-subtle: #9A99A4;
+  --c-text-2: #77757F;
 
-  /* Accent ÚNICO (índigo) — fills, foco, ativo. Verde/vermelho ficam só
-     pra semântica de dinheiro (entrada/saída). */
-  --c-primary:      #4F46E5;
-  --c-primary-hover:#4338CA;
-  --c-primary-deep: #3730A3;
+  /* Accent ÚNICO — VIOLETA (ações: botões, foco, ativo). */
+  --c-primary:      #7C3AED;
+  --c-primary-hover:#6D28D9;
+  --c-primary-deep: #5B21B6;
   --c-primary-text: #FFFFFF;
-  --c-primary-glow: rgba(79, 70, 229, 0.18);
-  --c-primary-ink:  #4F46E5;
+  --c-primary-glow: rgba(124, 58, 237, 0.18);
+  --c-primary-ink:  #7C3AED;
 
-  /* Semântica de dinheiro — entrada usa o MESMO verde do accent */
-  --c-entrada:      #059669;
-  --c-entrada-soft: #E6F5EF;
-  --c-entrada-mid:  rgba(5, 150, 105, 0.10);
-  --c-saida:        #DF1B41;
-  --c-saida-soft:   #FCEAEE;
-  --c-saida-mid:    rgba(223, 27, 65, 0.08);
-  --c-danger:       #DF1B41;
+  /* Semântica de dinheiro */
+  --c-entrada:      #10B981;
+  --c-entrada-soft: rgba(16, 185, 129, 0.12);
+  --c-entrada-mid:  rgba(16, 185, 129, 0.10);
+  --c-saida:        #EF4444;
+  --c-saida-soft:   rgba(239, 68, 68, 0.12);
+  --c-saida-mid:    rgba(239, 68, 68, 0.08);
+  --c-danger:       #EF4444;
   /* Alerta = laranja (avisos: vencimento, estoque baixo, mensalidade) */
   --c-alerta:       #EA580C;
   --c-alerta-soft:  #FFEDD5;
@@ -72,16 +71,16 @@
   --c-saldo-neg-bg:     linear-gradient(155deg, #FCEDF0 0%, #FEF6F8 46%, #FFFFFF 78%);
   --c-saldo-neg-border: #F5D2DA;
 
-  /* Sidebar — painel branco, texto slate, ativo índigo (sem glow) */
+  /* Sidebar — painel branco, texto muted, ativo violeta */
   --c-sidebar:             #FFFFFF;
-  --c-sidebar-item-hover:  #F2F5F9;
-  --c-sidebar-item-active: rgba(79, 70, 229, 0.10);
-  --c-sidebar-accent:      #4F46E5;
+  --c-sidebar-item-hover:  #F3F3F7;
+  --c-sidebar-item-active: rgba(124, 58, 237, 0.10);
+  --c-sidebar-accent:      #7C3AED;
   --c-sidebar-accent-glow: transparent;
-  --c-sidebar-text:        #697386;
-  --c-sidebar-text-hover:  #1A1F36;
-  --c-sidebar-text-active: #4F46E5;
-  --c-sidebar-border:      #E6EAF0;
+  --c-sidebar-text:        #77757F;
+  --c-sidebar-text-hover:  #26243A;
+  --c-sidebar-text-active: #7C3AED;
+  --c-sidebar-border:      #E6E6EC;
 
   /* Sombras suaves em camadas (estilo Stripe) */
   --shadow-xs: 0 1px 1px rgba(26, 31, 54, 0.04);
@@ -104,44 +103,44 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  /* Superfícies — slate profundo, em camadas */
-  --c-bg:              #0B0E14;
-  --c-bg-2:            #11151C;
-  --c-surface:         #14181F;
-  --c-surface-raised:  #1A1F28;
-  --c-border:          #232A35;
-  --c-border-strong:   #353D4A;
+  /* Superfícies — navy profundo em camadas (referência Lovable) */
+  --c-bg:              #16161E;
+  --c-bg-2:            #24232E;
+  --c-surface:         #1D1D26;
+  --c-surface-raised:  #24232E;
+  --c-border:          #2D2C39;
+  --c-border-strong:   #3A3947;
 
   /* Texto */
-  --c-ink:    #EDEFF3;
-  --c-ink-2:  #C2C7D0;
-  --c-muted:  #888F9E;
-  --c-subtle: #5B6271;
-  --c-text-2: #888F9E;
+  --c-ink:    #EDEEF2;
+  --c-ink-2:  #D9D9DF;
+  --c-muted:  #9A99A4;
+  --c-subtle: #6B6A76;
+  --c-text-2: #9A99A4;
 
-  /* Accent ÚNICO (índigo) — fill que brilha no escuro, texto branco por cima */
-  --c-primary:      #6366F1;
-  --c-primary-hover:#818CF8;
-  --c-primary-deep: #4F46E5;
+  /* Accent ÚNICO — VIOLETA que brilha no escuro */
+  --c-primary:      #8B5CF6;
+  --c-primary-hover:#A78BFA;
+  --c-primary-deep: #7C3AED;
   --c-primary-text: #FFFFFF;
-  --c-primary-glow: rgba(99, 102, 241, 0.30);
-  --c-primary-ink:  #818CF8;
+  --c-primary-glow: rgba(139, 92, 246, 0.30);
+  --c-primary-ink:  #A78BFA;
 
   /* Semântica de dinheiro */
   --c-entrada:      #34D399;
-  --c-entrada-soft: rgba(52, 211, 153, 0.13);
+  --c-entrada-soft: rgba(52, 211, 153, 0.16);
   --c-entrada-mid:  rgba(52, 211, 153, 0.16);
-  --c-saida:        #FB7185;
-  --c-saida-soft:   rgba(251, 113, 133, 0.13);
-  --c-saida-mid:    rgba(251, 113, 133, 0.15);
-  --c-danger:       #FB7185;
+  --c-saida:        #F87171;
+  --c-saida-soft:   rgba(248, 113, 113, 0.16);
+  --c-saida-mid:    rgba(248, 113, 113, 0.15);
+  --c-danger:       #F87171;
   --c-alerta:       #FB923C;
   --c-alerta-soft:  rgba(251, 146, 60, 0.16);
   --c-info:         #60A5FA;
   --c-info-soft:    rgba(96, 165, 250, 0.16);
 
   /* Topbar */
-  --c-topbar-bg: rgba(11, 14, 20, 0.78);
+  --c-topbar-bg: rgba(22, 22, 30, 0.80);
 
   /* Login — charcoal neutro quase preto */
   --c-auth-bg: #090A0E;
@@ -152,14 +151,14 @@
   --c-saldo-neg-bg:     linear-gradient(155deg, rgba(251,113,133,0.14) 0%, rgba(251,113,133,0.04) 46%, var(--c-surface) 80%);
   --c-saldo-neg-border: rgba(251, 113, 133, 0.24);
 
-  /* Sidebar — mais escura que as superfícies */
-  --c-sidebar:             #080B11;
+  /* Sidebar — navy um tom abaixo das superfícies */
+  --c-sidebar:             #191922;
   --c-sidebar-item-hover:  rgba(255, 255, 255, 0.05);
-  --c-sidebar-item-active: rgba(99, 102, 241, 0.16);
-  --c-sidebar-accent:      #6366F1;
-  --c-sidebar-accent-glow: rgba(99, 102, 241, 0.0);
-  --c-sidebar-text:        rgba(237, 239, 243, 0.46);
-  --c-sidebar-text-hover:  rgba(237, 239, 243, 0.88);
+  --c-sidebar-item-active: rgba(139, 92, 246, 0.18);
+  --c-sidebar-accent:      #8B5CF6;
+  --c-sidebar-accent-glow: rgba(139, 92, 246, 0.0);
+  --c-sidebar-text:        rgba(237, 238, 242, 0.50);
+  --c-sidebar-text-hover:  rgba(237, 238, 242, 0.90);
   --c-sidebar-text-active: #FFFFFF;
   --c-sidebar-border:      rgba(255, 255, 255, 0.07);
 
