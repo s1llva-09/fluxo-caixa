@@ -213,16 +213,22 @@ function desenharGraficoReceita(serie) {
 
   const css = getComputedStyle(document.documentElement);
   const v = (nome, fb) => (css.getPropertyValue(nome).trim() || fb);
-  const cor = v("--c-primary", "#4F46E5");
-  const muted = v("--c-muted", "#8B9E98");
-  const grid = v("--c-border", "rgba(221,229,226,0.8)");
-  const font = "'Inter', system-ui, sans-serif";
+  // Barra no violeta da marca: ele dá 4.8:1 sobre a superfície branca, bem
+  // acima dos 3:1 exigidos de elemento não-textual, então funciona como área
+  // preenchida — o que o accent do tema anterior não permitia.
+  const cor = v("--c-accent", "#9A3FF0");
+  const ink = v("--c-ink", "#141726");
+  const surface = v("--c-surface", "#FFFFFF");
+  const muted = v("--c-muted", "#5E6178");
+  const grid = v("--c-line", "rgba(20,23,38,0.12)");
+  const eixo = v("--c-line-strong", "rgba(20,23,38,0.26)");
+  const font = "'Archivo', system-ui, sans-serif";
 
   chartRef = new Chart(canvas, {
     type: "bar",
     data: {
       labels,
-      datasets: [{ label: "Receita", data: valores, backgroundColor: cor, borderRadius: 7, borderSkipped: false }],
+      datasets: [{ label: "Receita", data: valores, backgroundColor: cor, borderRadius: 4, borderSkipped: false }],
     },
     options: {
       responsive: true,
@@ -230,25 +236,29 @@ function desenharGraficoReceita(serie) {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "#1E293B",
-          padding: 12,
-          cornerRadius: 8,
-          titleFont: { family: font, size: 12 },
+          backgroundColor: ink,
+          titleColor: surface,
+          bodyColor: surface,
+          padding: 10,
+          cornerRadius: 6,
+          displayColors: false,
+          titleFont: { family: font, size: 11, weight: 700 },
           bodyFont: { family: font, size: 12 },
-          callbacks: { label: (ctx) => "  R$ " + ctx.raw.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) },
+          // formatBRL e não "R$" fixo: a moeda é configurável no app.
+          callbacks: { label: (ctx) => formatBRL(Math.round(ctx.raw * 100)) },
         },
       },
       scales: {
         x: {
           grid: { display: false },
-          border: { display: false },
-          ticks: { font: { family: font, size: 12 }, color: muted },
+          border: { color: eixo, width: 1 },
+          ticks: { font: { family: font, size: 11, weight: 700 }, color: muted },
         },
         y: {
           grid: { color: grid },
           border: { display: false },
           ticks: {
-            callback: (val) => "R$ " + val.toLocaleString("pt-BR", { minimumFractionDigits: 0 }),
+            callback: (val) => formatBRL(Math.round(val * 100)),
             font: { family: font, size: 11 },
             color: muted,
           },

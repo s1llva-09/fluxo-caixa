@@ -28,9 +28,17 @@ function resolve(theme) {
 export function applyTheme(theme) {
   const resolvido = resolve(theme);
   document.documentElement.setAttribute("data-theme", resolvido);
-  // Cor da barra de status no mobile / PWA acompanha o tema.
+  // Cor da barra de status no mobile / PWA acompanha o tema. Os valores são
+  // os mesmos de --c-bg nos dois temas: quando divergem, a barra de status
+  // fica num tom diferente do fundo do app e a emenda aparece.
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", resolvido === "dark" ? "#0B0E14" : "#FFFFFF");
+  if (meta) meta.setAttribute("content", resolvido === "dark" ? "#0B0E1A" : "#F0EFF4");
+
+  // Quem desenha em <canvas> não é repintado pelo CSS: o Chart.js copia as
+  // cores das CSS vars uma vez, na hora de desenhar. Sem este aviso, trocar
+  // de tema no dashboard deixava grade e eixos na cor do tema anterior até
+  // navegar pra outra tela e voltar.
+  window.dispatchEvent(new CustomEvent("temachange", { detail: resolvido }));
 }
 
 // Salva e aplica.

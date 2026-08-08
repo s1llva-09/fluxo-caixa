@@ -1,198 +1,231 @@
 /* ============================================================================
-   base.css — Design tokens + fundação visual
-   ========================================================================== */
-
-/* ============================================================================
-   TEMAS
+   base.css — Tokens e fundação visual
    ----------------------------------------------------------------------------
-   As cores ficam todas em variáveis. O tema é escolhido pelo atributo
-   data-theme no <html> (definido em js/theme.js a partir do localStorage).
-     - sem atributo  -> tema claro (o :root abaixo)
-     - data-theme="dark" -> tema escuro
-   Tudo que NÃO for cor (tipografia, raios, espaçamentos, sombras) fica num
-   bloco comum no fim, pra não repetir.
+   MUNDO: A PLACA, na paleta do logo.
+
+   O sistema gráfico continua vindo da placa de preço de mercado — o objeto que
+   o dono de comércio lê a vida inteira, feito pra ser entendido de longe, em
+   pé, com pressa. O que ficou de pé daquela leitura:
+
+     1. UM número manda em cada tela; o resto é letra miúda. A placa não
+        negocia hierarquia.
+     2. Rótulo de seção sustentado por um fio. É o gesto que mais se repete no
+        app e o que dá ritmo à página.
+     3. Cor é informação, nunca enfeite: verde e vermelho são a direção do
+        dinheiro, e o violeta do "M" é a ação.
+
+   O que mudou no acabamento (pedido do dono, 08/08/2026): saiu o corte reto de
+   2px e o preto de pincel, entrou raio de verdade, sombra em camadas e uma
+   paleta tirada do próprio logo. A placa deixou de ser cartaz e virou objeto —
+   mesma hierarquia, acabamento de ferramenta cara.
+
+   ── A PALETA VEM DO LOGO ───────────────────────────────────────────────────
+   Tudo aqui é derivado de icon.svg / favicon.svg, e não de um framework:
+
+     gradiente do "M"   #C68BFF → #9A3FF0 → #7A28DD
+     tile               #0B0E1A
+     canto do tile      rx 116 em 512 = 23% do lado
+
+   Os três violetas viram a rampa de ação (claro / núcleo / profundo). O navy
+   do tile vira o chão do tema escuro e o fundo da tela de entrada — o app
+   escuro passa a ser, literalmente, a cor do ícone. E os 23% de canto são a
+   linguagem de curva da marca: é o logo dizendo que a coisa não é quadrada.
+
+   Estes violetas NÃO são os do Tailwind (#7C3AED e vizinhos), que era o que
+   deixava o app com cara de template. São os do "M".
+
+   O verde e o vermelho ficam fora da marca de propósito: são a direção do
+   dinheiro, o único sinal que o app precisa dar, e não podem ser confundidos
+   com "cor da empresa".
    ========================================================================== */
 
-/* ── TEMA CLARO (padrão) ───────────────────────────────────────────────────────
-   Neutros slate (paleta da Stripe) + UM único accent verde, que serve tanto
-   para os elementos interativos (botões, foco, ativo) quanto para valores
-   positivos. O vermelho é só semântica de saída. Nada de segundo verde. */
+/* ── CLARO (padrão) ───────────────────────────────────────────────────────────
+   Cena: loja aberta, luz forte, celular na mão entre um cliente e outro.
+   Neutros com um sopro do violeta da marca — não cinza puro, não o slate
+   azulado de todo painel SaaS. A tinta puxa do navy do tile. */
 :root,
 :root[data-theme="light"] {
   color-scheme: light;
 
-  /* Superfícies (paleta Monetta / referência Lovable) */
-  --c-bg:              #F7F7FA;
-  --c-bg-2:            #F1F1F5;
-  --c-surface:         #FFFFFF;
-  --c-surface-raised:  #FFFFFF;
-  --c-border:          #E6E6EC;
-  --c-border-strong:   #D3D3DC;
+  --c-bg:        #F0EFF4;
+  --c-bg-2:      #E7E5EE;
+  --c-surface:   #FFFFFF;
+  --c-surface-2: #FAFAFD; /* rebaixado: trilho, campo dentro de modal */
 
-  /* Texto — dark com leve tinte violeta */
-  --c-ink:    #26243A;
-  --c-ink-2:  #3B3A52;
-  --c-muted:  #77757F;
-  --c-subtle: #9A99A4;
-  --c-text-2: #77757F;
+  /* Fios. --c-rule sustenta rótulo de seção; --c-line é a borda da placa.
+     Nenhum dos dois é preto: o traço pesado virou peso de tinta, não de
+     contraste bruto. */
+  --c-rule:         rgba(20, 23, 38, 0.38);
+  --c-line:         rgba(20, 23, 38, 0.12);
+  --c-line-strong:  rgba(20, 23, 38, 0.26);
 
-  /* Accent ÚNICO — VIOLETA (ações: botões, foco, ativo). */
-  --c-primary:      #7C3AED;
-  --c-primary-hover:#6D28D9;
-  --c-primary-deep: #5B21B6;
-  --c-primary-text: #FFFFFF;
-  --c-primary-glow: rgba(124, 58, 237, 0.18);
-  --c-primary-ink:  #7C3AED;
+  /* Tinta, derivada do tile #0B0E1A. Sobre --c-bg: ink 15.7:1, muted 5.6:1,
+     subtle 4.9:1. */
+  --c-ink:    #141726;
+  --c-ink-2:  #3A3D52;
+  --c-muted:  #5E6178;
+  --c-subtle: #666980;
+  --c-text-2: #5E6178;
 
-  /* Semântica de dinheiro */
-  --c-entrada:      #10B981;
-  --c-entrada-soft: rgba(16, 185, 129, 0.12);
-  --c-entrada-mid:  rgba(16, 185, 129, 0.10);
-  --c-saida:        #EF4444;
-  --c-saida-soft:   rgba(239, 68, 68, 0.12);
-  --c-saida-mid:    rgba(239, 68, 68, 0.08);
-  --c-danger:       #EF4444;
-  /* Alerta = laranja (avisos: vencimento, estoque baixo, mensalidade) */
-  --c-alerta:       #EA580C;
-  --c-alerta-soft:  #FFEDD5;
-  /* Informação = azul (neutro informativo: notificações, dicas, status) */
-  --c-info:         #2563EB;
-  --c-info-soft:    #E0EDFF;
+  /* ── VIOLETA DO "M" — a cor da ação ─────────────────────────────────────
+     Cada tom com um trabalho:
+       --c-accent      #9A3FF0, o núcleo do gradiente. Campo sólido do botão
+                       primário, com texto BRANCO (4.8:1). Dá 4.8:1 contra a
+                       placa, então já cumpre sozinho o mínimo de 3:1 do
+                       limite do controle (WCAG 1.4.11) e dispensa contorno.
+       --c-accent-hover #7A28DD, a ponta profunda do gradiente.
+       --c-accent-soft  campo claro do "você está aqui" (menu, aba, seleção).
+       --c-accent-text  violeta escurecido o bastante pra virar TEXTO sobre
+                       branco (7.9:1) — o #9A3FF0 puro reprovaria como link. */
+  --c-accent:       #9A3FF0;
+  --c-accent-hover: #7A28DD;
+  --c-accent-soft:  #EDE2FE;
+  --c-accent-line:  rgba(154, 63, 240, 0.32);
+  --c-accent-ink:   #FFFFFF;
+  --c-accent-text:  #5B1FAB;
+  --c-accent-glow:  rgba(154, 63, 240, 0.22);
 
-  /* Topbar (translúcida com blur) */
-  --c-topbar-bg: rgba(255, 255, 255, 0.80);
+  /* ── Direção do dinheiro ────────────────────────────────────────────────
+     Um tom só por semântica, escurecido até passar 4.5:1 tanto na placa
+     quanto no fundo — o que dispensa o par preenchimento/texto que o tema
+     antigo precisava manter. Os aliases -text seguem porque as views
+     apontam pra eles. */
+  --c-entrada:      #0F6B47;
+  --c-entrada-text: #0F6B47;
+  --c-entrada-soft: rgba(15, 107, 71, 0.10);
+  --c-saida:        #B3261E;
+  --c-saida-text:   #B3261E;
+  --c-saida-soft:   rgba(179, 38, 30, 0.10);
+  --c-alerta-text:  #96500A;
+  --c-alerta-soft:  #FBEFDC;
+  --c-info:         #1F4FA8;
 
-  /* Fundo da tela de login — charcoal neutro profundo (sem cast azulado) */
-  --c-auth-bg: #0E1015;
+  --c-topbar-bg: #FFFFFF;
+  --c-auth-bg:   #0B0E1A; /* o tile do logo, exato */
 
-  /* Cartões de saldo — tinte bem sutil (lean) */
-  --c-saldo-pos-bg:     linear-gradient(155deg, #EDF8F3 0%, #F7FBF9 46%, #FFFFFF 78%);
-  --c-saldo-pos-border: #CEEBDD;
-  --c-saldo-neg-bg:     linear-gradient(155deg, #FCEDF0 0%, #FEF6F8 46%, #FFFFFF 78%);
-  --c-saldo-neg-border: #F5D2DA;
-
-  /* Sidebar — painel branco, texto muted, ativo violeta */
   --c-sidebar:             #FFFFFF;
-  --c-sidebar-item-hover:  #F3F3F7;
-  --c-sidebar-item-active: rgba(124, 58, 237, 0.10);
-  --c-sidebar-accent:      #7C3AED;
-  --c-sidebar-accent-glow: transparent;
-  --c-sidebar-text:        #77757F;
-  --c-sidebar-text-hover:  #26243A;
-  --c-sidebar-text-active: #7C3AED;
-  --c-sidebar-border:      #E6E6EC;
+  --c-sidebar-item-hover:  #F2F1F7;
+  --c-sidebar-item-active: var(--c-accent-soft);
+  --c-sidebar-text:        #5E6178;
+  --c-sidebar-text-hover:  #141726;
+  --c-sidebar-text-active: #5B1FAB;
 
-  /* Sombras suaves em camadas (estilo Stripe) */
-  --shadow-xs: 0 1px 1px rgba(26, 31, 54, 0.04);
-  --shadow-sm: 0 1px 1px rgba(26, 31, 54, 0.04),
-               0 2px 4px rgba(26, 31, 54, 0.04);
-  --shadow:    0 1px 1px rgba(26, 31, 54, 0.03),
-               0 2px 5px rgba(26, 31, 54, 0.05),
-               0 6px 16px -4px rgba(26, 31, 54, 0.06);
-  --shadow-md: 0 1px 2px rgba(26, 31, 54, 0.04),
-               0 4px 10px -2px rgba(26, 31, 54, 0.06),
-               0 12px 32px -6px rgba(26, 31, 54, 0.10);
-  --shadow-lg: 0 2px 6px rgba(26, 31, 54, 0.05),
-               0 10px 24px -6px rgba(26, 31, 54, 0.10),
-               0 28px 56px -10px rgba(26, 31, 54, 0.18);
+  /* ── Sombras ────────────────────────────────────────────────────────────
+     Em camadas e com o tinte do navy da marca, não cinza neutro. Todas têm
+     deslocamento E desfoque — halo sem offset é decoração, não profundidade. */
+  --shadow-xs:   0 1px 2px rgba(20, 23, 38, 0.05);
+  --shadow-sm:   0 1px 2px rgba(20, 23, 38, 0.05),
+                 0 2px 6px -1px rgba(20, 23, 38, 0.06);
+  --shadow-md:   0 2px 4px -1px rgba(20, 23, 38, 0.06),
+                 0 8px 20px -4px rgba(20, 23, 38, 0.10);
+  --shadow-over: 0 8px 16px -6px rgba(20, 23, 38, 0.18),
+                 0 24px 48px -12px rgba(20, 23, 38, 0.28);
 }
 
-/* ── TEMA ESCURO ───────────────────────────────────────────────────────────────
-   Slate-navy profundo em camadas (estilo Linear) + o mesmo accent verde, um
-   pouco mais claro pra brilhar no escuro. */
+/* ── ESCURO ───────────────────────────────────────────────────────────────────
+   Cena: loja fechada, fim do dia, conferindo o caixa. O chão é o tile do logo
+   (#0B0E1A) e as superfícies sobem a partir dele. O violeta clareia pro tom
+   claro do gradiente, que é o que brilha no escuro. */
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  /* Superfícies — navy profundo em camadas (referência Lovable) */
-  --c-bg:              #16161E;
-  --c-bg-2:            #24232E;
-  --c-surface:         #1D1D26;
-  --c-surface-raised:  #24232E;
-  --c-border:          #2D2C39;
-  --c-border-strong:   #3A3947;
+  --c-bg:        #0B0E1A; /* o tile do logo, exato */
+  --c-bg-2:      #232941;
+  --c-surface:   #131726;
+  --c-surface-2: #1B2032;
 
-  /* Texto */
-  --c-ink:    #EDEEF2;
-  --c-ink-2:  #D9D9DF;
-  --c-muted:  #9A99A4;
-  --c-subtle: #6B6A76;
-  --c-text-2: #9A99A4;
+  --c-rule:         rgba(237, 238, 244, 0.32);
+  --c-line:         rgba(237, 238, 244, 0.13);
+  --c-line-strong:  rgba(237, 238, 244, 0.26);
 
-  /* Accent ÚNICO — VIOLETA que brilha no escuro */
-  --c-primary:      #8B5CF6;
-  --c-primary-hover:#A78BFA;
-  --c-primary-deep: #7C3AED;
-  --c-primary-text: #FFFFFF;
-  --c-primary-glow: rgba(139, 92, 246, 0.30);
-  --c-primary-ink:  #A78BFA;
+  --c-ink:    #EDEEF4;
+  --c-ink-2:  #CFD1DE;
+  --c-muted:  #969AB0;
+  --c-subtle: #8B8FA6;
+  --c-text-2: #969AB0;
 
-  /* Semântica de dinheiro */
-  --c-entrada:      #34D399;
-  --c-entrada-soft: rgba(52, 211, 153, 0.16);
-  --c-entrada-mid:  rgba(52, 211, 153, 0.16);
-  --c-saida:        #F87171;
-  --c-saida-soft:   rgba(248, 113, 113, 0.16);
-  --c-saida-mid:    rgba(248, 113, 113, 0.15);
-  --c-danger:       #F87171;
-  --c-alerta:       #FB923C;
-  --c-alerta-soft:  rgba(251, 146, 60, 0.16);
-  --c-info:         #60A5FA;
-  --c-info-soft:    rgba(96, 165, 250, 0.16);
+  /* No escuro o campo sólido clareia e passa a receber tinta escura em cima —
+     é o que acontece com qualquer superfície colorida quando o fundo inverte. */
+  --c-accent:       #B47AFA;
+  --c-accent-hover: #C68BFF; /* a ponta clara do gradiente do logo */
+  --c-accent-soft:  #2A1D46;
+  --c-accent-line:  rgba(180, 122, 250, 0.40);
+  --c-accent-ink:   #0B0E1A;
+  --c-accent-text:  #C68BFF;
+  --c-accent-glow:  rgba(180, 122, 250, 0.28);
 
-  /* Topbar */
-  --c-topbar-bg: rgba(22, 22, 30, 0.80);
+  --c-entrada:      #4ED598;
+  --c-entrada-text: #4ED598;
+  --c-entrada-soft: rgba(78, 213, 152, 0.13);
+  --c-saida:        #FF8A75;
+  --c-saida-text:   #FF8A75;
+  --c-saida-soft:   rgba(255, 138, 117, 0.13);
+  --c-alerta-text:  #F0B44E;
+  --c-alerta-soft:  #3A2C12;
+  --c-info:         #85AEF0;
 
-  /* Login — charcoal neutro quase preto */
-  --c-auth-bg: #090A0E;
+  --c-topbar-bg: #131726;
+  --c-auth-bg:   #07090F;
 
-  /* Cartões de saldo */
-  --c-saldo-pos-bg:     linear-gradient(155deg, rgba(52,211,153,0.14) 0%, rgba(52,211,153,0.04) 46%, var(--c-surface) 80%);
-  --c-saldo-pos-border: rgba(52, 211, 153, 0.26);
-  --c-saldo-neg-bg:     linear-gradient(155deg, rgba(251,113,133,0.14) 0%, rgba(251,113,133,0.04) 46%, var(--c-surface) 80%);
-  --c-saldo-neg-border: rgba(251, 113, 133, 0.24);
+  --c-sidebar:             #131726;
+  --c-sidebar-item-hover:  rgba(237, 238, 244, 0.06);
+  --c-sidebar-item-active: var(--c-accent-soft);
+  --c-sidebar-text:        #969AB0;
+  --c-sidebar-text-hover:  #EDEEF4;
+  --c-sidebar-text-active: #C68BFF;
 
-  /* Sidebar — navy um tom abaixo das superfícies */
-  --c-sidebar:             #191922;
-  --c-sidebar-item-hover:  rgba(255, 255, 255, 0.05);
-  --c-sidebar-item-active: rgba(139, 92, 246, 0.18);
-  --c-sidebar-accent:      #8B5CF6;
-  --c-sidebar-accent-glow: rgba(139, 92, 246, 0.0);
-  --c-sidebar-text:        rgba(237, 238, 242, 0.50);
-  --c-sidebar-text-hover:  rgba(237, 238, 242, 0.90);
-  --c-sidebar-text-active: #FFFFFF;
-  --c-sidebar-border:      rgba(255, 255, 255, 0.07);
-
-  /* Sombras mais profundas no escuro */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.30);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32), 0 2px 6px rgba(0, 0, 0, 0.30);
-  --shadow:    0 1px 2px rgba(0, 0, 0, 0.34), 0 4px 12px -2px rgba(0, 0, 0, 0.44);
-  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.40), 0 12px 32px -6px rgba(0, 0, 0, 0.55);
-  --shadow-lg: 0 6px 16px rgba(0, 0, 0, 0.46), 0 28px 56px -10px rgba(0, 0, 0, 0.64);
+  --shadow-xs:   0 1px 2px rgba(0, 0, 0, 0.40);
+  --shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.42),
+                 0 2px 6px -1px rgba(0, 0, 0, 0.40);
+  --shadow-md:   0 2px 4px -1px rgba(0, 0, 0, 0.46),
+                 0 8px 20px -4px rgba(0, 0, 0, 0.52);
+  --shadow-over: 0 8px 16px -6px rgba(0, 0, 0, 0.56),
+                 0 24px 48px -12px rgba(0, 0, 0, 0.66);
 }
 
-/* ── Tokens comuns (independentes de tema) ─────────────────────────────────── */
+/* ── Tokens comuns ────────────────────────────────────────────────────────── */
 :root {
-  /* ── Tipografia ──────────────────────────────────────────────────────────────
-     Par display + texto (igual à landing/login): Sora carrega a personalidade
-     nos títulos e números-herói; Inter cuida do texto e dos valores em lista
-     (numerais tabulares alinham as colunas). --font-mono continua sendo Inter. */
-  --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: 'Sora', 'Inter', system-ui, sans-serif;
-  --font-body:    var(--font-sans);
-  --font-mono:    var(--font-sans);
+  /* ── Tipografia ──────────────────────────────────────────────────────────
+     UMA família: Archivo variável, com os eixos de LARGURA (62–125%) e peso
+     num arquivo só. A largura é o recurso de design do app inteiro, não um
+     detalhe: --font-num usa a condensada pesada, que é como preço sempre foi
+     escrito à mão (cabe mais dígito no mesmo cartão), e o texto corre na
+     largura normal. Duas vozes, um download.
 
-  /* ── Raios ───────────────────────────────────────────────────────────────── */
-  --radius-xs:   7px;
-  --radius-sm:   10px;
-  --radius:      14px;
-  --radius-lg:   20px;
-  --radius-xl:   28px;
+     Antes eram Inter + Sora, o par que toda interface gerada por IA usa. */
+  --font-sans:    'Archivo', system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-sans);
+  --font-body:    var(--font-sans);
+
+  /* Escala de texto. Densidade de ferramenta: o dono abre isso dezenas de
+     vezes por dia e quer VER as linhas, não o ar entre elas. */
+  --fs-2xs: 11px; /* rótulo caixa-alta, badge, aba */
+  --fs-xs:  12px; /* apoio, meta de lançamento */
+  --fs-sm:  13px; /* secundário — o mais usado */
+  --fs-md:  14px; /* corpo, item de lista, botão */
+  --fs-lg:  15px; /* destaque */
+
+  /* ── Raios ───────────────────────────────────────────────────────────────
+     A curva vem do logo: o tile do icon.svg tem rx 116 num lado de 512, ou
+     seja 23%. A rampa cresce com o tamanho da peça — 23% de um botão de 36px
+     dá ~8px, de uma placa de 44px dá ~10, de um modal dá ~18. Raio fixo pequeno
+     numa superfície grande lê como reto, que era exatamente a queixa.
+
+     Etiqueta e chip vão a --radius-full de propósito: em corpo pequeno a
+     pílula é mais legível e mais acabada que o retângulo. */
+  --radius-xs:   6px;  /* chip de ícone, quadradinho de categoria */
+  --radius-sm:   8px;  /* botão, campo, item de menu */
+  --radius:      12px; /* placa (card), painel */
+  --radius-lg:   18px; /* modal, placa de saldo */
   --radius-full: 9999px;
 
-  /* ── Layout (mais respiro) ─────────────────────────────────────────────────── */
-  --gap:       24px;
-  --topbar-h:  64px;
-  --sidebar-w: 248px;
+  --gap:       14px;
+  --pad-card:  18px;
+  --topbar-h:  56px;
+  --sidebar-w: 228px;
+
+  /* Uma curva só, saída exponencial. */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* ── Reset ───────────────────────────────────────────────────────────────── */
@@ -210,26 +243,25 @@ body {
   font-family: var(--font-body);
   background: var(--c-bg);
   color: var(--c-ink);
-  font-size: 15px;
-  line-height: 1.55;
-  letter-spacing: -0.011em;
+  font-size: var(--fs-md);
+  line-height: 1.45;
+  letter-spacing: -0.005em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
 }
 
-/* Transição suave ao alternar entre tema claro e escuro.
-   Limitada às superfícies/textos principais para não dar "lag" visual. */
 body, .topbar, .nav, .bottom-nav, .card, .saldo, .stat, .input, .modal {
-  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-/* Títulos — Sora, pesada e bem fechada (mesmo display da landing/login) */
+/* Títulos — a mesma Archivo, estreitada. Título de seção aqui se comporta como
+   rótulo de placa: curto, condensado, apertado. */
 h1, h2, h3 {
   font-family: var(--font-display);
   font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.025em;
+  font-stretch: 88%;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
   color: var(--c-ink);
 }
 
@@ -240,19 +272,37 @@ button {
 
 input, select, textarea {
   font-family: inherit;
-  font-size: 15px;
+  font-size: var(--fs-md);
 }
 
-/* Valores monetários — Inter com numerais tabulares (alinham em coluna) */
+/* O Safari do iOS dá zoom em qualquer campo abaixo de 16px, e o app é usado
+   principalmente no celular — sem isso a tela pula a cada campo. */
+@media (pointer: coarse) {
+  input, select, textarea { font-size: 16px; }
+}
+
+/* ── A VOZ DO NÚMERO ──────────────────────────────────────────────────────────
+   Condensada e pesada, com numeral tabular pra coluna de valor alinhar na
+   vírgula. É isto que faz o app parecer um livro-caixa e não um painel. */
 .num {
+  font-stretch: 78%;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1, "cv01" 1;
-  letter-spacing: -0.01em;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: 0;
 }
 
-.c-entrada { color: var(--c-entrada); }
-.c-saida   { color: var(--c-saida);   }
+.c-entrada { color: var(--c-entrada-text); }
+.c-saida   { color: var(--c-saida-text);   }
 .ta-right  { text-align: right; }
+
+/* Foco: anel de latão com folga. --c-accent dá 5:1 contra a placa e 4.4:1
+   contra o papel, bem acima dos 3:1 exigidos de um indicador de foco. */
+:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

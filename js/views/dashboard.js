@@ -8,11 +8,50 @@
 
 import Chart from "https://esm.sh/chart.js@4/auto";
 import { el, $, emptyState, errorState, ICONS } from "../ui.js";
-import { state, mesAtual } from "../state.js";
+import { state, periodoDoMes, mesAnterior, mesChaveAtual } from "../state.js";
 import { listarLancamentos, listarContas } from "../api.js";
-import { formatBRL, formatDate } from "../money.js";
+import { formatBRL, formatDate, splitMoeda } from "../money.js";
 
 let chartRef = null;
+// Últimos lançamentos desenhados, pra poder repintar o gráfico numa troca de
+// tema sem ir buscar tudo na API de novo.
+let ultimosDados = null;
+
+// Um único listener no módulo (não por render): ao trocar o tema, redesenha o
+// gráfico se ele ainda estiver na tela. Se o usuário já navegou pra outra
+// view, o canvas não existe mais e desenharGrafico() sai na primeira linha.
+window.addEventListener("temachange", () => {
+  if (ultimosDados) desenharGrafico(ultimosDados);
+});
+
+// Mês em foco ("YYYY-MM"). Mora no módulo, não no render, pra sobreviver a uma
+// ida e volta a outra tela — quem estava conferindo março não volta pro mês
+// corrente só por ter passado em Lançamentos.
+let mesSelecionado = mesChaveAtual();
+
+// <input type="month"> em vez de um seletor próprio: é um controle nativo, já
+// vem com teclado, calendário e localização do sistema de graça.
+function seletorDeMes(root) {
+  const input = el("input", {
+    type: "month",
+    class: "input input--mes",
+    value: mesSelecionado,
+    "aria-label": "Mês do resumo",
+  });
+  input.addEventListener("change", () => {
+    if (!input.value) return; // o campo aceita ser esvaziado; ignoramos
+    mesSelecionado = input.value;
+    renderDashboard(root);
+  });
+  return input;
+}
+
+// "2026-08" -> "Agosto 2026"
+function nomeDoMes(chave) {
+  const [ano, mes] = chave.split("-").map(Number);
+  const nome = new Date(ano, mes - 1, 1).toLocaleDateString("pt-BR", { month: "long" });
+  return `${nome.charAt(0).toUpperCase()}${nome.slice(1)} ${ano}`;
+}
 
 export async function renderDashboard(root) {
   root.innerHTML = "";
@@ -40,36 +79,49 @@ export async function renderDashboard(root) {
   const aReceber = pendentes.filter((c) => c.kind === "entrada").reduce((s, c) => s + c.amount_cents, 0);
   const aPagar = pendentes.filter((c) => c.kind === "saida").reduce((s, c) => s + c.amount_cents, 0);
 
-  const { de, ate } = mesAtual();
+  const { de, ate } = periodoDoMes(mesSelecionado);
   const doMes = todos.filter((t) => t.occurred_on >= de && t.occurred_on <= ate);
   const entradasMes = somaPorTipo(doMes, "entrada");
   const saidasMes = somaPorTipo(doMes, "saida");
   const resultadoMes = entradasMes - saidasMes;
 
-  // Mês passado (pra tendência "vs mês passado").
-  const mp = mesPassado();
+  // Mês anterior ao escolhido (pra tendência "vs mês passado").
+  const mp = periodoDoMes(mesAnterior(mesSelecionado));
   const doMesPassado = todos.filter((t) => t.occurred_on >= mp.de && t.occurred_on <= mp.ate);
   const entradasAnt = somaPorTipo(doMesPassado, "entrada");
   const saidasAnt = somaPorTipo(doMesPassado, "saida");
 
-  const mesAno = new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  const ehMesCorrente = mesSelecionado === mesChaveAtual();
+  const mesAno = nomeDoMes(mesSelecionado);
 
   root.innerHTML = "";
   root.append(...[
     el("header", { class: "page-head page-head--row" },
       el("div", {},
-        el("h1", { class: "page-title" }, saudacao()),
-        el("p", { class: "page-sub" }, `Aqui está o resumo de ${mesAno}`)
+        // A saudação só faz sentido olhando o mês corrente. Num mês passado o
+        // título passa a dizer o que a tela está mostrando de verdade.
+        el("h1", { class: "page-title" }, ehMesCorrente ? saudacao() : mesAno),
+        el("p", { class: "page-sub" },
+          ehMesCorrente ? `Aqui está o resumo de ${mesAno}` : "Resumo do período selecionado")
       ),
-      el("button", {
-        class: "btn btn--primary",
-        onclick: () => document.querySelector('[data-tela="lancamentos"]')?.click(),
-      }, "+ Novo lançamento")
+      el("div", { class: "page-head__acoes" },
+        seletorDeMes(root),
+        el("button", {
+          class: "btn btn--primary",
+          onclick: () => document.querySelector('[data-tela="lancamentos"]')?.click(),
+        }, "+ Novo lançamento")
+      )
     ),
 
-    // ---- cards de resumo ----
-    el("section", { class: "metrics" },
-      metricCard("Saldo total", saldo, "saldo", deltaFoot(resultadoMes)),
+    // ---- resumo ----
+    // Grade assimétrica: a placa de saldo ocupa a largura toda e entradas e
+    // saídas ficam embaixo, em corpo menor. Três cards iguais diziam que as
+    // três informações valem o mesmo, e não valem — o saldo é o que o dono
+    // abriu o app pra ver.
+    el("section", { class: "metrics metrics--dash" },
+      // Saldo total é acumulado desde sempre, não do mês — por isso não muda
+      // com o seletor; só o rodapé (o resultado do período) acompanha.
+      metricCard("Saldo total", saldo, "saldo", deltaFoot(resultadoMes, ehMesCorrente), true),
       metricCard("Entradas do mês", entradasMes, "entrada", trendFoot(entradasMes, entradasAnt, "entrada")),
       metricCard("Saídas do mês", saidasMes, "saida", trendFoot(saidasMes, saidasAnt, "saida"))
     ),
@@ -79,14 +131,14 @@ export async function renderDashboard(root) {
       el("div", { class: "card chart-card" },
         el("div", { class: "card__head" },
           el("h2", { class: "card__title" }, "Fluxo de caixa"),
-          el("span", { class: "card__hint" }, "Últimos 6 meses")
+          el("span", { class: "card__hint" }, `6 meses até ${mesAno}`)
         ),
         el("div", { class: "chart-wrap" }, el("canvas", { id: "chart-meses" }))
       ),
       el("div", { class: "card" },
         el("div", { class: "card__head" },
           el("h2", { class: "card__title" }, "Composição de despesas"),
-          el("span", { class: "card__hint" }, "Este mês")
+          el("span", { class: "card__hint" }, mesAno)
         ),
         composicaoDespesas(doMes)
       )
@@ -166,26 +218,39 @@ const METRIC_ICONS = {
   saida:   `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>`,
 };
 
-function metricCard(label, cents, tipo, foot) {
+// `placa` transforma o card no elemento-assinatura: número em condensada
+// pesada com a cifra pequena e erguida ao lado, do jeito que preço é escrito
+// numa placa de banca. Fora da placa a cifra fica junto do número mesmo — em
+// corpo pequeno, separá-la só abriria um buraco no meio do valor.
+function metricCard(label, cents, tipo, foot, placa = false) {
   const cls = tipo === "entrada" || tipo === "saida" ? `metric--${tipo}` : "";
-  return el("div", { class: `card metric ${cls}` },
+  const { cifra, valor } = splitMoeda(cents);
+  return el("div", { class: `card metric ${cls} ${placa ? "metric--placa" : ""}` },
     el("div", { class: "metric__head" },
       el("span", { class: "metric__label" }, label),
-      METRIC_ICONS[tipo]
+      // O ícone repete o que o rótulo e a cor já dizem. Na placa ele sai:
+      // ali o número é o assunto e nada mais disputa com ele.
+      !placa && METRIC_ICONS[tipo]
         ? el("span", { class: `metric__icon metric__icon--${tipo}`, html: METRIC_ICONS[tipo] })
         : null
     ),
-    el("span", { class: "metric__value num" }, formatBRL(cents)),
+    placa
+      ? el("span", { class: "metric__value num" },
+          el("span", { class: "metric__cifra" }, cifra),
+          el("span", {}, valor)
+        )
+      : el("span", { class: "metric__value num" }, formatBRL(cents)),
     foot || null
   );
 }
 
-// Rodapé do card Saldo: resultado do mês (▲/▼ R$ X este mês).
-function deltaFoot(cents) {
-  if (!cents) return el("span", { class: "metric__foot" }, "Sem movimento este mês");
+// Rodapé do card Saldo: resultado do período (▲/▼ R$ X este mês / no mês).
+function deltaFoot(cents, ehMesCorrente) {
+  const quando = ehMesCorrente ? "este mês" : "no mês";
+  if (!cents) return el("span", { class: "metric__foot" }, `Sem movimento ${quando}`);
   const pos = cents > 0;
   return el("span", { class: `metric__foot ${pos ? "is-up" : "is-down"}` },
-    `${pos ? "▲" : "▼"} ${formatBRL(Math.abs(cents))} este mês`);
+    `${pos ? "▲" : "▼"} ${formatBRL(Math.abs(cents))} ${quando}`);
 }
 
 // Rodapé de tendência vs mês passado. Pra saídas, subir é "ruim" (vermelho).
@@ -207,7 +272,7 @@ function composicaoDespesas(doMes) {
   const saidas = doMes.filter((t) => t.kind === "saida");
   const total = saidas.reduce((s, t) => s + t.amount_cents, 0);
   if (total === 0) {
-    return el("p", { class: "config__hint", style: "margin:0" }, "Nenhuma saída registrada este mês.");
+    return el("p", { class: "config__hint", style: "margin:0" }, "Nenhuma saída registrada no mês.");
   }
   const grupos = {};
   for (const t of saidas) {
@@ -278,24 +343,19 @@ function somaSaldo(itens) {
   return itens.reduce((acc, t) => acc + (t.kind === "entrada" ? t.amount_cents : -t.amount_cents), 0);
 }
 
-function mesPassado() {
-  const hoje = new Date();
-  const ini = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
-  const fim = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
-  const iso = (d) => d.toISOString().slice(0, 10);
-  return { de: iso(ini), ate: iso(fim) };
-}
-
 // ---- gráfico (área) --------------------------------------------------------
 
 function desenharGrafico(todos) {
   const canvas = $("#chart-meses");
   if (!canvas) return;
+  ultimosDados = todos;
 
+  // Os 6 meses terminam no mês escolhido, não no de hoje: olhando março, o
+  // gráfico mostra out–mar, e não uma janela que ignora o seletor.
   const meses = [];
-  const base = new Date();
+  const [anoBase, mesBase] = mesSelecionado.split("-").map(Number);
   for (let i = 5; i >= 0; i--) {
-    const d = new Date(base.getFullYear(), base.getMonth() - i, 1);
+    const d = new Date(anoBase, mesBase - 1 - i, 1);
     meses.push({
       chave: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
       rotulo: d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""),
@@ -311,42 +371,44 @@ function desenharGrafico(todos) {
 
   if (chartRef) chartRef.destroy();
 
-  const font = "'Inter', system-ui, sans-serif";
+  // Colunas, não área com gradiente: o mês é uma quantidade discreta, e duas
+  // barras lado a lado deixam comparar entrada e saída do mesmo mês sem ler
+  // duas curvas sobrepostas. A área suave também era o desenho que todo
+  // painel de SaaS financeiro usa.
+  const font = "'Archivo', system-ui, sans-serif";
   const css = getComputedStyle(document.documentElement);
   const v = (nome, fallback) => (css.getPropertyValue(nome).trim() || fallback);
-  const mutedColor = v("--c-muted", "#8B9E98");
-  const gridColor = v("--c-border", "rgba(221,229,226,0.8)");
-  const corEntrada = v("--c-entrada", "#10B981");
-  const corSaida = v("--c-saida", "#EF4444");
-
-  const ctx = canvas.getContext("2d");
-  const grad = (cor) => {
-    const g = ctx.createLinearGradient(0, 0, 0, 240);
-    g.addColorStop(0, cor + "44");
-    g.addColorStop(1, cor + "00");
-    return g;
-  };
+  const mutedColor = v("--c-muted", "#5E6178");
+  const inkColor = v("--c-ink", "#141726");
+  const gridColor = v("--c-line", "rgba(20,23,38,0.12)");
+  const axisColor = v("--c-line-strong", "rgba(20,23,38,0.26)");
+  const corEntrada = v("--c-entrada", "#0F6B47");
+  const corSaida = v("--c-saida", "#B3261E");
+  const surface = v("--c-surface", "#FFFFFF");
 
   chartRef = new Chart(canvas, {
-    type: "line",
+    type: "bar",
     data: {
       labels: meses.map((m) => m.rotulo),
       datasets: [
         {
           label: "Entradas",
           data: meses.map((m) => m.entrada / 100),
-          borderColor: corEntrada,
-          backgroundColor: grad(corEntrada),
-          fill: true, tension: 0.35, borderWidth: 2.5,
-          pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: corEntrada,
+          backgroundColor: corEntrada,
+          borderWidth: 0,
+          borderRadius: 4,     // acompanha o --radius-xs do resto do sistema
+          borderSkipped: false,
+          categoryPercentage: 0.66,
+          barPercentage: 0.92,
         },
         {
           label: "Saídas",
           data: meses.map((m) => m.saida / 100),
-          borderColor: corSaida,
-          backgroundColor: grad(corSaida),
-          fill: true, tension: 0.35, borderWidth: 2.5,
-          pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: corSaida,
+          backgroundColor: corSaida,
+          borderWidth: 0,
+          borderRadius: 0,
+          categoryPercentage: 0.66,
+          barPercentage: 0.92,
         },
       ],
     },
@@ -358,24 +420,44 @@ function desenharGrafico(todos) {
         legend: {
           position: "bottom",
           labels: {
-            boxWidth: 9, boxHeight: 9, borderRadius: 3, useBorderRadius: true,
-            font: { family: font, size: 12 }, color: mutedColor, padding: 18,
+            boxWidth: 10, boxHeight: 10, borderRadius: 3, useBorderRadius: true,
+            font: { family: font, size: 11, weight: 700 },
+            color: mutedColor, padding: 16,
           },
         },
         tooltip: {
-          backgroundColor: "#1E293B", titleFont: { family: font, size: 12 },
-          bodyFont: { family: font, size: 12 }, padding: 12, cornerRadius: 8,
+          // Tinta sólida com a cor do texto do tema: no claro fica preto sobre
+          // a placa branca, no escuro fica claro sobre o carvão. Um valor fixo
+          // some contra uma das duas superfícies.
+          backgroundColor: inkColor,
+          titleColor: surface,
+          bodyColor: surface,
+          titleFont: { family: font, size: 11, weight: 700 },
+          bodyFont: { family: font, size: 12 },
+          padding: 10,
+          cornerRadius: 6,
+          displayColors: false,
           callbacks: {
-            label: (c) => `  ${c.dataset.label}: R$ ${c.raw.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+            // formatBRL e não "R$" fixo: a moeda é configurável entre 7 opções
+            // e o rótulo do gráfico era o único lugar que ignorava isso.
+            label: (c) => `${c.dataset.label}: ${formatBRL(Math.round(c.raw * 100))}`,
           },
         },
       },
       scales: {
-        x: { grid: { display: false }, border: { display: false }, ticks: { font: { family: font, size: 12 }, color: mutedColor } },
-        y: {
-          grid: { color: gridColor }, border: { display: false },
+        x: {
+          grid: { display: false },
+          border: { color: axisColor, width: 1 },
           ticks: {
-            callback: (val) => "R$ " + val.toLocaleString("pt-BR", { minimumFractionDigits: 0 }),
+            font: { family: font, size: 11, weight: 700 },
+            color: mutedColor,
+          },
+        },
+        y: {
+          grid: { color: gridColor },
+          border: { display: false },
+          ticks: {
+            callback: (val) => formatBRL(Math.round(val * 100)),
             font: { family: font, size: 11 }, color: mutedColor, maxTicksLimit: 5,
           },
         },

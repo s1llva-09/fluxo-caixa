@@ -3,25 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="only light" />
   <title>Monetta</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 
   <!-- PWA: instalável e abre como app no celular -->
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#FFFFFF" />
+  <meta name="theme-color" content="#F0EFF4" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Monetta" />
   <link rel="apple-touch-icon" href="icon-180.png" />
 
-  <!-- Tipografia: Sora (display — títulos e números-herói) + Inter (texto e
-       valores em lista, com numerais tabulares). Mesmo par da landing/login. -->
+  <!-- Tipografia: Archivo variável, UMA família com os eixos de largura
+       (62–125%) e peso num arquivo só. A largura é o recurso de design do app:
+       condensada pesada nos números (como preço sempre foi escrito à mão),
+       largura normal no texto. Duas vozes, um download. -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&family=Sora:wght@600;700;800&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap"
     rel="stylesheet"
   />
 
@@ -43,6 +44,34 @@
   </script>
 </head>
 <body>
+<!--
+  DIREÇÃO: A PLACA — seed 471c0ec5
+
+  THESIS: numa tela de caixa UMA informação manda e o resto é letra miúda.
+  Recusa o arranjo de três cards de métrica iguais, onde nada é mais
+  importante que nada.
+
+  OWN-WORLD: paleta tirada do próprio logo — gradiente #C68BFF→#9A3FF0→#7A28DD,
+  tile #0B0E1A, canto de 23% (rx 116 em 512). O violeta do "M" é a AÇÃO; o navy
+  do tile é o chão do tema escuro e da tela de entrada. Neutros com um sopro de
+  violeta, nunca cinza puro. Rótulo de seção sustentado por fio; sombra em
+  camadas, discreta, sempre com offset. Raio cresce com a peça (6→18px).
+  Archivo variável: condensada 68% nos números, normal no texto. Verde e
+  vermelho ficam fora da marca — são a direção do dinheiro, não enfeite.
+
+  STORY: o dono lê o saldo do outro lado do balcão, vê a fita do dia e lança
+  em dois toques.
+
+  FIRST VIEWPORT: placa de saldo em largura cheia, cifra pequena e número em
+  condensada pesada; entradas e saídas como letra miúda embaixo; a fita de
+  lançamentos logo em seguida. Ação primária é o bloco amarelo.
+
+  FORM: candidato 4 da lista ordenada por ressonância; seed key 471c0ec5.
+
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
   <!--
     A página tem duas áreas que se alternam:
       #auth-root  -> login / cadastro / criar empresa (quando deslogado)
@@ -82,8 +111,9 @@
 
     <!-- Corpo: menu lateral + conteúdo -->
     <div class="body-grid">
-      <!-- Menu de navegação. Cada botão tem data-tela com o nome da tela. -->
-      <nav class="nav">
+      <!-- Menu de navegação. Cada botão tem data-tela com o nome da tela.
+           No celular é o drawer que o botão "Mais" da barra inferior abre. -->
+      <nav class="nav" id="nav-lateral">
         <div class="nav__group">
           <span class="nav__group-label">Visão geral</span>
           <button class="nav__item is-active" data-tela="dashboard">
@@ -176,44 +206,26 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><path d="M9 16l2 2 4-4"/></svg>
         <span>Contas</span>
       </button>
-      <button class="bottom-nav__item" data-tela="categorias" aria-label="Categorias">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><circle cx="7" cy="7" r="1.2" fill="currentColor" stroke="none"/></svg>
-        <span>Categorias</span>
-      </button>
-      <button class="bottom-nav__item" data-tela="vendas" aria-label="Vendas">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-        <span>Vendas</span>
-      </button>
-      <button class="bottom-nav__item" data-tela="estoque" aria-label="Estoque">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-        <span>Estoque</span>
-      </button>
-      <button class="bottom-nav__item" data-tela="clientes" aria-label="Clientes">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        <span>Clientes</span>
-      </button>
-      <button class="bottom-nav__item" data-tela="funcionarios" aria-label="Funcionários">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="8" cy="10" r="2"/><path d="M5 16a3 3 0 0 1 6 0"/><line x1="14" y1="9" x2="19" y2="9"/><line x1="14" y1="13" x2="19" y2="13"/></svg>
-        <span>Equipe</span>
-      </button>
       <button class="bottom-nav__item" data-tela="relatorios" aria-label="Relatórios">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
         <span>Relatórios</span>
       </button>
-      <button class="bottom-nav__item" data-tela="configuracoes" aria-label="Configurações">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-        <span>Config</span>
-      </button>
-      <button class="bottom-nav__item nav__admin" data-tela="admin" aria-label="Admin" hidden>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
-        <span>Admin</span>
+      <!-- Abre o menu lateral completo (Categorias, Vendas, Estoque, Clientes,
+           Equipe, Configurações, Admin). A barra tinha 11 abas e rolava na
+           horizontal: aba que precisa de scroll não é encontrada por ninguém. -->
+      <button class="bottom-nav__item" id="btn-mais" aria-label="Mais opções" aria-expanded="false" aria-controls="nav-lateral">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        <span>Mais</span>
       </button>
     </nav>
   </div>
 
-  <!-- Modal reutilizável (usado pra "novo lançamento", "estornar", etc.) -->
+  <!-- Modal reutilizável (usado pra "novo lançamento", "estornar", etc.)
+       role/aria-modal/aria-labelledby: sem isso o leitor de tela anuncia o
+       conteúdo como se fosse parte da página, sem dizer que abriu um diálogo
+       nem qual é o título dele. O foco em si é cuidado pelo js/ui.js. -->
   <div id="modal-overlay" class="modal-overlay">
-    <div class="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal__head">
         <h3 id="modal-title"></h3>
         <button id="modal-close" class="modal__close" aria-label="Fechar" data-tip="Fechar">×</button>
@@ -222,8 +234,11 @@
     </div>
   </div>
 
-  <!-- Área dos avisos (toast) -->
-  <div id="toast-area"></div>
+  <!-- Área dos avisos (toast).
+       role="status" + aria-live="polite": o toast é a ÚNICA confirmação de que
+       um lançamento salvou (ou falhou). Sem live region ele é puramente visual
+       e quem usa leitor de tela nunca fica sabendo do resultado. -->
+  <div id="toast-area" role="status" aria-live="polite" aria-atomic="false"></div>
 
   <!-- Único JS carregado: ele importa todos os módulos -->
   <script type="module" src="js/index.js"></script>

@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <title>Preview — A Placa</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap"
+    rel="stylesheet">
+  <!-- CSS de verdade: o preview lê os arquivos do app, não cópias. -->
+  <link rel="stylesheet" href="../css/index.css">
+  <style>
+    /* Só a casca do preview. Nada aqui vaza pro app. */
+    .pv-bar {
+      position: fixed; right: 12px; bottom: 12px; z-index: 99;
+      display: flex; gap: 6px;
+    }
+    .pv-sec { margin: 26px 0 10px; }
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+  <header class="topbar">
+    <button class="btn-menu" aria-label="Menu">
+      <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
+    </button>
+    <a class="brand" href="#">
+      <span class="brand__mark">
+        <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mg" x1="0.12" y1="0" x2="0.82" y2="1"><stop offset="0" stop-color="#C68BFF"/><stop offset="0.5" stop-color="#9A3FF0"/><stop offset="1" stop-color="#7A28DD"/></linearGradient></defs><path d="M4 15 L4 5.6 L10 13 L16 4.8 L16 15" fill="none" stroke="url(#mg)" stroke-width="2.8" stroke-linejoin="miter" stroke-linecap="butt"/></svg>
+      </span>
+      <span class="brand__name">Monetta</span>
+    </a>
+    <span class="topbar__month">Agosto 2026</span>
+    <button class="topbar__notif" aria-label="Notificações">
+      <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+      <span class="topbar__notif-badge">3</span>
+    </button>
+    <button class="topbar__empresa topbar__empresa--switch">Mercearia do Zé</button>
+  </header>
+
+  <div class="sub-banner">
+    <span class="sub-banner__text">Sua mensalidade vence em 3 dias.</span>
+    <button class="sub-banner__close">×</button>
+  </div>
+
+  <div class="body-grid">
+    <nav class="nav">
+      <div class="nav__group">
+        <span class="nav__group-label">Visão geral</span>
+        <button class="nav__item is-active">
+          <svg class="nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+          <span>Painel</span>
+        </button>
+        <button class="nav__item">
+          <svg class="nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Lançamentos</span>
+        </button>
+        <button class="nav__item">
+          <svg class="nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>Contas</span>
+        </button>
+      </div>
+      <div class="nav__group">
+        <span class="nav__group-label">Comercial</span>
+        <button class="nav__item"><svg class="nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg><span>Vendas</span></button>
+        <button class="nav__item"><svg class="nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8l-9-5-9 5v8l9 5 9-5z"/></svg><span>Estoque</span></button>
+      </div>
+      <button class="nav__item nav__sair">
+        <svg class="nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span>Sair</span>
+      </button>
+    </nav>
+
+    <main class="content">
+      <header class="page-head page-head--row">
+        <div>
+          <h1 class="page-title">Bom dia</h1>
+          <p class="page-sub">Aqui está o resumo de Agosto 2026</p>
+        </div>
+        <div class="page-head__acoes">
+          <input class="input input--mes" type="month" value="2026-08" aria-label="Mês">
+          <button class="btn btn--primary">+ Novo lançamento</button>
+        </div>
+      </header>
+
+      <!-- A PLACA + a letra miúda -->
+      <section class="metrics metrics--dash">
+        <div class="card metric metric--placa">
+          <div class="metric__head"><span class="metric__label">Saldo total</span></div>
+          <span class="metric__value num"><span class="metric__cifra">R$</span><span>48.230,15</span></span>
+          <span class="metric__foot is-up">▲ R$ 4.310,00 este mês</span>
+        </div>
+        <div class="card metric metric--entrada">
+          <div class="metric__head">
+            <span class="metric__label">Entradas do mês</span>
+            <span class="metric__icon metric__icon--entrada"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></span>
+          </div>
+          <span class="metric__value num">R$ 18.940,00</span>
+          <span class="metric__foot is-up">▲ 12,4% vs julho</span>
+        </div>
+        <div class="card metric metric--saida">
+          <div class="metric__head">
+            <span class="metric__label">Saídas do mês</span>
+            <span class="metric__icon metric__icon--saida"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg></span>
+          </div>
+          <span class="metric__value num">R$ 14.630,00</span>
+          <span class="metric__foot is-down">▲ 3,1% vs julho</span>
+        </div>
+      </section>
+
+      <section class="dash-grid">
+        <div class="card chart-card">
+          <div class="card__head">
+            <h2 class="card__title">Fluxo de caixa</h2>
+            <span class="card__hint">6 meses até Agosto 2026</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-meses"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card__head">
+            <h2 class="card__title">Composição de despesas</h2>
+            <span class="card__hint">Agosto 2026</span>
+          </div>
+          <div class="compo">
+            <div class="compo__item">
+              <div class="compo__top"><span class="compo__nome">Fornecedores</span><span class="compo__pct">46%</span></div>
+              <div class="compo__bar"><div class="compo__fill" style="width:46%"></div></div>
+              <span class="compo__val">R$ 6.729,80</span>
+            </div>
+            <div class="compo__item">
+              <div class="compo__top"><span class="compo__nome">Aluguel</span><span class="compo__pct">28%</span></div>
+              <div class="compo__bar"><div class="compo__fill" style="width:28%"></div></div>
+              <span class="compo__val">R$ 4.096,40</span>
+            </div>
+            <div class="compo__item">
+              <div class="compo__top"><span class="compo__nome">Folha</span><span class="compo__pct">17%</span></div>
+              <div class="compo__bar"><div class="compo__fill" style="width:17%"></div></div>
+              <span class="compo__val">R$ 2.487,10</span>
+            </div>
+            <div class="compo__item">
+              <div class="compo__top"><span class="compo__nome">Energia</span><span class="compo__pct">9%</span></div>
+              <div class="compo__bar"><div class="compo__fill" style="width:9%"></div></div>
+              <span class="compo__val">R$ 1.316,70</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- A FITA -->
+      <section class="card">
+        <div class="card__head">
+          <h2 class="card__title">Lançamentos recentes</h2>
+          <button class="btn btn--tiny btn--ghost">Ver todos →</button>
+        </div>
+        <ul class="tx-list">
+          <li class="tx tx--entrada">
+            <div class="tx__main"><span class="tx__desc"><span>Venda balcão</span></span><span class="tx__meta">07/08/2026</span></div>
+            <div class="tx__right"><span class="tx__cat">Vendas</span><span class="tx__value num">+ R$ 1.240,00</span></div>
+          </li>
+          <li class="tx tx--saida">
+            <div class="tx__main"><span class="tx__desc"><span>Distribuidora Souza — nota 4471</span></span><span class="tx__meta">07/08/2026</span></div>
+            <div class="tx__right"><span class="tx__cat">Fornecedores</span><span class="tx__value num">− R$ 890,50</span></div>
+          </li>
+          <li class="tx tx--entrada">
+            <div class="tx__main"><span class="tx__desc"><span>Venda balcão</span><span class="badge">PIX</span></span><span class="tx__meta">06/08/2026</span></div>
+            <div class="tx__right"><span class="tx__cat">Vendas</span><span class="tx__value num">+ R$ 2.100,00</span></div>
+          </li>
+          <li class="tx tx--saida is-reversed">
+            <div class="tx__main"><span class="tx__desc"><span>Aluguel</span><span class="badge badge--muted">estornado</span></span><span class="tx__meta">05/08/2026</span></div>
+            <div class="tx__right"><span class="tx__cat">Fixos</span><span class="tx__value num">− R$ 3.200,00</span></div>
+          </li>
+          <li class="tx tx--saida">
+            <div class="tx__main"><span class="tx__desc"><span>Energia elétrica</span></span><span class="tx__meta">03/08/2026</span></div>
+            <div class="tx__right"><span class="tx__cat">Fixos</span><span class="tx__value num">− R$ 612,44</span></div>
+          </li>
+        </ul>
+      </section>
+
+      <!-- Controles -->
+      <section class="card">
+        <div class="card__head"><h2 class="card__title">Controles</h2></div>
+        <div class="seg-group">
+          <button class="seg seg--on">Entrada</button>
+          <button class="seg">Saída</button>
+        </div>
+        <div class="form-inline">
+          <label class="field" style="flex:1"><span class="field__label">Descrição</span><input class="input" value="Venda balcão"></label>
+          <label class="field" style="flex:1"><span class="field__label">Categoria</span><select class="input"><option>Vendas</option></select></label>
+        </div>
+        <div class="admin-filtros">
+          <button class="chip chip--on">Todos</button>
+          <button class="chip">Ativos</button>
+          <button class="chip">Vencendo</button>
+        </div>
+        <div class="form__actions">
+          <button class="btn btn--ghost">Cancelar</button>
+          <button class="btn btn--danger">Estornar</button>
+          <button class="btn btn--primary">Salvar</button>
+        </div>
+      </section>
+
+      <!-- Tabela -->
+      <section class="card">
+        <div class="card__head"><h2 class="card__title">Relatório por categoria</h2></div>
+        <div class="tabela-wrap">
+          <table class="tabela">
+            <thead><tr><th>Categoria</th><th class="ta-right">Entradas</th><th class="ta-right">Saídas</th><th class="ta-right">Saldo</th></tr></thead>
+            <tbody>
+              <tr><td>Vendas</td><td class="ta-right">18.940,00</td><td class="ta-right">0,00</td><td class="ta-right">18.940,00</td></tr>
+              <tr><td>Fornecedores</td><td class="ta-right">0,00</td><td class="ta-right">6.729,80</td><td class="ta-right">−6.729,80</td></tr>
+              <tr><td>Fixos</td><td class="ta-right">0,00</td><td class="ta-right">5.413,10</td><td class="ta-right">−5.413,10</td></tr>
+            </tbody>
+            <tfoot><tr><td>Total</td><td class="ta-right">18.940,00</td><td class="ta-right">12.142,90</td><td class="ta-right">6.797,10</td></tr></tfoot>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card__head"><h2 class="card__title">Estado vazio</h2></div>
+        <div class="empty-state">
+          <span class="empty-state__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+          <p class="empty-state__text">Nenhum lançamento neste mês. Comece registrando o que entrou hoje.</p>
+          <button class="btn btn--primary">+ Novo lançamento</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="bottom-nav__item is-active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Painel</span></button>
+    <button class="bottom-nav__item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>Lançar</span></button>
+    <button class="bottom-nav__item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Contas</span></button>
+    <button class="bottom-nav__item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Relat.</span></button>
+    <button class="bottom-nav__item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg><span>Mais</span></button>
+  </nav>
+</div>
+
+<!-- Modal aberto, pra conferir a bandeja e o contorno -->
+<div id="modal-overlay" class="modal-overlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal__head">
+      <h3>Novo lançamento</h3>
+      <button class="modal__close">×</button>
+    </div>
+    <div class="modal__body">
+      <div class="seg-group"><button class="seg seg--on">Entrada</button><button class="seg">Saída</button></div>
+      <label class="field"><span class="field__label">Valor</span><input class="input" value="1.240,00"></label>
+      <label class="field"><span class="field__label">Descrição</span><input class="input" placeholder="Venda balcão"></label>
+      <div class="form__actions">
+        <button class="btn btn--ghost">Cancelar</button>
+        <button class="btn btn--primary">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="pv-bar">
+  <button class="btn btn--ghost btn--tiny" id="pv-tema">Tema</button>
+  <button class="btn btn--ghost btn--tiny" id="pv-modal">Modal</button>
+</div>
+
+<script type="module">
+  import Chart from "https://esm.sh/chart.js@4/auto";
+
+  const raiz = document.documentElement;
+  let chart = null;
+
+  function desenhar() {
+    const css = getComputedStyle(raiz);
+    const v = (n, fb) => (css.getPropertyValue(n).trim() || fb);
+    const font = "'Archivo', system-ui, sans-serif";
+    const ink = v("--c-ink", "#141726");
+    const surface = v("--c-surface", "#fff");
+    const muted = v("--c-muted", "#5E6178");
+
+    if (chart) chart.destroy();
+    chart = new Chart(document.getElementById("chart-meses"), {
+      type: "bar",
+      data: {
+        labels: ["mar", "abr", "mai", "jun", "jul", "ago"],
+        datasets: [
+          { label: "Entradas", data: [12400, 15100, 13800, 16900, 16850, 18940],
+            backgroundColor: v("--c-entrada", "#0F6B47"), borderRadius: 4, borderSkipped: false,
+            categoryPercentage: 0.66, barPercentage: 0.92 },
+          { label: "Saídas", data: [9800, 11200, 12600, 11900, 14180, 14630],
+            backgroundColor: v("--c-saida", "#B3261E"), borderRadius: 4, borderSkipped: false,
+            categoryPercentage: 0.66, barPercentage: 0.92 },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { position: "bottom", labels: {
+            boxWidth: 10, boxHeight: 10, borderRadius: 3, useBorderRadius: true,
+            font: { family: font, size: 11, weight: 700 }, color: muted, padding: 16 } },
+          tooltip: {
+            backgroundColor: ink, titleColor: surface, bodyColor: surface,
+            cornerRadius: 6, padding: 10, displayColors: false,
+            titleFont: { family: font, size: 11, weight: 700 },
+            bodyFont: { family: font, size: 12 },
+          },
+        },
+        scales: {
+          x: { grid: { display: false }, border: { color: v("--c-line-strong", "rgba(20,23,38,.26)"), width: 1 },
+               ticks: { font: { family: font, size: 11, weight: 700 }, color: muted } },
+          y: { grid: { color: v("--c-line", "rgba(20,23,38,.12)") }, border: { display: false },
+               ticks: { font: { family: font, size: 11 }, color: muted, maxTicksLimit: 5 } },
+        },
+      },
+    });
+  }
+
+  desenhar();
+
+  document.getElementById("pv-tema").onclick = () => {
+    raiz.setAttribute("data-theme", raiz.getAttribute("data-theme") === "dark" ? "light" : "dark");
+    desenhar();
+  };
+  document.getElementById("pv-modal").onclick = () => {
+    document.getElementById("modal-overlay").classList.toggle("is-open");
+  };
+</script>
+</body>
+</html>

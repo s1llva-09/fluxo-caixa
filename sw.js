@@ -6,7 +6,9 @@
 //  fontes do Google e módulos do esm.sh passam direto pra rede.
 // ============================================================================
 
-const CACHE = "fluxo-caixa-v8";
+// v9: redesign completo do CSS. Sem bumpar a versão, quem já tem o PWA
+// instalado continuaria servindo o css/index.css antigo do cache.
+const CACHE = "fluxo-caixa-v9";
 
 // Arquivos essenciais pra casca abrir offline.
 // Obs.: usamos URLs "limpas" (/ e /app) porque o Vercel está com cleanUrls,

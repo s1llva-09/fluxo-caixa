@@ -1,8 +1,12 @@
 /* ============================================================================
    pages.css — Estilos específicos de telas
+   ----------------------------------------------------------------------------
+   Mundo: A PLACA, na paleta do logo (ver base.css).
    ========================================================================== */
 
-/* ── Tela de entrada: split-screen — painel de marca + card de formulário ─── */
+/* ── Entrada: o navy do logo como tela inteira ────────────────────────────────
+   O fundo é #0B0E1A — o tile do icon.svg, exato. A tela de login é o ícone
+   ampliado: mesma cor, mesmo violeta, mesma curva. */
 .auth {
   min-height: 100vh;
   min-height: 100dvh;
@@ -13,253 +17,217 @@
   overflow: hidden;
 }
 
-/* Profundidade discreta — sheen no topo, vinheta embaixo, um sussurro de indigo.
-   Charcoal sério (estilo Linear/Stripe), sem "banho de azul". */
+/* Um brilho violeta muito baixo, vindo de onde a marca fica. Não é decoração
+   solta: é a luz do próprio "M" caindo no painel. */
 .auth::before {
   content: "";
   position: absolute;
   inset: 0;
+  pointer-events: none;
   background:
-    radial-gradient(70% 52% at 50% -16%, rgba(255,255,255,0.04) 0%, transparent 60%),
-    radial-gradient(48% 42% at 90% 2%,  rgba(99,102,241,0.085) 0%, transparent 60%),
-    radial-gradient(130% 95% at 50% 122%, rgba(0,0,0,0.5) 0%, transparent 70%);
-  pointer-events: none;
+    radial-gradient(60% 46% at 14% 8%, rgba(154, 63, 240, 0.16), transparent 62%),
+    radial-gradient(50% 40% at 92% 96%, rgba(198, 139, 255, 0.08), transparent 64%);
 }
 
-/* Grid sutil de fundo — profundidade dimensional */
-.auth::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
-  background-size: 56px 56px;
-  pointer-events: none;
-  mask-image: radial-gradient(ellipse 75% 75% at 50% 50%, black 20%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 75% 75% at 50% 50%, black 20%, transparent 100%);
-}
-
-/* Painel de marca (esquerda) — só no desktop, ecoa a landing.
-   Marca fixada no topo; headline + mock de produto centralizados. */
 .auth__aside {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 38px;
-  padding: 56px 60px;
+  gap: 32px;
+  padding: 52px 56px;
   overflow: hidden;
-}
-/* halo discreto pra erguer o mock, sem saturar de azul */
-.auth__aside::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(40% 32% at 16% 84%, rgba(99, 102, 241, 0.13), transparent 62%),
-    radial-gradient(52% 44% at 94% 6%, rgba(255, 255, 255, 0.025), transparent 60%);
 }
 .auth__aside > * { position: relative; z-index: 1; }
 
 .auth__aside-brand {
   position: absolute;
-  top: 52px; left: 60px;
-  display: flex; align-items: center; gap: 11px;
+  top: 46px; left: 56px;
+  display: flex; align-items: center; gap: 10px;
   z-index: 2;
 }
-.auth__aside-brand .brand__name { color: #fff; font-size: 18px; letter-spacing: -0.02em; }
-.auth__aside-mid { max-width: 440px; }
+.auth__aside-brand .brand__mark { background: rgba(237, 238, 244, 0.07); }
+.auth__aside-brand .brand__name { color: #EDEEF4; }
+.auth__aside-mid { max-width: 460px; }
 
-/* Botão "voltar ao site" — chip ghost no topo do card, em fluxo (com respiro) */
-.auth__back {
-  align-self: flex-start;
-  display: inline-flex; align-items: center; gap: 7px;
-  margin: 0 0 26px;
-  font-size: 13px; font-weight: 600; color: var(--c-muted);
-  text-decoration: none;
-  padding: 7px 13px 7px 10px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--c-border);
-  background: var(--c-bg);
-  box-shadow: var(--shadow-xs);
-  transition: color 0.18s var(--ease, ease), border-color 0.18s, background 0.18s,
-              box-shadow 0.18s, transform 0.18s;
+.auth__aside-title {
+  font-family: var(--font-display);
+  font-size: clamp(30px, 3.4vw, 46px);
+  font-weight: 800;
+  font-stretch: 74%;
+  line-height: 1.0;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+  color: #EDEEF4;
+  margin-bottom: 28px;
 }
-.auth__back svg { width: 15px; height: 15px; transition: transform 0.18s ease; }
-.auth__back:hover {
-  color: var(--c-ink);
-  border-color: var(--c-border-strong);
-  box-shadow: var(--shadow-sm);
-  transform: translateY(-1px);
-}
-.auth__back:hover svg { transform: translateX(-2px); }
-.auth__back:active { transform: translateY(0); }
-.auth__back:focus-visible {
-  outline: none; color: var(--c-ink);
-  border-color: var(--c-primary);
-  box-shadow: 0 0 0 3px var(--c-primary-glow);
-}
+/* Destaque em cor sólida, não em gradiente: texto com background-clip não tem
+   contraste aferível, porque cada letra cai num ponto diferente da rampa.
+   Este é o tom claro do gradiente do logo e dá 8.4:1 sobre o navy. */
+.auth .hl { color: #C68BFF; }
 
-/* ── Mini dashboard flutuante (a "assinatura" do painel) ─────────────────── */
+.auth__ticks { list-style: none; display: flex; flex-direction: column; gap: 0; margin: 0; padding: 0; }
+.auth__tick {
+  display: flex; align-items: center; gap: 12px;
+  color: #B9BCCC; font-size: var(--fs-md);
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(237, 238, 244, 0.10);
+}
+.auth__tick:first-child { border-top: 1px solid rgba(237, 238, 244, 0.10); }
+.auth__tick-ic {
+  width: 24px; height: 24px; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-xs);
+  background: rgba(154, 63, 240, 0.24);
+  color: #C68BFF;
+}
+.auth__tick-ic svg { width: 13px; height: 13px; }
+.auth__aside-foot { color: #7E8296; font-size: var(--fs-sm); }
+
+/* ── O mostruário: o produto real, no vocabulário do produto ─────────────── */
 .auth__mock {
   width: 100%;
   max-width: 420px;
-  background: #0F131B;
-  border: 1px solid #232a37;
-  border-radius: 18px;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 28px 56px -24px rgba(0, 0, 0, 0.7),
-    0 12px 28px -18px rgba(79, 70, 229, 0.5);
+  background: #131726;
+  border: 1px solid rgba(237, 238, 244, 0.12);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  animation: auth-float 7s cubic-bezier(0.45, 0, 0.55, 1) infinite,
-             auth-mock-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.6),
+              0 32px 64px -20px rgba(0, 0, 0, 0.5);
+  animation: auth-mock-in 0.5s var(--ease) both;
 }
-@keyframes auth-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
-@keyframes auth-mock-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; } }
+@keyframes auth-mock-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; } }
 
 .auth__mock-bar {
-  display: flex; align-items: center; gap: 7px;
-  padding: 12px 15px;
-  background: #0C0F16;
-  border-bottom: 1px solid #1c232e;
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 13px;
+  background: #0F1220;
+  border-bottom: 1px solid rgba(237, 238, 244, 0.10);
 }
-.auth__mock-bar i { width: 10px; height: 10px; border-radius: 50%; background: #2c3543; }
-.auth__mock-bar i:nth-child(1) { background: #ef5f5f; }
-.auth__mock-bar i:nth-child(2) { background: #f6b73c; }
-.auth__mock-bar i:nth-child(3) { background: #3fcf68; }
+.auth__mock-bar i { width: 8px; height: 8px; border-radius: var(--radius-full); background: #2E3348; }
+.auth__mock-bar i:nth-child(3) { background: #9A3FF0; }
 .auth__mock-url {
-  margin-left: 8px; font-size: 11px; color: #6b7689;
-  background: #141a24; border: 1px solid #222a37; border-radius: 6px; padding: 3px 11px;
+  margin-left: 6px; font-size: var(--fs-2xs); color: #7E8296;
+  background: rgba(237, 238, 244, 0.04);
+  border: 1px solid rgba(237, 238, 244, 0.10);
+  border-radius: var(--radius-full); padding: 3px 11px;
 }
-.auth__mock-body { padding: 18px; }
+.auth__mock-body { padding: 16px; }
 .auth__mock-label {
-  font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase;
-  color: #7f8aa3; font-weight: 700;
+  font-size: var(--fs-2xs); letter-spacing: 0.12em; text-transform: uppercase;
+  color: #EDEEF4; font-weight: 700; font-stretch: 82%;
+  padding-bottom: 7px; border-bottom: 1px solid rgba(237, 238, 244, 0.16);
 }
 .auth__mock-saldo {
   font-family: var(--font-display);
-  font-size: 32px; font-weight: 700; color: #fff;
-  letter-spacing: -0.025em; margin: 5px 0 2px;
+  font-size: 42px; font-weight: 800; font-stretch: 68%;
+  color: #EDEEF4; line-height: 0.95;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.015em; margin: 10px 0 2px;
 }
-.auth__mock-delta { font-size: 12px; color: #34d399; font-weight: 600; margin-bottom: 16px; }
+.auth__mock-delta {
+  font-size: var(--fs-xs); color: #4ED598; font-weight: 700;
+  font-stretch: 82%; margin-bottom: 14px;
+}
 .auth__mock-bars {
-  display: flex; align-items: flex-end; gap: 8px; height: 64px;
-  padding-bottom: 14px; margin-bottom: 12px; border-bottom: 1px solid #1c232e;
+  display: flex; align-items: flex-end; gap: 6px; height: 58px;
+  padding-bottom: 12px; margin-bottom: 12px;
+  border-bottom: 1px solid rgba(237, 238, 244, 0.10);
 }
 .auth__mock-bars i {
-  flex: 1; border-radius: 4px 4px 2px 2px;
-  background: linear-gradient(180deg, #6366f1, #4f46e5);
+  flex: 1; border-radius: 3px 3px 0 0;
+  background: #363B57;
   transform: scaleY(0); transform-origin: bottom;
-  animation: auth-grow 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: auth-grow 0.55s var(--ease) forwards;
 }
-.auth__mock-bars i:last-child { background: linear-gradient(180deg, #5eead4, #10b981); }
+.auth__mock-bars i:last-child { background: #9A3FF0; }
 @keyframes auth-grow { to { transform: scaleY(1); } }
-.auth__mock-tx { display: flex; align-items: center; gap: 11px; }
+.auth__mock-tx { display: flex; align-items: center; gap: 10px; }
 .auth__mock-ic {
-  width: 30px; height: 30px; flex: 0 0 auto; border-radius: 9px;
+  width: 26px; height: 26px; flex: 0 0 auto; border-radius: var(--radius-xs);
   display: flex; align-items: center; justify-content: center;
-  background: rgba(16, 185, 129, 0.14); color: #34d399;
+  background: rgba(78, 213, 152, 0.15); color: #4ED598;
 }
-.auth__mock-ic svg { width: 15px; height: 15px; }
+.auth__mock-ic svg { width: 13px; height: 13px; }
 .auth__mock-tx-main { flex: 1; min-width: 0; }
-.auth__mock-tx-main b { display: block; font-size: 12.5px; font-weight: 600; color: #e6e9f0; }
-.auth__mock-tx-main span { font-size: 11px; color: #7f8aa3; }
-.auth__mock-v { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: #34d399; }
+.auth__mock-tx-main b { display: block; font-size: var(--fs-xs); font-weight: 600; color: #E4E6EF; }
+.auth__mock-tx-main span { font-size: var(--fs-2xs); color: #7E8296; }
+.auth__mock-v {
+  font-size: var(--fs-sm); font-weight: 700; font-stretch: 78%;
+  color: #4ED598; font-variant-numeric: tabular-nums;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .auth__mock, .auth__mock-bars i { animation: none; }
   .auth__mock-bars i { transform: scaleY(1); }
 }
-.auth__aside-title {
-  font-family: var(--font-display);
-  font-size: clamp(27px, 2.7vw, 37px);
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  color: #fff;
-  margin-bottom: 32px;
-}
-.auth .hl {
-  background: linear-gradient(110deg, #818CF8 10%, #5EEAD4 90%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.auth__ticks { list-style: none; display: flex; flex-direction: column; gap: 15px; margin: 0; padding: 0; }
-.auth__tick { display: flex; align-items: center; gap: 13px; color: #aeb6c8; font-size: 15.5px; }
-.auth__tick-ic {
-  width: 26px; height: 26px; flex: 0 0 auto;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: 8px;
-  background: rgba(99, 102, 241, 0.16);
-  color: #818CF8;
-  box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.22);
-}
-.auth__tick-ic svg { width: 14px; height: 14px; }
-.auth__aside-foot { color: #6b7689; font-size: 13.5px; }
 
+/* ── A placa do formulário ────────────────────────────────────────────────── */
 .auth__card {
   width: 100%;
-  max-width: 408px;
+  max-width: 404px;
   margin: auto;
-  padding: 40px 44px 44px;
+  padding: 34px 34px 36px;
   display: flex;
   flex-direction: column;
   background: var(--c-surface);
-  border-radius: 24px;
-  box-shadow:
-    0 0  0 1px rgba(255, 255, 255, 0.07),
-    0 2px 8px rgba(0, 0, 0, 0.22),
-    0 16px 52px rgba(0, 0, 0, 0.42),
-    0 48px 96px rgba(0, 0, 0, 0.22);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.24),
+              0 18px 44px -12px rgba(0, 0, 0, 0.44),
+              0 48px 88px -32px rgba(0, 0, 0, 0.34);
   position: relative;
   z-index: 1;
-  overflow: hidden;
-  animation: card-appear 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: card-appear 0.34s var(--ease);
 }
-/* brilho sutil no topo do card */
-.auth__card::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(129, 140, 248, 0.55), transparent);
+@keyframes card-appear {
+  from { opacity: 0; transform: translateY(14px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-/* No desktop a marca já está no painel; some do card pra não repetir. */
 @media (min-width: 901px) {
   .auth__card .brand--lg { display: none; }
 }
-@keyframes card-appear {
-  from { opacity: 0; transform: translateY(26px) scale(0.96); }
-  to   { opacity: 1; transform: translateY(0)    scale(1); }
-}
 
-/* Tela de acesso suspenso — cadeado */
+/* Voltar ao site */
+.auth__back {
+  align-self: flex-start;
+  display: inline-flex; align-items: center; gap: 6px;
+  margin: 0 0 22px;
+  font-size: var(--fs-2xs); font-weight: 700; font-stretch: 82%;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--c-muted); text-decoration: none;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--c-line);
+  background: var(--c-bg);
+  transition: background 0.16s var(--ease), color 0.16s var(--ease),
+              border-color 0.16s, transform 0.16s var(--ease);
+}
+.auth__back svg { width: 13px; height: 13px; transition: transform 0.16s var(--ease); }
+.auth__back:hover {
+  color: var(--c-ink);
+  border-color: var(--c-line-strong);
+  transform: translateY(-1px);
+}
+.auth__back:hover svg { transform: translateX(-2px); }
+.auth__back:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 2px; }
+
+/* Acesso suspenso */
 .auth__lock {
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 20px;
+  width: 50px; height: 50px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
   border-radius: var(--radius-full);
   background: var(--c-saida-soft);
-  color: var(--c-saida);
+  color: var(--c-saida-text);
 }
-.auth__lock svg { width: 26px; height: 26px; }
-.auth__lock--ok { background: var(--c-entrada-soft); color: var(--c-entrada); }
+.auth__lock svg { width: 22px; height: 22px; }
+.auth__lock--ok { background: var(--c-entrada-soft); color: var(--c-entrada-text); }
 .auth__contato {
-  font-size: 13px;
-  color: var(--c-subtle);
-  text-align: center;
-  margin: -12px 0 24px;
-  line-height: 1.5;
+  font-size: var(--fs-sm); color: var(--c-muted);
+  text-align: center; margin: -10px 0 20px; line-height: 1.45;
 }
 
-/* Link discreto ("Esqueci minha senha") */
 .auth__link {
   display: block;
   width: 100%;
@@ -267,106 +235,66 @@
   border: none;
   color: var(--c-muted);
   font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 500;
-  text-align: center;
-  padding: 4px;
-  margin: -4px 0 8px;
-  cursor: pointer;
-  transition: color 0.15s;
-}
-.auth__link:hover { color: var(--c-primary); text-decoration: underline; }
-.auth__link:focus-visible {
-  outline: 2px solid var(--c-primary);
-  outline-offset: 2px;
-  border-radius: var(--radius-xs);
-}
-
-/* Convites recebidos */
-.auth__convites { display: flex; flex-direction: column; gap: 12px; margin: 6px 0 14px; }
-.auth__convite {
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius);
-  padding: 14px;
-}
-.auth__convite-nome { font-weight: 600; color: var(--c-ink); }
-.auth__convite-papel { font-size: 13px; color: var(--c-muted); margin: 2px 0 12px; }
-
-/* Título da tela de auth */
-.auth__title {
-  font-family: var(--font-display);
-  font-size: 25px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   text-align: center;
-  letter-spacing: -0.025em;
+  padding: 5px;
+  margin: -2px 0 8px;
+  cursor: pointer;
+  border-radius: var(--radius-xs);
+  transition: color 0.16s;
+}
+.auth__link:hover { color: var(--c-accent-text); text-decoration: underline; }
+.auth__link:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 2px; }
+
+.auth__convites { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 12px; }
+.auth__convite { border: 1px solid var(--c-line); border-radius: var(--radius); padding: 13px; }
+.auth__convite-nome { font-weight: 700; color: var(--c-ink); }
+.auth__convite-papel { font-size: var(--fs-sm); color: var(--c-muted); margin: 1px 0 10px; }
+
+.auth__title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  font-stretch: 78%;
+  text-transform: uppercase;
+  text-align: center;
+  letter-spacing: 0.02em;
   color: var(--c-ink);
 }
-
 .auth__sub {
   color: var(--c-muted);
   text-align: center;
-  margin: 8px 0 30px;
-  font-size: 14px;
-  line-height: 1.6;
+  margin: 7px 0 26px;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
 }
 
-/* Marca dentro do card de login */
-.auth .brand--lg {
-  margin-bottom: 28px;
-  flex-direction: column;
-  gap: 12px;
-}
-.auth .brand--lg .brand__name {
-  font-size: 20px;
-  letter-spacing: -0.4px;
-}
+.auth .brand--lg { margin-bottom: 22px; flex-direction: column; gap: 12px; }
+.auth .brand--lg .brand__name { font-size: 18px; }
 
-/* Botão secundário (alternar login/cadastro) — outline definido */
-.auth__card .btn--ghost {
-  color: var(--c-ink-2);
-  font-size: 14.5px;
-  font-weight: 600;
-  border-color: var(--c-border);
-  background: transparent;
-  margin-top: 14px;
-}
-.auth__card .btn--ghost:hover {
-  background: var(--c-bg);
-  color: var(--c-ink);
-  border-color: var(--c-border-strong);
-}
+.auth__card .btn--ghost { margin-top: 12px; }
 
-/* ── Polish dos campos do card de auth (escopado — não toca os inputs do app) */
+/* Campos do card de entrada (escopado — não toca os inputs do app).
+   Campo rebaixado: fundo afundado contra a superfície branca do card. */
 .auth__form { margin-top: 2px; }
-.auth .field { margin-bottom: 18px; }
-.auth .field__label {
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  margin-bottom: 8px;
-}
-/* Campo "rebaixado": fundo afundado vs. a superfície do card */
+.auth .field { margin-bottom: 15px; }
 .auth .input {
-  padding: 13px 15px;
-  border-radius: var(--radius);
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
   background: var(--c-bg);
-  font-size: 15px;
+  font-size: var(--fs-md);
 }
-.auth .input:focus {
-  background: var(--c-surface);
-  border-color: var(--c-primary);
-  box-shadow: 0 0 0 3.5px var(--c-primary-glow);
-}
-.auth .input-pass .input { padding-right: 48px; }
-.auth__form .btn--block { padding: 13px 18px; font-size: 15px; }
-.auth__form .btn--primary { margin-top: 8px; }
+.auth .input:focus { background: var(--c-surface); }
+.auth .input-pass .input { padding-right: 44px; }
+.auth__form .btn--block { padding: 13px 18px; font-size: var(--fs-sm); }
+.auth__form .btn--primary { margin-top: 6px; }
 
-/* Tablet/menor — esconde o painel e centraliza só o card */
 @media (max-width: 900px) {
-  .auth { grid-template-columns: 1fr; padding: 24px; }
+  .auth { grid-template-columns: 1fr; padding: 22px; }
   .auth__aside { display: none; }
 }
 
-/* Mobile — card ocupa toda a tela */
 @media (max-width: 440px) {
   .auth { padding: 0; }
   .auth__card {
@@ -374,31 +302,30 @@
     border-radius: 0;
     min-height: 100vh;
     min-height: 100dvh;
-    padding: calc(env(safe-area-inset-top, 0px) + 28px) 28px 40px;
+    padding: calc(env(safe-area-inset-top, 0px) + 26px) 24px 36px;
     box-shadow: none;
-    animation: card-appear-mobile 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
-  .auth__card::before { display: none; }
-  @keyframes card-appear-mobile {
-    from { opacity: 0; transform: translateY(12px); }
-    to   { opacity: 1; transform: translateY(0); }
+    animation: card-appear 0.26s var(--ease);
   }
 }
 
-/* ── Impressão / PDF (usado em Relatórios → botão PDF) ────────────────────────
-   Esconde a "casca" do app e força cores legíveis no papel, mesmo no tema
-   escuro (senão sairia texto claro em fundo branco). */
+/* ── Impressão / PDF ─────────────────────────────────────────────────────────
+   No papel a casca do app sai e as cores claras são forçadas, senão o tema
+   escuro sairia com texto claro em fundo branco. [data-theme] iguala a
+   especificidade do tema. */
 @media print {
-  /* [data-theme] iguala a especificidade do tema (senão o dark venceria) */
   :root[data-theme] {
-    --c-bg: #FFFFFF; --c-surface: #FFFFFF;
-    --c-ink: #111111; --c-ink-2: #333333; --c-muted: #555555; --c-subtle: #777777;
-    --c-border: #CCCCCC; --c-border-strong: #999999;
-    --c-entrada: #0A7C55; --c-saida: #C0392B;
+    --c-bg: #FFFFFF; --c-bg-2: #FFFFFF; --c-surface: #FFFFFF; --c-surface-2: #FFFFFF;
+    --c-ink: #000000; --c-ink-2: #222222; --c-muted: #444444; --c-subtle: #666666;
+    --c-rule: rgba(0, 0, 0, 0.5);
+    --c-line: rgba(0, 0, 0, 0.28); --c-line-strong: rgba(0, 0, 0, 0.5);
+    --c-entrada: #0C5E3E; --c-entrada-text: #0C5E3E;
+    --c-saida: #9E211A;   --c-saida-text: #9E211A;
+    --c-accent: #5B1FAB;  --c-accent-text: #5B1FAB;
+    --shadow-xs: none; --shadow-sm: none; --shadow-md: none; --shadow-over: none;
   }
   body {
     background: #FFFFFF !important;
-    color: #111111 !important;
+    color: #000000 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -409,10 +336,9 @@
   .body-grid { display: block !important; }
   .body-grid::before { display: none !important; }
   .content { padding: 0 !important; max-width: none !important; }
-  .card { box-shadow: none !important; border: 1px solid #CCCCCC !important; }
+  .card { border: 1px solid #CCCCCC !important; box-shadow: none !important; }
 
-  .page-title { font-size: 20px !important; }
-  /* No papel, mostra a tabela mesmo em telas estreitas */
+  .page-title { font-size: 19px !important; }
   .tabela-wrap { display: block !important; }
   .rel-lista { display: none !important; }
 }

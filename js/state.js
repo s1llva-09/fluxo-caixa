@@ -24,14 +24,38 @@ export function empresaAtiva(company) {
   return true;
 }
 
-// Recorta o período do mês atual ({ de, ate }) no formato do banco.
-// Usado como filtro padrão do dashboard e dos lançamentos.
-export function mesAtual() {
+// "YYYY-MM" do mês corrente — a chave que o <input type="month"> usa.
+export function mesChaveAtual() {
   const hoje = new Date();
-  const ano = hoje.getFullYear();
-  const mes = hoje.getMonth(); // 0-11
-  const primeiro = new Date(ano, mes, 1);
-  const ultimo = new Date(ano, mes + 1, 0);
-  const iso = (d) => d.toISOString().slice(0, 10);
-  return { de: iso(primeiro), ate: iso(ultimo) };
+  return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
+}
+
+// Recorta o período de um mês ({ de, ate }) no formato do banco, a partir da
+// chave "YYYY-MM".
+//
+// Monta as datas como texto em vez de passar Date por toISOString(): aquele
+// caminho converte pra UTC, e a meia-noite local de um fuso positivo cai no
+// dia anterior em UTC — o primeiro dia do mês voltava como o último do mês
+// passado. Com fuso do Brasil (negativo) nunca deu problema, mas é uma
+// armadilha que não precisa existir num recorte que é só aritmética de calendário.
+export function periodoDoMes(chave) {
+  const [ano, mes] = chave.split("-").map(Number);
+  // Dia 0 do mês seguinte = último dia deste mês. getDate() lê o componente
+  // local, sem passar por UTC.
+  const ultimoDia = new Date(ano, mes, 0).getDate();
+  const pad = (n) => String(n).padStart(2, "0");
+  return { de: `${ano}-${pad(mes)}-01`, ate: `${ano}-${pad(mes)}-${pad(ultimoDia)}` };
+}
+
+// Mês anterior a uma chave "YYYY-MM".
+export function mesAnterior(chave) {
+  const [ano, mes] = chave.split("-").map(Number);
+  return mes === 1
+    ? `${ano - 1}-12`
+    : `${ano}-${String(mes - 1).padStart(2, "0")}`;
+}
+
+// Período do mês corrente. Filtro padrão do dashboard, lançamentos e relatórios.
+export function mesAtual() {
+  return periodoDoMes(mesChaveAtual());
 }

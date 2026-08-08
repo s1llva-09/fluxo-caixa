@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Testes - Contraste (WCAG)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <!-- Carrega o CSS de verdade: o teste lê os tokens do arquivo, não cópias. -->
+  <link rel="stylesheet" href="../css/index.css">
+  <style>
+    body { padding: 24px; font-family: system-ui, sans-serif; }
+    .ok   { color: #047857; }
+    .fail { color: #CC2929; font-weight: 700; }
+    li { font-family: ui-monospace, monospace; font-size: 13px; line-height: 1.7; }
+  </style>
+</head>
+<body>
+  <h1>Contraste dos tokens</h1>
+  <p>Verifica os pares cor/fundo que o app usa de verdade, nos dois temas.
+     Mínimos WCAG 2.1 AA: <b>4.5:1</b> pra texto normal, <b>3:1</b> pra texto
+     grande (≥24px) e pra elemento não-textual (ícone, borda).</p>
+  <ul id="log"></ul>
+  <p id="resumo"></p>
+
+  <script type="module">
+    // ---- utilidades de cor -------------------------------------------------
+
+    // "rgb(1, 2, 3)" / "rgba(1, 2, 3, 0.12)" -> [r, g, b, a]
+    function parse(cor) {
+      const n = cor.match(/[\d.]+/g).map(Number);
+      return [n[0], n[1], n[2], n[3] ?? 1];
+    }
+
+    // Achata uma cor translúcida sobre um fundo opaco. Os tokens `-soft` são
+    // rgba, então sem isso o contraste sairia calculado contra o alpha cru.
+    function sobre(frente, fundo) {
+      const [r, g, b, a] = parse(frente);
+      const [br, bg, bb] = parse(fundo);
+      return `rgb(${a * r + (1 - a) * br}, ${a * g + (1 - a) * bg}, ${a * b + (1 - a) * bb})`;
+    }
+
+    function luminancia(cor) {
+      const [r, g, b] = parse(cor).slice(0, 3).map((v) => {
+        const c = v / 255;
+        return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    }
+
+    function contraste(a, b) {
+      const [l1, l2] = [luminancia(a), luminancia(b)].sort((x, y) => y - x);
+      return (l1 + 0.05) / (l2 + 0.05);
+    }
+
+    // Lê um token do :root no tema ativo, sempre como rgb()/rgba().
+    //
+    // Não dá pra usar getComputedStyle(raiz).getPropertyValue("--x"): custom
+    // property volta como o texto cru que está no CSS ("#FFEDD5" num token,
+    // "rgba(...)" no outro), e aí o parser teria que lidar com hex, hex curto
+    // e nomes. Aplicando o token em `color` de um elemento real, o browser
+    // normaliza tudo pra rgb()/rgba() — que é o único formato que parse() lê.
+    const raiz = document.documentElement;
+    const sonda = document.createElement("span");
+    sonda.style.display = "none";
+    document.body.append(sonda);
+
+    function token(nome) {
+      sonda.style.color = "";
+      sonda.style.color = `var(${nome})`;
+      return getComputedStyle(sonda).color;
+    }
+
+    // ---- os pares que o app realmente pinta --------------------------------
+    //
+    // min 4.5 = texto normal; min 3 = texto grande ou ícone/borda.
+    // Cada linha aponta pra onde o par aparece, pra quem quebrar saber o que olhar.
+
+    function casos() {
+      const surface = token("--c-surface");
+      const bg = token("--c-bg");
+      const accent = token("--c-accent");
+      const accentSoft = token("--c-accent-soft");
+      const entradaSoft = sobre(token("--c-entrada-soft"), surface);
+      const saidaSoft = sobre(token("--c-saida-soft"), surface);
+
+      return [
+        // O valor de cada lançamento na fita — o texto mais importante do app.
+        ["tx__value entrada", token("--c-entrada-text"), surface, 4.5],
+        ["tx__value saida", token("--c-saida-text"), surface, 4.5],
+        // Etiquetas: texto colorido sobre o próprio fundo tintado.
+        ["badge entrada", token("--c-entrada-text"), entradaSoft, 4.5],
+        ["badge saida", token("--c-saida-text"), saidaSoft, 4.5],
+        ["badge alerta / sub-banner", token("--c-alerta-text"), token("--c-alerta-soft"), 4.5],
+        ["badge info", token("--c-accent-text"), accentSoft, 4.5],
+        // Texto secundário (page-sub, card__hint, meta) sobre os dois fundos.
+        ["muted / surface", token("--c-muted"), surface, 4.5],
+        ["muted / bg", token("--c-muted"), bg, 4.5],
+        ["subtle / surface", token("--c-subtle"), surface, 4.5],
+        ["subtle / bg", token("--c-subtle"), bg, 4.5],
+        ["ink / surface", token("--c-ink"), surface, 4.5],
+        ["ink / bg", token("--c-ink"), bg, 4.5],
+        ["ink-2 / surface", token("--c-ink-2"), surface, 4.5],
+
+        // ── O violeta do "M" ───────────────────────────────────────────────
+        // Texto branco no botão primário.
+        ["accent-ink / campo violeta", token("--c-accent-ink"), accent, 4.5],
+        // Item de menu ativo e aba ativa: tinta violeta sobre o campo claro.
+        ["accent-text / campo claro", token("--c-accent-text"), accentSoft, 4.5],
+        // Violeta como texto na placa (link, empresa em hover).
+        ["accent-text / surface", token("--c-accent-text"), surface, 4.5],
+        // O campo sólido é o próprio limite do botão primário: sem contorno,
+        // ele precisa se separar da placa sozinho (WCAG 1.4.11). É este caso
+        // que o violeta do logo passa e o accent do tema anterior reprovava,
+        // e é o que libera a barra de composição a usar a cor da marca.
+        ["campo violeta / surface", accent, surface, 3],
+        ["foco / surface", accent, surface, 3],
+        ["foco / bg", accent, bg, 3],
+
+        // Preenchimento não-textual: quadrado de categoria, ícone do stat,
+        // barra do gráfico.
+        ["icone entrada", token("--c-entrada-text"), entradaSoft, 3],
+        ["icone saida", token("--c-saida-text"), saidaSoft, 3],
+        ["fill entrada / surface", token("--c-entrada"), surface, 3],
+        ["fill saida / surface", token("--c-saida"), surface, 3],
+      ];
+    }
+
+    // ---- roda nos dois temas -----------------------------------------------
+
+    const log = document.getElementById("log");
+    let falhas = 0;
+
+    for (const tema of ["light", "dark"]) {
+      raiz.setAttribute("data-theme", tema);
+      for (const [nome, frente, fundo, min] of casos()) {
+        const r = contraste(frente, fundo);
+        const passou = r >= min;
+        if (!passou) falhas++;
+        const li = document.createElement("li");
+        li.className = passou ? "ok" : "fail";
+        li.textContent = `${passou ? "OK  " : "FALHA"} [${tema}] ${nome} — ${r.toFixed(2)}:1 (mínimo ${min})`;
+        log.append(li);
+      }
+    }
+
+    raiz.setAttribute("data-theme", "light");
+    const resumo = document.getElementById("resumo");
+    resumo.className = falhas ? "fail" : "ok";
+    resumo.textContent = falhas
+      ? `${falhas} par(es) abaixo do mínimo.`
+      : "Todos os pares passam.";
+    console.assert(falhas === 0, `${falhas} pares de contraste abaixo do mínimo WCAG AA`);
+  </script>
+</body>
+</html>

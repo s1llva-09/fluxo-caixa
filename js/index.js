@@ -186,7 +186,9 @@ function mostrarApp() {
   mostrarAvisoVencimento();
   configurarNotificacoes();
   configurarSeletorEmpresa();
-  irPara("dashboard");
+  // Abre na tela que a URL pede — é o que faz o F5 e o link direto caírem no
+  // lugar certo em vez de sempre no dashboard.
+  irPara(telaDoHash());
 }
 
 // Sininho de notificações no topo (sempre visível; badge com a contagem).
@@ -373,6 +375,44 @@ function mostrarAvisoVencimento() {
 }
 
 // ---- navegação entre as telas ----------------------------------------------
+//
+// A tela atual mora no hash da URL (#/lancamentos). Antes ela só existia numa
+// troca de innerHTML, e isso custava três coisas: F5 sempre voltava pro
+// dashboard, o botão voltar do Android fechava o app (não havia histórico
+// nenhum pra desempilhar) e não dava pra mandar link de tela pra ninguém.
+//
+// Fluxo: quem clica chama navegar(), que só mexe no hash; o hashchange é o
+// único lugar que manda desenhar. Assim clique do menu e botão voltar do
+// navegador percorrem exatamente o mesmo caminho.
+
+// Nome da tela pedida pela URL. Cai no dashboard se o hash estiver vazio ou
+// apontar pra algo que não existe (link velho, tela renomeada).
+function telaDoHash() {
+  const nome = location.hash.replace(/^#\/?/, "");
+  return telas[nome] ? nome : "dashboard";
+}
+
+// Pede uma tela. Empilha no histórico e deixa o hashchange desenhar.
+function navegar(nome) {
+  const alvo = `#/${nome}`;
+  if (location.hash === alvo) {
+    // Já está nela: não empilha duplicata no histórico nem redesenha. Mas o
+    // drawer do celular precisa fechar mesmo assim — sem isso, tocar no item
+    // da tela atual deixava o menu aberto sem nada acontecer.
+    $("#app-shell").classList.remove("nav-open");
+    $("#btn-mais")?.setAttribute("aria-expanded", "false");
+    return;
+  }
+  location.hash = alvo;
+}
+
+window.addEventListener("hashchange", () => {
+  // Fora do app (login, onboarding, redefinir senha) o hash tem outros donos:
+  // a auth.js usa "#criar" e o link de recuperação do Supabase usa
+  // "#type=recovery". Roteia só quando o app está de fato na tela.
+  if ($("#app-shell").hidden) return;
+  irPara(telaDoHash());
+});
 
 function irPara(nome) {
   // Bloqueia telas fora do plano (ex.: link direto/atalho).
@@ -380,6 +420,13 @@ function irPara(nome) {
     toast("Esse módulo não está no seu plano.", "info");
     nome = "dashboard";
   }
+
+  // Deixa a URL contando a verdade quando o pedido foi corrigido acima (tela
+  // fora do plano, hash inexistente). replaceState em vez de mexer no
+  // location.hash de propósito: não dispara hashchange, então não reentra
+  // aqui, e corrigir um destino inválido não vira uma entrada no histórico.
+  const alvo = `#/${nome}`;
+  if (location.hash !== alvo) history.replaceState(null, "", alvo);
   // Marca o item ativo no menu lateral e na bottom nav
   $$(".nav__item, .bottom-nav__item").forEach((b) =>
     b.classList.toggle("is-active", b.dataset.tela === nome)
@@ -402,6 +449,7 @@ function irPara(nome) {
 
   // Fecha o menu no celular e volta ao topo
   $("#app-shell").classList.remove("nav-open");
+  $("#btn-mais")?.setAttribute("aria-expanded", "false");
   window.scrollTo({ top: 0, behavior: "instant" });
 }
 
@@ -411,7 +459,7 @@ function ligarEventos() {
   // Navegação — sidebar e bottom nav
   $$(".nav__item, .bottom-nav__item").forEach((btn) => {
     if (!btn.dataset.tela) return;
-    btn.addEventListener("click", () => irPara(btn.dataset.tela));
+    btn.addEventListener("click", () => navegar(btn.dataset.tela));
   });
 
   // Sair
@@ -459,12 +507,24 @@ function ligarEventos() {
     });
   }
 
+  // "Mais" na barra inferior: abre o mesmo drawer do hamburger, onde ficam os
+  // destinos que não couberam nas 5 abas.
+  const btnMais = $("#btn-mais");
+  btnMais?.addEventListener("click", () => {
+    const aberto = $("#app-shell").classList.toggle("nav-open");
+    btnMais.setAttribute("aria-expanded", String(aberto));
+  });
+
   // Fechar menu ao clicar no overlay escuro (mobile)
   document.addEventListener("click", (e) => {
     const shell = $("#app-shell");
     if (!shell?.classList.contains("nav-open")) return;
-    if (!e.target.closest(".nav") && !e.target.closest("#btn-menu")) {
+    // #btn-mais entra na lista de exceções junto com #btn-menu: sem isso, o
+    // clique que abre o drawer continua subindo até aqui e o fecha no mesmo
+    // instante — o drawer nunca chegaria a aparecer.
+    if (!e.target.closest(".nav") && !e.target.closest("#btn-menu") && !e.target.closest("#btn-mais")) {
       shell.classList.remove("nav-open");
+      btnMais?.setAttribute("aria-expanded", "false");
     }
   });
 

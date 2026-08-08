@@ -40,6 +40,23 @@ export function formatBRL(cents) {
   return valor.toLocaleString(locale, { style: "currency", currency: _moeda });
 }
 
+// Separa a cifra do número, pra tipografia de placa: símbolo pequeno em cima,
+// valor grande embaixo. O corte é no primeiro dígito, não num espaço, porque
+// o Intl usa espaço fixo (U+00A0) em pt-BR e cola o símbolo no número em
+// en-US. O sinal negativo vai junto do número — ele é parte do valor, não da
+// moeda, e sozinho na cifra pequena passaria despercebido.
+export function splitMoeda(cents) {
+  const s = formatBRL(cents);
+  const i = s.search(/\d/);
+  if (i <= 0) return { cifra: "", valor: s };
+  const cifra = s.slice(0, i);
+  const neg = cifra.includes("-");
+  return {
+    cifra: cifra.replace("-", "").trim(),
+    valor: (neg ? "-" : "") + s.slice(i),
+  };
+}
+
 // Converte o que o usuário digitou (ex.: "1.234,56" ou "1234,56" ou "1234.56")
 // para centavos. Retorna null se não for um número válido.
 export function parseToCents(input) {

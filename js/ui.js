@@ -36,6 +36,22 @@ export function toast(message, tipo = "info") {
   setTimeout(() => t.remove(), 3400);
 }
 
+// ---- Modal ---------------------------------------------------------------
+//
+// Todo cadastro e edição do app passa por este modal, então ele precisa se
+// comportar como diálogo de verdade:
+//   1. o foco entra no modal ao abrir (senão o teclado continua na página);
+//   2. o Tab não escapa pro que está atrás (o `inert` resolve isso de graça,
+//      e de quebra esconde o fundo do leitor de tela — é o mesmo que o
+//      <dialog> faz internamente);
+//   3. o foco volta pra quem abriu, ao fechar.
+
+// O que estava focado antes de abrir, pra devolver o foco no fim.
+let focoAnterior = null;
+
+// Tudo que não é o modal. Vira inert enquanto ele está aberto.
+const fundo = () => [$("#app-shell"), $("#auth-root")].filter(Boolean);
+
 // Abre o modal com um título e um conteúdo (elemento HTML).
 export function openModal(title, contentEl) {
   const overlay = $("#modal-overlay");
@@ -43,12 +59,35 @@ export function openModal(title, contentEl) {
   const body = $("#modal-body");
   body.innerHTML = "";
   body.append(contentEl);
+  // Só guarda o foco se não havia modal aberto. Um confirmar() disparado de
+  // dentro de um formulário reusa este mesmo overlay: sem a guarda, o foco a
+  // devolver viraria um botão do modal anterior, que acabou de ser destruído.
+  if (!overlay.classList.contains("is-open")) focoAnterior = document.activeElement;
   overlay.classList.add("is-open");
+
+  fundo().forEach((n) => (n.inert = true));
+
+  // Primeiro campo do formulário; se não houver, o botão de fechar — nunca
+  // deixa o foco no <body>, que é o que joga o Tab de volta pro começo.
+  const alvo = body.querySelector(
+    "input:not([type=hidden]), select, textarea, button, [href], [tabindex]:not([tabindex='-1'])"
+  );
+  (alvo || $("#modal-close"))?.focus();
 }
 
 export function closeModal() {
   const overlay = $("#modal-overlay");
   if (!overlay || !overlay.classList.contains("is-open")) return;
+
+  // Sai do inert ANTES de devolver o foco: elemento dentro de subárvore inert
+  // não aceita focus() e a chamada seria silenciosamente ignorada.
+  fundo().forEach((n) => (n.inert = false));
+  // isConnected: depois de salvar, a lista se redesenha e o botão que abriu o
+  // modal costuma não existir mais. focus() num nó solto falha em silêncio e
+  // o foco cairia no <body> — melhor não fingir que devolveu.
+  if (focoAnterior?.isConnected) focoAnterior.focus();
+  focoAnterior = null;
+
   // Anima a saída e só então remove de fato (a classe is-closing dispara o CSS).
   overlay.classList.add("is-closing");
   setTimeout(() => overlay.classList.remove("is-open", "is-closing"), 190);

@@ -1,12 +1,13 @@
 /* ============================================================================
    layout.css — Estrutura da página
+   ----------------------------------------------------------------------------
+   Mundo: A PLACA, na paleta do logo (ver base.css). A casca é discreta de
+   propósito: fio fino separando topo, lateral e conteúdo, e a única cor forte
+   é o violeta marcando onde você está.
    ========================================================================== */
 
-/* Impede scroll horizontal global.
-   Usamos `clip` em vez de `hidden`: `hidden` transformaria estes elementos em
-   containers de scroll e quebraria o `position: sticky` da .nav (o menu lateral
-   passaria a rolar junto com a página). `clip` corta o overflow sem criar
-   contexto de rolagem, então o sticky continua funcionando. */
+/* `clip` e não `hidden`: `hidden` transformaria estes elementos em containers
+   de scroll e quebraria o `position: sticky` da .nav. */
 html { overflow-x: clip; }
 
 /* Shell -------------------------------------------------------------------- */
@@ -22,66 +23,79 @@ html { overflow-x: clip; }
 .topbar {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 0 28px 0 24px;
+  gap: 12px;
+  padding: 0 20px;
   height: var(--topbar-h);
   background: var(--c-topbar-bg);
-  backdrop-filter: saturate(180%) blur(16px);
-  -webkit-backdrop-filter: saturate(180%) blur(16px);
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--c-line);
   position: sticky;
   top: 0;
   z-index: 20;
 }
 
+.topbar__empresa,
+.topbar__month {
+  flex-shrink: 0;
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  font-stretch: 82%;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--c-ink-2);
+  background: var(--c-bg);
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--c-line);
+  white-space: nowrap;
+  transition: background 0.16s var(--ease), color 0.16s var(--ease), border-color 0.16s;
+}
 .topbar__empresa {
   margin-left: auto;
   min-width: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--c-ink-2);
-  background: var(--c-surface);
-  padding: 6px 14px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--c-border);
-  box-shadow: var(--shadow-xs);
-  max-width: 220px;
+  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  letter-spacing: -0.01em;
-  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
-.topbar__empresa:hover { border-color: var(--c-border-strong); box-shadow: var(--shadow-sm); }
+.topbar__empresa--switch { cursor: pointer; }
+.topbar__empresa--switch:hover {
+  border-color: var(--c-accent);
+  color: var(--c-accent-text);
+}
+.topbar__empresa--switch:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 2px; }
+@media (max-width: 640px) { .topbar__month { display: none; } }
 
-/* Banner de mensalidade vencendo (acima do corpo) --------------------------- */
+/* Banner de mensalidade vencendo --------------------------------------------
+   Âmbar, não violeta: o violeta é a cor da AÇÃO e em faixa de largura cheia
+   ele passaria a ser a maior área colorida da tela, competindo com o botão.
+   Aviso tem cor própria. */
 .sub-banner {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 24px;
+  gap: 10px;
+  padding: 9px 20px;
   background: var(--c-alerta-soft);
-  color: var(--c-alerta);
-  border-bottom: 1px solid var(--c-border);
-  font-size: 13.5px;
-  font-weight: 500;
+  color: var(--c-alerta-text);
+  border-bottom: 1px solid var(--c-line);
+  font-size: var(--fs-sm);
+  font-weight: 600;
 }
-.sub-banner__text { flex: 1; line-height: 1.4; }
+.sub-banner__text { flex: 1; line-height: 1.35; }
 .sub-banner__close {
   background: none;
   border: none;
   color: inherit;
-  font-size: 20px;
+  font-size: 19px;
   line-height: 1;
   cursor: pointer;
   padding: 0 4px;
   opacity: 0.7;
   flex-shrink: 0;
+  border-radius: var(--radius-xs);
 }
 .sub-banner__close:hover { opacity: 1; }
 
-/* Sininho de notificações ---------------------------------------------------- */
-.topbar__notif, .topbar__icon {
+/* Ícones da topbar ---------------------------------------------------------- */
+.topbar__notif, .topbar__icon, .btn-menu {
   position: relative;
   flex-shrink: 0;
   background: none;
@@ -91,25 +105,15 @@ html { overflow-x: clip; }
   border-radius: var(--radius-sm);
   line-height: 0;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
 }
-.topbar__notif:hover, .topbar__icon:hover { background: var(--c-bg); color: var(--c-ink); }
-.topbar__notif:focus-visible, .topbar__icon:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
+.topbar__notif:hover, .topbar__icon:hover, .btn-menu:hover {
+  background: var(--c-bg-2);
+  color: var(--c-ink);
+}
+.topbar__notif:focus-visible,
+.topbar__icon:focus-visible,
+.btn-menu:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 1px; }
 
-/* Indicador do mês atual na topbar */
-.topbar__month {
-  flex-shrink: 0;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--c-ink-2);
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  padding: 6px 13px;
-  border-radius: var(--radius-full);
-  box-shadow: var(--shadow-xs);
-  white-space: nowrap;
-}
-@media (max-width: 640px) { .topbar__month { display: none; } }
 .topbar__notif-badge {
   position: absolute;
   top: 1px;
@@ -118,7 +122,7 @@ html { overflow-x: clip; }
   height: 16px;
   padding: 0 4px;
   border-radius: var(--radius-full);
-  background: var(--c-info);
+  background: var(--c-saida);
   color: #fff;
   font-size: 10px;
   font-weight: 700;
@@ -127,24 +131,8 @@ html { overflow-x: clip; }
   border: 2px solid var(--c-topbar-bg);
 }
 
-/* Badge da empresa quando dá pra trocar de empresa */
-.topbar__empresa--switch { cursor: pointer; }
-
-/* Botão do menu (só no mobile) ------------------------------------------- */
-.btn-menu {
-  display: none;
-  background: none;
-  border: none;
-  color: var(--c-muted);
-  padding: 7px;
-  border-radius: var(--radius-xs);
-  transition: background 0.14s, color 0.14s;
-  line-height: 0;
-}
-.btn-menu:hover { background: var(--c-bg); color: var(--c-ink); }
-.btn-menu:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
-/* No desktop o hamburger vira o botão de recolher/expandir a sidebar */
-@media (min-width: 761px) {
+.btn-menu { display: none; }
+@media (min-width: 861px) {
   .btn-menu { display: inline-flex; align-items: center; justify-content: center; }
 }
 
@@ -157,53 +145,44 @@ html { overflow-x: clip; }
   font-weight: 700;
   text-decoration: none;
 }
-
+/* O tile e o canto vêm do próprio arquivo do logo: fundo #0B0E1A e rx de 23%
+   do lado (rx 116 em 512 no icon.svg). Usando porcentagem, a curva continua
+   sendo a da marca em qualquer tamanho que o tile assuma. */
 .brand__mark {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 23%;
   background: #0B0E1A;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 1px 2px rgba(124, 58, 237, 0.30),
-              0 2px 10px rgba(124, 58, 237, 0.28),
-              inset 0 0 0 1px rgba(124, 58, 237, 0.18);
   padding: 6px;
 }
 .brand__mark svg { width: 100%; height: 100%; display: block; }
-
 .brand__name {
   font-family: var(--font-display);
-  font-size: 15.5px;
-  letter-spacing: -0.02em;
+  font-size: var(--fs-md);
+  font-weight: 800;
+  font-stretch: 78%;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   color: var(--c-ink);
-  font-weight: 700;
 }
 
 .brand--lg { justify-content: center; }
-.brand--lg .brand__mark {
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
-  padding: 14px;
-  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.34),
-              0 2px 6px rgba(124, 58, 237, 0.22);
-}
-.brand--lg .brand__name { font-size: 22px; letter-spacing: -0.5px; }
+.brand--lg .brand__mark { width: 52px; height: 52px; padding: 10px; }
+.brand--lg .brand__name { font-size: 19px; letter-spacing: 0.12em; }
 
-/* Grid: sidebar + conteúdo ------------------------------------------------- */
+/* Grade: lateral + conteúdo ------------------------------------------------- */
 .body-grid {
   flex: 1;
   display: grid;
   grid-template-columns: var(--sidebar-w) 1fr;
   align-items: start;
   position: relative;
+  transition: grid-template-columns 0.24s var(--ease);
 }
-
-/* Fundo escuro que preenche toda a altura da coluna do sidebar,
-   independente de quanto a página cresce */
 .body-grid::before {
   content: "";
   position: absolute;
@@ -214,131 +193,89 @@ html { overflow-x: clip; }
   background: var(--c-sidebar);
   z-index: -1;
   pointer-events: none;
+  transition: width 0.24s var(--ease);
 }
 
-/* Sidebar ------------------------------------------------------------------ */
+/* Barra lateral ------------------------------------------------------------- */
 .nav {
   background: var(--c-sidebar);
-  padding: 16px 14px 24px;
+  padding: 14px 10px 20px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   position: sticky;
   top: var(--topbar-h);
   height: calc(100vh - var(--topbar-h));
   height: calc(100dvh - var(--topbar-h));
   overflow-y: auto;
   scrollbar-width: none;
-  border-right: 1px solid var(--c-sidebar-border);
+  border-right: 1px solid var(--c-line);
+  min-width: 0;
+  transition: opacity 0.18s ease, padding 0.24s var(--ease);
 }
 .nav::-webkit-scrollbar { display: none; }
 
-/* Grupos de navegação (Visão geral, Financeiro, Comercial…) */
 .nav__group { display: flex; flex-direction: column; gap: 2px; }
 .nav__group + .nav__group { margin-top: 14px; }
 .nav__group[hidden] { display: none; }
 .nav__group-label {
-  font-size: 10.5px;
+  font-size: var(--fs-2xs);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  font-stretch: 82%;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
-  color: var(--c-sidebar-text);
-  opacity: 0.55;
-  padding: 2px 12px 6px;
+  color: var(--c-subtle);
+  padding: 2px 10px 6px;
   user-select: none;
 }
 
 .nav__item {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 10px;
   width: 100%;
-  padding: 9px 12px;
+  padding: 8px 10px;
   border: none;
   background: none;
   border-radius: var(--radius-sm);
   color: var(--c-sidebar-text);
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--fs-sm);
+  font-weight: 600;
   font-family: var(--font-body);
   text-align: left;
-  transition: background 0.15s, color 0.15s;
   position: relative;
-  letter-spacing: -0.006em;
+  letter-spacing: -0.005em;
 }
 .nav__item:hover {
   background: var(--c-sidebar-item-hover);
   color: var(--c-sidebar-text-hover);
 }
+/* "Você está aqui": campo violeta claro com a tinta violeta escura por cima
+   (7.6:1). Substitui a barrinha de accent que ficava colada na borda. */
 .nav__item.is-active {
   background: var(--c-sidebar-item-active);
   color: var(--c-sidebar-text-active);
-  font-weight: 600;
-}
-.nav__item.is-active::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 50%;
-  width: 3px;
-  background: var(--c-sidebar-accent);
-  border-radius: 0 3px 3px 0;
-  box-shadow: 0 0 12px 2px var(--c-sidebar-accent-glow);
-}
-.nav__item:focus-visible {
-  outline: 2px solid var(--c-primary);
-  outline-offset: -2px;
+  font-weight: 700;
 }
 .nav__item.is-active .nav__icon { opacity: 1; }
+.nav__item:focus-visible { outline: 2px solid var(--c-accent); outline-offset: -2px; }
 
-.nav__sair {
-  margin-top: auto;
-  color: var(--c-sidebar-text);
-  opacity: 0.75;
-}
-.nav__sair:hover {
-  background: var(--c-saida-mid);
-  color: var(--c-saida);
-  opacity: 1;
-}
+.nav__sair { margin-top: auto; color: var(--c-sidebar-text); }
+.nav__sair:hover { background: var(--c-saida-soft); color: var(--c-saida-text); }
 
-.nav__icon {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-  opacity: 0.7;
-}
+.nav__icon { width: 17px; height: 17px; flex-shrink: 0; opacity: 0.8; }
 
-/* Área de conteúdo --------------------------------------------------------- */
+/* Conteúdo ------------------------------------------------------------------ */
 .content {
-  padding: 48px 56px;
-  max-width: 1160px;
+  padding: 26px 30px 40px;
+  max-width: 1120px;
   width: 100%;
-  margin-inline: auto; /* centraliza na coluna — equilibra o respiro lateral */
+  margin-inline: auto;
 }
 
-/* Sidebar retrátil no desktop ------------------------------------------------
-   O botão de menu (hamburger) recolhe/expande a barra lateral; o conteúdo
-   reaproveita o espaço. O estado fica salvo no localStorage.
-
-   Quem anima é a COLUNA do grid, não a largura da .nav. Antes o
-   `--sidebar-w: 0px` mudava `grid-template-columns` sem transição — o conteúdo
-   pulava para a largura cheia num quadro enquanto a .nav ainda encolhia por
-   240ms. Animando a coluna, a .nav acompanha por ser item do grid, e a largura
-   dela deixa de ser uma segunda fonte de verdade. */
-.body-grid {
-  transition: grid-template-columns 0.24s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.body-grid::before {
-  transition: width 0.24s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.nav {
-  min-width: 0; /* deixa o item do grid encolher abaixo do conteúdo */
-  transition: opacity 0.18s ease,
-              padding 0.24s cubic-bezier(0.16, 1, 0.3, 1);
-}
+/* Lateral retrátil no desktop. Quem anima é a COLUNA da grade, não a largura
+   da .nav — senão o conteúdo pula pra largura cheia num quadro enquanto a
+   .nav ainda encolhe. */
 .app-shell.nav-collapsed { --sidebar-w: 0px; }
 .app-shell.nav-collapsed .nav {
   padding-left: 0;
@@ -349,88 +286,76 @@ html { overflow-x: clip; }
   overflow: hidden;
 }
 
-/* ── Responsivo: tablet ──────────────────────────────────────────────────── */
+/* ── Tablet ──────────────────────────────────────────────────────────────── */
 @media (max-width: 1080px) {
-  .content { padding: 36px 36px; }
+  .content { padding: 22px 22px 40px; }
 }
 
-/* ── Responsivo: mobile ──────────────────────────────────────────────────── */
-/* btn-menu oculto: a bottom nav já cobre toda a navegação no mobile          */
+/* ── Celular ─────────────────────────────────────────────────────────────── */
 @media (max-width: 860px) {
   .body-grid { display: block; }
   .body-grid::before { display: none; }
 
+  /* Gaveta: aqui ela de fato paira sobre o conteúdo, então ganha sombra. */
   .nav {
     position: fixed;
     top: 0;
     left: 0;
     bottom: 0;
-    width: 256px;
+    width: 250px;
     height: 100%;
-    padding-top: 28px;
+    padding-top: 20px;
     transform: translateX(-100%);
-    transition: transform 0.24s cubic-bezier(0.32, 0.72, 0, 1);
+    transition: transform 0.26s cubic-bezier(0.32, 0.72, 0, 1);
     z-index: 30;
-    box-shadow: 8px 0 48px rgba(0, 0, 0, 0.45);
+    border-right: none;
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+    box-shadow: var(--shadow-over);
   }
-
   .app-shell.nav-open .nav { transform: translateX(0); }
-
   .app-shell.nav-open::before {
     content: "";
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.58);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    background: rgba(11, 14, 26, 0.52);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
     z-index: 25;
-    animation: fade-in 0.22s ease;
+    animation: fade-in 0.2s ease;
   }
-
-  @keyframes fade-in {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
   .content {
-    padding: 20px 16px calc(var(--bottom-nav-h, 64px) + 28px + env(safe-area-inset-bottom, 0px));
+    padding: 16px 14px calc(var(--bottom-nav-h, 62px) + 22px + env(safe-area-inset-bottom, 0px));
   }
-
-  .topbar__empresa { max-width: 150px; }
+  .topbar { padding: 0 14px; }
+  .topbar__empresa { max-width: 140px; }
 }
 
-/* Esconde o nome da marca cedo no celular: libera espaço pro nome da empresa
-   + o sino de notificações (que estava sendo cortado em telas estreitas). */
-@media (max-width: 520px) {
-  .brand__name { display: none; }
-}
+@media (max-width: 520px) { .brand__name { display: none; } }
+@media (max-width: 400px) { .topbar__empresa { max-width: 120px; } }
 
-@media (max-width: 400px) {
-  .topbar__empresa { max-width: 130px; font-size: 11.5px; }
-}
-
-/* ── Bottom navigation bar (mobile) ──────────────────────────────────────── */
+/* ── Barra inferior (celular) ────────────────────────────────────────────── */
 .bottom-nav {
   display: none;
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: calc(var(--bottom-nav-h, 64px) + env(safe-area-inset-bottom, 0px));
+  height: calc(var(--bottom-nav-h, 62px) + env(safe-area-inset-bottom, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--c-sidebar);
-  border-top: 1px solid var(--c-sidebar-border);
+  border-top: 1px solid var(--c-line);
   z-index: 24;
   align-items: stretch;
-  /* Com muitos itens (Contas, Admin...), rola na horizontal em vez de espremer */
-  overflow-x: auto;
-  scrollbar-width: none;
 }
-.bottom-nav::-webkit-scrollbar { display: none; }
+@media (max-width: 860px) { .bottom-nav { display: flex; } }
 
 .bottom-nav__item {
-  flex: 1 0 auto;
-  min-width: 62px;
+  /* 5 abas fixas dividindo a largura; o que não cabe vive na gaveta atrás de
+     "Mais". Sem scroll horizontal: aba que precisa rolar ninguém acha. */
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -439,72 +364,63 @@ html { overflow-x: clip; }
   background: none;
   border: none;
   color: var(--c-sidebar-text);
-  font-size: 10px;
-  font-weight: 600;
+  font-size: var(--fs-2xs);
+  font-weight: 700;
   font-family: var(--font-body);
-  letter-spacing: 0.2px;
-  padding: 8px 2px;
-  transition: color 0.15s;
+  font-stretch: 82%;
+  letter-spacing: 0.04em;
+  padding: 7px 2px;
   position: relative;
 }
-
 .bottom-nav__item svg {
   width: 21px;
   height: 21px;
-  /* Sem overshoot: é a troca de tela, a ação mais repetida do app. */
-  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  z-index: 1;
+  transition: transform 0.2s var(--ease);
 }
+.bottom-nav__item span { position: relative; z-index: 1; }
 
-.bottom-nav__item.is-active { color: var(--c-primary); }
-
-.bottom-nav__item.is-active svg {
-  transform: scale(1.14) translateY(-1px);
-}
-
+/* A aba ativa ganha uma cápsula violeta atrás do ícone, no lugar de pintar a
+   aba inteira. Mesma leitura de relance, acabamento de app e não de cartaz. */
+.bottom-nav__item.is-active { color: var(--c-sidebar-text-active); }
 .bottom-nav__item.is-active::before {
   content: "";
   position: absolute;
-  top: 0;
+  top: 5px;
   left: 50%;
   transform: translateX(-50%);
-  width: 24px;
-  height: 2.5px;
-  background: var(--c-primary);
-  border-radius: 0 0 4px 4px;
-  box-shadow: 0 0 10px 2px var(--c-primary-glow);
+  width: 46px;
+  height: 26px;
+  border-radius: var(--radius-full);
+  background: var(--c-sidebar-item-active);
+  animation: aba-in 0.24s var(--ease);
 }
+@keyframes aba-in {
+  from { opacity: 0; transform: translateX(-50%) scale(0.8); }
+  to   { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+.bottom-nav__item.is-active svg { transform: translateY(-1px); }
 
-/* Animação de entrada de tela — escalonada, bloco a bloco (estilo Linear) */
+/* ── Entrada de tela ─────────────────────────────────────────────────────────
+   Um fade curto no bloco inteiro, sem escalonar filho a filho. O escalonamento
+   anterior atrasava em até 300ms justamente o número que o dono abriu o app
+   pra ver — animação cobrando pedágio na tarefa. */
 @keyframes view-enter {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(5px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+.content.is-entering { animation: view-enter 0.2s var(--ease) both; }
 
-.content.is-entering > * {
-  animation: view-enter 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-.content.is-entering > *:nth-child(1) { animation-delay: 0.02s; }
-.content.is-entering > *:nth-child(2) { animation-delay: 0.07s; }
-.content.is-entering > *:nth-child(3) { animation-delay: 0.12s; }
-.content.is-entering > *:nth-child(4) { animation-delay: 0.17s; }
-.content.is-entering > *:nth-child(5) { animation-delay: 0.22s; }
-.content.is-entering > *:nth-child(6) { animation-delay: 0.27s; }
-.content.is-entering > *:nth-child(n+7) { animation-delay: 0.30s; }
-
-@media (max-width: 860px) {
-  .bottom-nav { display: flex; }
-}
-
-/* Feedback de toque nos pressionáveis que não são .btn (menu, bottom nav, ícones
-   da topbar). Sem isso, no celular — onde não existe hover — tocar no menu não
-   devolve nada. Imperceptível de propósito: é ação de dezenas de vezes ao dia. */
+/* Retorno de toque nos pressionáveis que não são .btn. No celular não existe
+   hover: sem isso, tocar no menu não devolve nada. */
 .nav__item,
 .bottom-nav__item,
 .topbar__notif,
 .topbar__icon,
 .btn-menu {
-  transition: background 0.15s, color 0.15s,
-              transform 0.12s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: background 0.16s var(--ease), color 0.16s var(--ease),
+              transform 0.12s var(--ease);
 }
 .nav__item:active,
 .bottom-nav__item:active,

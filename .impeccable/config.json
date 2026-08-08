@@ -11,6 +11,12 @@
         ],
         "createdAt": "2026-08-06T03:45:26.494Z",
         "reason": "Faixa de fundo do sidebar e position:absolute (z-index:-1), fora do fluxo: animar a largura nao reflui a pagina e ela precisa acompanhar a coluna do grid"
+      },
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-08-08T02:07:18.733Z",
+        "reason": "User confirmed Inter is intentional"
       }
     ]
   }
