@@ -14,7 +14,7 @@ import {
 import { updateEmail, updatePassword, signOut, salvarPreferencias } from "../auth.js";
 import { getTheme, setTheme } from "../theme.js";
 import { MOEDAS_LISTA, getMoeda, setMoeda } from "../money.js";
-import { planoDe, nomePlano } from "../planos.js";
+import { planoDe, nomePlano, limiteUsuarios, cabeMaisUsuario } from "../planos.js";
 
 export function renderConfiguracoes(root) {
   root.innerHTML = "";
@@ -69,6 +69,18 @@ function secaoMoeda() {
 function secaoEquipe() {
   const ehDono = state.company?.owner_id === state.user?.id;
   const box = el("div", {}, el("div", { class: "loading" }, "Carregando..."));
+
+  // Preenchidos quando o formulário de convite existe (só o dono o vê).
+  let botaoConvite = null, campoConvite = null, ocupadas = 0;
+
+  function atualizarBotaoConvite(usados, limite) {
+    ocupadas = usados;
+    if (!botaoConvite) return;
+    const lotou = usados >= limite;
+    botaoConvite.disabled = lotou;
+    if (campoConvite) campoConvite.disabled = lotou;
+    botaoConvite.textContent = lotou ? "Limite do plano atingido" : "Convidar";
+  }
 
   async function carregar() {
     box.innerHTML = "";
@@ -161,7 +173,16 @@ function secaoEquipe() {
         acoes
       ));
     }
-    box.append(el("h3", { class: "admin-pay__titulo" }, "Membros"), ul);
+    // Membros + convites pendentes: um convite pendente já é uma vaga dada.
+    const usados = membros.length + convites.length;
+    const limite = limiteUsuarios(planoDe(state.company));
+    const vagas = limite === Infinity ? "usuários ilimitados" : `${usados} de ${limite} usuários`;
+    box.append(
+      el("h3", { class: "admin-pay__titulo" }, "Membros"),
+      el("p", { class: "config__note", style: "margin:-4px 0 8px" }, vagas),
+      ul
+    );
+    atualizarBotaoConvite(usados, limite);
 
     // Histórico de alterações de papéis
     if (audit.length) {
@@ -237,6 +258,10 @@ function secaoEquipe() {
     async function convidarFn() {
       const e = email.value.trim();
       if (!e) { toast("Digite o email", "erro"); return; }
+      if (!cabeMaisUsuario(planoDe(state.company), ocupadas)) {
+        toast(`Seu plano permite ${limiteUsuarios(planoDe(state.company))} usuários. Mude de plano pra convidar mais.`, "erro");
+        return;
+      }
       btn.disabled = true; btn.textContent = "Convidando...";
       try {
         const inv = await convidar(state.company.id, e);
@@ -247,14 +272,24 @@ function secaoEquipe() {
         carregar();
       } catch (err) {
         console.error(err);
-        const dup = /duplicate|already|unique/i.test(err?.message || "");
-        toast(dup ? "Já existe um convite para esse email" : "Não foi possível convidar", "erro");
+        const msg = err?.message || "";
+        // O banco tem a mesma trava (supabase/limite-usuarios.sql) e é ela que
+        // vale — a daqui só evita a ida perdida ao servidor.
+        if (/limite_usuarios_atingido/i.test(msg)) {
+          toast(`Seu plano permite ${limiteUsuarios(planoDe(state.company))} usuários. Mude de plano pra convidar mais.`, "erro");
+          carregar();
+        } else {
+          const dup = /duplicate|already|unique/i.test(msg);
+          toast(dup ? "Já existe um convite para esse email" : "Não foi possível convidar", "erro");
+        }
       } finally {
         btn.disabled = false; btn.textContent = "Convidar";
       }
     }
     btn.addEventListener("click", convidarFn);
     email.addEventListener("keydown", (ev) => { if (ev.key === "Enter") convidarFn(); });
+    botaoConvite = btn;
+    campoConvite = email;
 
     filhos.push(
       el("hr", { class: "admin-conta__sep" }),

@@ -6,6 +6,7 @@ import {
   AVISO_DIAS, diasAte, venceEmBreve, avisoVenc, ordenarPorUrgencia,
   formatCPFValue, formatPhoneValue, validarCPF,
 } from "../js/regras.js";
+import { limiteUsuarios, cabeMaisUsuario } from "../js/planos.js";
 
 const HOJE = "2026-08-09"; // data fixa: teste que depende de "hoje" quebra sozinho
 
@@ -75,5 +76,18 @@ assert.equal(validarCPF(""), false);
 assert.equal(validarCPF(null), false);
 // Caso em que o resto dá 10 e o dígito tem que virar 0.
 assert.equal(validarCPF("133.456.789-01"), false);
+
+// ---- limite de usuários por plano ------------------------------------------
+// A landing vende "até 3 usuários" no Pro e "ilimitado" no Empresarial; estes
+// números são o contrato, então quebram o teste se mudarem sem querer.
+assert.equal(limiteUsuarios("pro"), 3);
+assert.equal(limiteUsuarios("trial"), 3, "trial é prévia do Pro, não plano melhor");
+assert.equal(limiteUsuarios("empresarial"), Infinity);
+assert.equal(limiteUsuarios("plano-que-nao-existe"), 3, "desconhecido cai no mais restrito");
+
+assert.equal(cabeMaisUsuario("pro", 2), true);
+assert.equal(cabeMaisUsuario("pro", 3), false, "na borda o convite é recusado");
+assert.equal(cabeMaisUsuario("pro", 9), false, "quem já passou do limite não ganha vaga");
+assert.equal(cabeMaisUsuario("empresarial", 500), true);
 
 console.log("regras: todos os casos passaram");
