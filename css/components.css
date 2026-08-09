@@ -242,6 +242,10 @@ select.input {
 }
 .filtros .input { width: 100%; }
 .filtro-grupo--busca { grid-column: 1 / -1; }
+/* Busca + um seletor: a busca leva o dobro, senão os dois ficam ilhados numa
+   coluna de 148px com meia tela vazia à direita. */
+.filtros--2 { grid-template-columns: minmax(200px, 2fr) minmax(150px, 1fr); }
+@media (max-width: 480px) { .filtros--2 { grid-template-columns: 1fr; } }
 
 .input--file { padding: 6px 8px; font-size: var(--fs-sm); cursor: pointer; }
 .input--file::file-selector-button {
@@ -488,6 +492,31 @@ select.input {
 }
 .metric--entrada .metric__value { color: var(--c-entrada-text); }
 .metric--saida .metric__value   { color: var(--c-saida-text); }
+.metric--alerta .metric__value  { color: var(--c-alerta-text); }
+
+/* Card de resumo que também comanda o filtro da lista. É <button>, então
+   precisa desmanchar o visual de botão do navegador — o resto vem do .card. */
+.metric--filtro {
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.16s var(--ease), box-shadow 0.16s var(--ease),
+              transform 0.12s var(--ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .metric--filtro:hover {
+    border-color: var(--c-line-strong);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+  }
+}
+.metric--filtro:active { transform: translateY(0); }
+.metric--filtro:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 2px; }
+/* Selecionado: o mesmo anel do campo em foco e da opção de tema escolhida. */
+.metric--filtro.is-on {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px var(--c-accent-glow);
+}
 .metric__foot { font-size: var(--fs-xs); color: var(--c-muted); font-weight: 500; }
 .metric__foot.is-up   { color: var(--c-entrada-text); font-weight: 700; }
 .metric__foot.is-down { color: var(--c-saida-text);   font-weight: 700; }
@@ -495,6 +524,8 @@ select.input {
 
 /* A placa: primeira da grade, largura cheia, raio maior, número gigante. */
 .metrics--dash { grid-template-columns: repeat(2, 1fr); }
+/* Admin: placa em cima, quatro contagens embaixo. */
+.metrics--admin { grid-template-columns: repeat(4, 1fr); }
 .metric--placa {
   grid-column: 1 / -1;
   border-radius: var(--radius-lg);
@@ -562,8 +593,10 @@ select.input {
 
 @media (max-width: 860px) {
   .metrics, .metrics--3, .metrics--dash { grid-template-columns: 1fr; gap: var(--gap); }
+  .metrics--admin { grid-template-columns: repeat(2, 1fr); }
   .dash-grid { grid-template-columns: 1fr; }
 }
+@media (max-width: 480px) { .metrics--admin { grid-template-columns: 1fr; } }
 
 /* ── A FITA — lista de lançamentos ────────────────────────────────────────────
    O livro-caixa: data numa coluna fixa à esquerda, histórico no meio, valor
@@ -769,9 +802,26 @@ select.input {
   .rel-lista { display: block; }
 }
 
-/* ── Configurações ────────────────────────────────────────────────────────── */
-.config-secao { max-width: 560px; }
-.config-secao + .config-secao { margin-top: var(--gap); }
+/* ── Configurações ──────────────────────────────────────────────────────────
+   Uma coluna de 560px sobrando meia tela era desperdício em telas largas: as
+   seções são independentes entre si, então correm em duas colunas e cada uma
+   fica com a altura que precisa. */
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: var(--gap);
+  align-items: start;
+}
+@media (max-width: 900px) { .config-grid { grid-template-columns: 1fr; } }
+.config-secao--full { grid-column: 1 / -1; }
+
+/* O plano é o cabeçalho da tela: nome grande, como um preço de placa. */
+.plano__head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.plano__nome {
+  font-family: var(--font-display);
+  font-size: 28px; font-weight: 800; font-stretch: 74%;
+  letter-spacing: -0.015em; line-height: 1; color: var(--c-ink);
+}
 .config__hint { font-size: var(--fs-sm); color: var(--c-muted); margin-bottom: 13px; line-height: 1.5; }
 .config__note { font-size: var(--fs-xs); color: var(--c-subtle); margin: -6px 0 12px; }
 .config__sucesso {
@@ -1077,10 +1127,15 @@ select.input {
 @media (max-width: 480px) { .admin-pay__row { flex-direction: column; gap: 0; } }
 
 .admin-list { list-style: none; }
+/* Ação alinhada ao topo, junto do nome: no rodapé da linha ela ficava boiando
+   num vão de meia tela, longe do que comanda. */
 .admin-cli {
-  display: flex; align-items: center; gap: 14px;
-  padding: 13px 4px; border-bottom: 1px solid var(--c-line);
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 13px 10px; border-bottom: 1px solid var(--c-line);
+  border-radius: var(--radius-xs);
+  transition: background 0.12s;
 }
+.admin-cli:hover { background: var(--c-bg-2); }
 .admin-cli:last-child  { border-bottom: none; }
 .admin-cli__main { flex: 1; min-width: 0; }
 .admin-cli__top { display: flex; align-items: center; gap: 9px; margin-bottom: 2px; }
@@ -1089,13 +1144,20 @@ select.input {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .admin-cli__email { font-size: var(--fs-sm); color: var(--c-muted); margin-bottom: 9px; word-break: break-all; }
-.admin-cli__meta { display: flex; flex-wrap: wrap; gap: 8px 20px; }
-.admin-cli__metaitem { display: flex; flex-direction: column; gap: 1px; }
-.admin-cli__metalabel {
+
+/* Célula de dado: rótulo miúdo em cima, valor embaixo. Nasceu na lista de
+   clientes; a ficha do funcionário usa a mesma, daí o nome neutro. */
+.meta-grid { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.meta-grid--2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+.meta-item { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.meta-label {
   font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: 0.07em;
   color: var(--c-subtle); font-weight: 700; font-stretch: 82%;
 }
-.admin-cli__metavalue { font-size: var(--fs-sm); color: var(--c-ink-2); font-weight: 500; }
+.meta-value {
+  font-size: var(--fs-sm); color: var(--c-ink-2); font-weight: 500;
+  overflow-wrap: anywhere;
+}
 .admin-cli__actions { flex-shrink: 0; }
 .admin-modal__id { margin-bottom: 16px; }
 .admin-conta__sep { border: none; border-top: 1px solid var(--c-line); margin: 18px 0; }
@@ -1130,6 +1192,13 @@ select.input {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .rec__meta { font-size: var(--fs-xs); color: var(--c-muted); }
+.rec__title-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.anexo__thumb {
+  width: 42px; height: 42px; flex-shrink: 0; object-fit: cover; cursor: pointer;
+  border-radius: var(--radius-xs); border: 1px solid var(--c-line);
+}
+/* Select de papel dentro de uma linha de ação: largura do conteúdo, não 100%. */
+.input--tiny { width: auto; padding: 5px 28px 5px 10px; font-size: var(--fs-2xs); }
 .rec__actions { display: flex; gap: 5px; flex-shrink: 0; }
 .rec__right { display: flex; align-items: center; gap: 9px; flex-shrink: 0; }
 @media (max-width: 560px) {

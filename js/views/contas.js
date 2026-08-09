@@ -6,7 +6,7 @@
 //  um lançamento real (via pagar_conta no banco).
 // ============================================================================
 
-import { el, $, toast, openModal, closeModal, confirmar, errorState, skeletonList } from "../ui.js";
+import { el, $, toast, openModal, closeModal, confirmar, errorState, skeletonList, numCard } from "../ui.js";
 import { state } from "../state.js";
 import {
   listarContas, criarConta, atualizarConta, pagarConta, cancelarConta, apagarConta,
@@ -32,7 +32,7 @@ export async function renderContas(root) {
       ),
       el("button", { class: "btn btn--primary", onclick: () => abrirForm() }, "+ Nova conta")
     ),
-    el("section", { id: "contas-resumo", class: "stats admin-resumo" }),
+    el("section", { id: "contas-resumo", class: "metrics" }),
     el("div", { id: "contas-filtros", class: "admin-filtros" }),
     el("div", { id: "contas-lista", class: "card" }, skeletonList(5))
   );
@@ -72,18 +72,14 @@ function desenharResumo() {
   const aPagar = pend.filter((c) => c.kind === "saida").reduce((s, c) => s + c.amount_cents, 0);
   const projetado = saldoAtual + aReceber - aPagar;
   box.innerHTML = "";
+  // O projetado é o que esta tela existe pra responder — "sobra ou falta
+  // dinheiro depois que tudo isso entrar e sair?". Vira placa.
   box.append(
-    resumoCard("Saldo atual", formatBRL(saldoAtual)),
-    resumoCard("A receber", formatBRL(aReceber), aReceber > 0 ? "entrada" : ""),
-    resumoCard("A pagar", formatBRL(aPagar), aPagar > 0 ? "saida" : ""),
-    resumoCard("Saldo projetado", formatBRL(projetado), projetado >= 0 ? "entrada" : "saida")
-  );
-}
-
-function resumoCard(label, valor, tipo = "") {
-  return el("div", { class: `card stat ${tipo ? "stat--" + tipo : ""}` },
-    el("div", { class: "stat__header" }, el("span", { class: "stat__label" }, label)),
-    el("span", { class: "stat__value num" }, String(valor))
+    numCard("Saldo projetado", formatBRL(projetado), projetado >= 0 ? "entrada" : "saida",
+      { placa: true, foot: "Saldo de hoje mais o que ainda entra, menos o que ainda sai" }),
+    numCard("Saldo atual", formatBRL(saldoAtual)),
+    numCard("A receber", formatBRL(aReceber), aReceber > 0 ? "entrada" : ""),
+    numCard("A pagar", formatBRL(aPagar), aPagar > 0 ? "saida" : "")
   );
 }
 

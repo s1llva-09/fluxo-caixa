@@ -109,7 +109,7 @@ function desenharLista() {
     ul.append(el("li", { class: "admin-cli" },
       el("div", { class: "admin-cli__main" },
         el("div", { class: "admin-cli__top" }, el("span", { class: "admin-cli__name" }, m.full_name || m.email), el("span", { class: "admin-cli__email" }, m.email || "—")),
-        el("div", { class: "admin-cli__meta" }, el("span", { class: "admin-cli__metavalue" }, `Papel: ${m.role || 'member'}`))
+        el("div", { class: "meta-grid" }, el("span", { class: "meta-value" }, `Papel: ${m.role || 'member'}`))
       ),
       el("div", { class: "admin-cli__actions" }, roleSel, btnAudit)
     ));

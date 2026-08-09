@@ -5,10 +5,11 @@
 //  carteira de trabalho, registro, contatos, status e observações.
 // ============================================================================
 
-import { el, $, toast, openModal, closeModal, confirmar, emptyState, errorState, skeletonList } from "../ui.js";
+import { el, $, toast, openModal, closeModal, confirmar, emptyState, errorState, skeletonList, metaItem, numCard } from "../ui.js";
 import { state } from "../state.js";
 import { listarFuncionarios, criarFuncionario, atualizarFuncionario, apagarFuncionario, uploadEmployeeAttachment, listarEmployeeAttachments, urlComprovante, deleteAttachment, listarEmployeeAudit } from "../api.js";
 import { formatBRL, formatDate, parseToCents } from "../money.js";
+import { formatCPFValue, formatPhoneValue, validarCPF } from "../regras.js";
 
 const ICON_ID = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="8" cy="10" r="2"/><path d="M5 16a3 3 0 0 1 6 0"/><line x1="14" y1="9" x2="19" y2="9"/><line x1="14" y1="13" x2="19" y2="13"/></svg>`;
 
@@ -21,69 +22,142 @@ function normalizarFuncionario(f) {
 }
 
 // ---- detalhes (modal) ----------------------------------------------------
+
+// Nome de cada campo em português. Serve à ficha e ao histórico: sem isto o
+// histórico só sabia mostrar o JSON cru da linha.
+const CAMPOS = {
+  full_name: "Nome", cpf: "CPF", role: "Cargo", sector: "Setor",
+  salary_cents: "Salário", hired_on: "Admissão", email: "E-mail",
+  phone: "Telefone", work_card: "CTPS", registration: "Registro",
+  status: "Status", notes: "Observações",
+};
+
+const OPERACOES = { INSERT: "Cadastrado", UPDATE: "Editado", DELETE: "Removido" };
+
+// Valor de um campo como gente lê: salário em moeda, data em dd/mm/aaaa,
+// CPF e telefone com máscara, status em português.
+function valorLegivel(campo, v) {
+  if (v == null || v === "") return null;
+  if (campo === "salary_cents") return formatBRL(v);
+  if (campo === "hired_on") return formatDate(String(v).slice(0, 10));
+  if (campo === "cpf") return formatCPFValue(v);
+  if (campo === "phone") return formatPhoneValue(v);
+  if (campo === "status") return getStatusLabel({ status: v });
+  return String(v);
+}
+
 async function abrirDetalhes(func) {
-  const box = el('div', { class: 'func-detalhe' });
-  box.append(
-    el('h2', {}, func.full_name),
-    el('p', {}, `CPF: ${func.cpf || '-'}`),
-    el('p', {}, `Cargo: ${func.role || '-'}`),
-    el('p', {}, `Setor: ${func.sector || '-'}`),
-    el('p', {}, `Salário: ${func.salary_cents ? formatBRL(func.salary_cents) : '-'}`),
-    el('p', {}, `Admissão: ${func.hired_on || '-'}`),
-    el('p', {}, `E-mail: ${func.email || '-'}`),
-    el('p', {}, `Telefone: ${func.phone ? formatPhoneValue(func.phone) : '-'}`),
-    el('p', {}, `Status: ${getStatusLabel(func)}`),
-    el('hr', {}),
-    el('h3', {}, 'Anexos'),
-    el('div', { id: 'detalhe-anexos' }, 'Carregando anexos...'),
-    el('h3', {}, 'Histórico de alterações'),
-    el('div', { id: 'detalhe-audit' }, 'Carregando histórico...')
+  const anexosBox = el("div", {}, el("div", { class: "loading" }, "Carregando..."));
+  const auditBox = el("div", {}, el("div", { class: "loading" }, "Carregando..."));
+
+  openModal("Ficha do funcionário",
+    el("div", {},
+      el("div", { class: "admin-modal__id" },
+        el("div", { class: "rec__title-row" },
+          el("span", { class: "admin-cli__name" }, func.full_name),
+          el("span", { class: getStatusClass(func) }, getStatusLabel(func))
+        ),
+        el("div", { class: "admin-cli__email" },
+          [func.role, func.sector].filter(Boolean).join(" · ") || "Sem cargo definido")
+      ),
+
+      el("div", { class: "meta-grid meta-grid--2" },
+        // Nome, status e observações já aparecem acima e abaixo da grade.
+        ...Object.keys(CAMPOS)
+          .filter((k) => !["full_name", "status", "notes"].includes(k))
+          .map((k) => metaItem(CAMPOS[k], valorLegivel(k, func[k])))
+      ),
+      func.notes ? el("p", { class: "tx-preview" }, func.notes) : null,
+
+      el("hr", { class: "admin-conta__sep" }),
+      el("h3", { class: "admin-pay__titulo" }, "Anexos"),
+      anexosBox,
+
+      el("hr", { class: "admin-conta__sep" }),
+      el("h3", { class: "admin-pay__titulo" }, "Histórico de alterações"),
+      auditBox,
+
+      el("div", { class: "form__actions", style: "margin-top:18px" },
+        el("button", { class: "btn btn--ghost", onclick: closeModal }, "Fechar"),
+        el("button", { class: "btn btn--primary", onclick: () => abrirForm(func) }, "Editar")
+      )
+    )
   );
 
-  openModal('Detalhes do funcionário', box);
-
-  // carregar anexos com miniaturas quando possível
+  // ---- anexos (miniatura quando for imagem) ----
   (async () => {
-    const cont = $('#detalhe-anexos');
     try {
       const anexos = await listarEmployeeAttachments(state.company.id, func.id);
-      cont.innerHTML = '';
-      if (!anexos.length) cont.textContent = 'Nenhum anexo';
-      for (const a of anexos) {
-        const row = el('div', { class: 'anexo-row anexo-row--thumb' });
-        try {
-          const url = await urlComprovante(a.path);
-          const isImage = /\.(jpe?g|png|gif|webp|bmp)$/i.test(a.filename || a.path);
-          if (isImage) {
-            const img = el('img', { src: url, style: 'max-width:120px;max-height:90px;cursor:pointer', onclick: () => window.open(url, '_blank') });
-            row.append(img, el('div', { class: 'anexo-meta' }, el('div', {}, a.filename || a.path)));
-          } else {
-            row.append(el('a', { href: '#', onclick: async (ev) => { ev.preventDefault(); window.open(url,'_blank'); } }, a.filename || a.path));
-          }
-        } catch (e) {
-          row.append(el('a', { href: '#', onclick: async (ev) => { ev.preventDefault(); try { const url = await urlComprovante(a.path); window.open(url,'_blank'); } catch { toast('Não foi possível abrir o anexo','erro'); } } }, a.filename || a.path));
-        }
-        cont.append(row);
+      anexosBox.innerHTML = "";
+      if (!anexos.length) {
+        anexosBox.append(el("p", { class: "admin-pay__vazio" }, "Nenhum anexo."));
+        return;
       }
-    } catch (e) { console.error(e); cont.textContent = 'Erro ao carregar anexos'; }
+      const ul = el("ul", { class: "rec-list" });
+      for (const a of anexos) {
+        const nome = a.filename || a.path;
+        // A URL é assinada e expira: pega na hora do clique, não na montagem.
+        const abrir = async (ev) => {
+          ev.preventDefault();
+          try { window.open(await urlComprovante(a.path), "_blank", "noopener"); }
+          catch { toast("Não foi possível abrir o anexo", "erro"); }
+        };
+        const li = el("li", { class: "rec" },
+          el("div", { class: "rec__main" },
+            el("a", { href: "#", class: "rec__desc", onclick: abrir }, nome)
+          )
+        );
+        if (/\.(jpe?g|png|gif|webp|bmp)$/i.test(nome)) {
+          try {
+            li.prepend(el("img", {
+              class: "anexo__thumb", src: await urlComprovante(a.path), alt: nome, onclick: abrir,
+            }));
+          } catch { /* sem miniatura: o nome já abre o arquivo */ }
+        }
+        ul.append(li);
+      }
+      anexosBox.append(ul);
+    } catch (e) {
+      console.error(e);
+      anexosBox.innerHTML = "";
+      anexosBox.append(el("p", { class: "admin-pay__vazio" }, "Não foi possível carregar os anexos."));
+    }
   })();
 
-  // carregar audit
+  // ---- histórico: "campo: antes → depois", não o JSON da linha ----
   (async () => {
-    const cont = $('#detalhe-audit');
     try {
       const logs = await listarEmployeeAudit(func.id);
-      cont.innerHTML = '';
-      if (!logs.length) cont.textContent = 'Nenhum registro de auditoria';
-      for (const l of logs) {
-        const who = l.changed_by || 'system';
-        const row = el('div', { class: 'audit-row' },
-          el('div', { class: 'audit__head' }, `${l.operation} — ${new Date(l.changed_at).toLocaleString()} — ${who}`),
-          el('pre', { class: 'audit__body' }, JSON.stringify({ old: l.old_data, new: l.new_data }, null, 2))
-        );
-        cont.append(row);
+      auditBox.innerHTML = "";
+      if (!logs.length) {
+        auditBox.append(el("p", { class: "admin-pay__vazio" }, "Nenhuma alteração registrada."));
+        return;
       }
-    } catch (e) { console.error(e); cont.textContent = 'Erro ao carregar histórico'; }
+      const ul = el("ul", { class: "rec-list" });
+      for (const l of logs) {
+        const antes = l.old_data || {};
+        const depois = l.new_data || {};
+        const mudou = Object.keys(CAMPOS).filter(
+          (k) => (antes[k] ?? null) !== (depois[k] ?? null)
+        );
+        ul.append(el("li", { class: "rec" },
+          el("div", { class: "rec__main" },
+            el("span", { class: "rec__desc" },
+              `${OPERACOES[l.operation] || l.operation} · ${new Date(l.changed_at).toLocaleString("pt-BR")}`),
+            el("span", { class: "rec__meta" }, l.changed_by || "sistema"),
+            ...(l.operation === "UPDATE" ? mudou : []).map((k) =>
+              el("span", { class: "rec__meta" },
+                `${CAMPOS[k]}: ${valorLegivel(k, antes[k]) ?? "—"} → ${valorLegivel(k, depois[k]) ?? "—"}`)
+            )
+          )
+        ));
+      }
+      auditBox.append(ul);
+    } catch (e) {
+      console.error(e);
+      auditBox.innerHTML = "";
+      auditBox.append(el("p", { class: "admin-pay__vazio" }, "Não foi possível carregar o histórico."));
+    }
   })();
 }
 
@@ -93,10 +167,12 @@ function getStatusLabel(f) {
   return "Ativo";
 }
 
+// Etiqueta do app (.badge): `status-pill` nunca existiu no CSS e saía como
+// texto solto ao lado do nome.
 function getStatusClass(f) {
-  if (f.status === "terminated") return "status-pill--danger";
-  if (f.status === "inactive") return "status-pill--muted";
-  return "status-pill--ok";
+  if (f.status === "terminated") return "badge badge--saida";
+  if (f.status === "inactive") return "badge badge--muted";
+  return "badge";
 }
 
 function getFuncionariosVisiveis() {
@@ -109,36 +185,8 @@ function getFuncionariosVisiveis() {
   });
 }
 
-function formatCPFValue(value) {
-  const digits = (value || "").replace(/\D/g, "").slice(0, 11);
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
-  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
-  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
-}
 
-function formatPhoneValue(value) {
-  const digits = (value || "").replace(/\D/g, "").slice(0, 11);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-}
 
-function validarCPF(cpf) {
-  const digits = String(cpf || "").replace(/\D/g, "");
-  if (digits.length !== 11 || /^(\d)\1+$/.test(digits)) return false;
-  let sum = 0;
-  for (let i = 0; i < 9; i += 1) sum += Number(digits[i]) * (10 - i);
-  let mod = (sum * 10) % 11;
-  if (mod === 10) mod = 0;
-  if (mod !== Number(digits[9])) return false;
-  sum = 0;
-  for (let i = 0; i < 10; i += 1) sum += Number(digits[i]) * (11 - i);
-  mod = (sum * 10) % 11;
-  if (mod === 10) mod = 0;
-  return mod === Number(digits[10]);
-}
 
 // --- CSV import helper ----------------------------------------------------
 function splitCSVLine(line) {
@@ -202,47 +250,50 @@ export async function renderFuncionarios(root) {
         el("h1", { class: "page-title" }, "Funcionários"),
         el("p", { class: "page-sub" }, "Equipe, cargos e folha salarial")
       ),
-      el("div", {},
-        el("button", { class: "btn btn--secondary", onclick: () => { fileCsvInput.click(); } }, "Importar CSV"),
+      el("div", { class: "page-head__acoes" },
+        // O input do CSV é buscado na hora do clique: aqui ele ainda não está
+        // no documento.
+        el("button", { class: "btn btn--ghost", onclick: () => $("#csv-file-input")?.click() }, "Importar CSV"),
         el("button", { class: "btn btn--primary", onclick: () => abrirForm() }, "+ Novo funcionário")
       ),
       // input invisível pra CSV
       el("input", { type: "file", id: "csv-file-input", style: "display:none", accept: ".csv" })
     ),
-    el("section", { id: "func-filtros", class: "card" },
-      el("div", { class: "admin-pay__row" },
-        el("label", { class: "field" },
-          el("span", { class: "field__label" }, "Buscar"),
-          el("input", {
-            class: "input",
-            placeholder: "Nome, cargo ou setor",
-            value: filtros.query,
-            oninput: (event) => {
-              filtros.query = event.target.value;
-              desenharResumo();
-              desenharLista();
-            },
-          })
-        ),
-        el("label", { class: "field" },
-          el("span", { class: "field__label" }, "Status"),
-          el("select", {
-            class: "input",
-            onchange: (event) => {
-              filtros.status = event.target.value;
-              desenharResumo();
-              desenharLista();
-            },
+    el("section", { id: "func-resumo", class: "metrics" }),
+    // Filtro na fita padrão do app (mesma de Lançamentos), não numa placa
+    // inteira: dois campos não justificam um cartão do tamanho de uma seção.
+    el("section", { class: "filtros filtros--2" },
+      el("label", { class: "filtro-grupo" },
+        el("span", { class: "filtro-grupo__label" }, "Buscar"),
+        el("input", {
+          class: "input",
+          type: "search",
+          placeholder: "Nome, cargo ou setor",
+          value: filtros.query,
+          oninput: (event) => {
+            filtros.query = event.target.value;
+            desenharResumo();
+            desenharLista();
           },
-            el("option", { value: "all" }, "Todos"),
-            el("option", { value: "active" }, "Ativos"),
-            el("option", { value: "inactive" }, "Inativos"),
-            el("option", { value: "terminated" }, "Demitidos")
-          )
+        })
+      ),
+      el("label", { class: "filtro-grupo" },
+        el("span", { class: "filtro-grupo__label" }, "Status"),
+        el("select", {
+          class: "input",
+          onchange: (event) => {
+            filtros.status = event.target.value;
+            desenharResumo();
+            desenharLista();
+          },
+        },
+          el("option", { value: "all" }, "Todos"),
+          el("option", { value: "active" }, "Ativos"),
+          el("option", { value: "inactive" }, "Inativos"),
+          el("option", { value: "terminated" }, "Demitidos")
         )
       )
     ),
-    el("section", { id: "func-resumo", class: "stats admin-resumo" }),
     el("div", { id: "func-lista", class: "card" }, skeletonList(5))
   );
   await carregar();
@@ -273,20 +324,17 @@ function desenharResumo() {
   const ativos = visiveis.filter((f) => f.status === "active");
   const inativos = visiveis.filter((f) => f.status !== "active");
   const folha = ativos.reduce((s, f) => s + (f.salary_cents || 0), 0);
-  const setores = new Set(ativos.map((f) => (f.sector || "").trim()).filter(Boolean));
   box.innerHTML = "";
+  // A folha é o número que se abre esta tela pra ver: vira placa, e as
+  // contagens ficam embaixo, em corpo miúdo.
   box.append(
-    card("Funcionários", String(visiveis.length)),
-    card("Ativos", String(ativos.length), "ok"),
-    card("Inativos", String(inativos.length), "saida"),
-    card("Folha mensal", formatBRL(folha), "saida")
-  );
-}
-
-function card(label, valor, tipo = "") {
-  return el("div", { class: `card stat ${tipo ? "stat--" + tipo : ""}` },
-    el("div", { class: "stat__header" }, el("span", { class: "stat__label" }, label)),
-    el("span", { class: "stat__value num" }, String(valor))
+    numCard("Folha mensal", formatBRL(folha), "", {
+      placa: true,
+      foot: ativos.length === 1 ? "1 funcionário ativo" : `${ativos.length} funcionários ativos`,
+    }),
+    numCard("Funcionários", String(visiveis.length)),
+    numCard("Ativos", String(ativos.length), "entrada"),
+    numCard("Inativos", String(inativos.length), inativos.length > 0 ? "saida" : "")
   );
 }
 
@@ -297,7 +345,15 @@ function desenharLista() {
   const visiveis = getFuncionariosVisiveis();
   box.innerHTML = "";
   if (visiveis.length === 0) {
-    box.append(emptyState("Nenhum funcionário encontrado com esses filtros.", ICON_ID));
+    // Lista vazia por não haver ninguém cadastrado é outra coisa de lista vazia
+    // por causa do filtro: uma pede um cadastro, a outra pede limpar a busca.
+    if (funcionarios.length === 0) {
+      const vazio = emptyState("Nenhum funcionário cadastrado ainda. Comece pela equipe que já trabalha com você.", ICON_ID);
+      vazio.append(el("button", { class: "btn btn--primary", onclick: () => abrirForm() }, "+ Cadastrar funcionário"));
+      box.append(vazio);
+    } else {
+      box.append(emptyState("Nenhum funcionário encontrado com esses filtros.", ICON_ID));
+    }
     return;
   }
 
@@ -317,7 +373,7 @@ function item(f) {
     el("div", { class: "rec__main" },
       el("div", { class: "rec__title-row" },
         el("a", { href: "#", class: "rec__desc", onclick: (e) => { e.preventDefault(); abrirDetalhes(f); } }, f.full_name),
-        el("span", { class: `status-pill ${getStatusClass(f)}` }, getStatusLabel(f))
+        el("span", { class: getStatusClass(f) }, getStatusLabel(f))
       ),
       el("span", { class: "rec__meta" }, meta || "Sem cargo definido")
     ),
@@ -393,7 +449,9 @@ function abrirForm(func = null) {
         try { await uploadEmployeeAttachment(state.company.id, created.id, file); }
         catch (e) { console.error('Upload anexo falhou', e); toast('Anexo não enviado', 'erro'); }
       }
-      closeModal();
+      // (true) fecha a pilha inteira: se este formulário foi aberto pela ficha,
+      // voltar pra ela mostraria os dados velhos que acabamos de substituir.
+      closeModal(true);
       toast(editando ? "Funcionário atualizado" : "Funcionário cadastrado", "ok");
       await carregar();
     } catch (err) {
@@ -444,26 +502,41 @@ function abrirForm(func = null) {
       const anexos = await listarEmployeeAttachments(state.company.id, func.id);
       if (!anexos || anexos.length === 0) { attachmentsBox.innerHTML = "Nenhum anexo"; return; }
       attachmentsBox.innerHTML = "";
+      const ul = el("ul", { class: "rec-list" });
       for (const a of anexos) {
-        const row = el("div", { class: "anexo-row anexo-row--thumb" });
-        try {
-          const url = await urlComprovante(a.path);
-          const isImage = /\.(jpe?g|png|gif|webp|bmp)$/i.test(a.filename || a.path);
-          if (isImage) {
-            const img = el('img', { src: url, style: 'max-width:120px;max-height:90px;cursor:pointer', onclick: () => window.open(url, '_blank') });
-            row.append(img, el('div', { class: 'anexo-meta' }, el('div', {}, a.filename || a.path)));
-          } else {
-            row.append(el('a', { href: '#', onclick: async (ev) => { ev.preventDefault(); window.open(url, '_blank'); } }, a.filename || a.path));
-          }
-        } catch (e) {
-          row.append(el('a', { href: '#', onclick: async (ev) => { ev.preventDefault(); try { const url = await urlComprovante(a.path); window.open(url, '_blank'); } catch (e) { toast('Não foi possível abrir o arquivo', 'erro'); } } }, a.filename || a.path));
+        const nome = a.filename || a.path;
+        // URL assinada expira: pega na hora do clique, não na montagem da lista.
+        const abrir = async (ev) => {
+          ev.preventDefault();
+          try { window.open(await urlComprovante(a.path), "_blank", "noopener"); }
+          catch { toast("Não foi possível abrir o arquivo", "erro"); }
+        };
+        const li = el("li", { class: "rec" },
+          el("div", { class: "rec__main" },
+            el("a", { href: "#", class: "rec__desc", onclick: abrir }, nome)
+          ),
+          el("div", { class: "rec__actions" },
+            // Agora que o modal empilha, o diálogo do app dá conta: ele abre
+            // por cima e devolve o formulário intacto ao fechar.
+            el("button", { class: "btn btn--tiny btn--danger", onclick: () => confirmar({
+              titulo: "Apagar anexo",
+              texto: `Apagar "${nome}"? O arquivo sai do sistema e não dá pra desfazer.`,
+              confirmar: "Apagar", perigo: true,
+            }, async () => {
+              await deleteAttachment(a.id, a.path);
+              toast("Anexo apagado", "ok");
+              await carregarAnexos();
+            }) }, "Apagar")
+          )
+        );
+        if (/\.(jpe?g|png|gif|webp|bmp)$/i.test(nome)) {
+          try {
+            li.prepend(el("img", { class: "anexo__thumb", src: await urlComprovante(a.path), alt: nome, onclick: abrir }));
+          } catch { /* sem miniatura: o nome já abre o arquivo */ }
         }
-        row.append(el("button", { class: "btn btn--tiny btn--danger", onclick: async () => {
-          if (!confirm(`Apagar anexo "${a.filename || a.path}"?`)) return;
-          try { await deleteAttachment(a.id, a.path); toast('Anexo apagado', 'ok'); await carregarAnexos(); } catch (e) { console.error(e); toast('Não foi possível apagar anexo', 'erro'); }
-        } }, "Apagar"));
-        attachmentsBox.append(row);
+        ul.append(li);
       }
+      attachmentsBox.append(ul);
     } catch (e) {
       console.error(e);
       attachmentsBox.innerHTML = "Erro ao carregar anexos";
@@ -511,7 +584,7 @@ async function previewCSVImport(file) {
           };
           try { await criarFuncionario(state.company.id, dados); added++; } catch (e) { failed++; }
         }
-        closeModal();
+        closeModal(true);
         toast(`Importação: ${added} adicionados, ${failed} falhas`, 'ok');
         await carregar();
       } }

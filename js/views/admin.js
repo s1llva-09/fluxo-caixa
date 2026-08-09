@@ -7,16 +7,14 @@
 // ============================================================================
 
 import Chart from "https://esm.sh/chart.js@4/auto";
-import { el, $, toast, openModal, closeModal, errorState, skeletonList, senhaInput } from "../ui.js";
+import { el, $, toast, openModal, closeModal, errorState, skeletonList, senhaInput, metaItem, numCard } from "../ui.js";
 import { listarClientesAdmin, definirStatusCliente, atualizarDadosCliente, definirPlanoEmpresa, registrarPagamento, listarPagamentos, receitaPeriodo, receitaMensal } from "../api.js";
 import { nomePlano } from "../planos.js";
 import { updateEmail, updatePassword } from "../auth.js";
 import { state, mesAtual } from "../state.js";
 import { renderAdminPermissoes } from "./admin_permissoes.js";
 import { formatDate, formatBRL, parseToCents, todayISO } from "../money.js";
-
-// Janela (em dias) para o aviso de "mensalidade vencendo em breve".
-const AVISO_DIAS = 7;
+import { AVISO_DIAS, venceEmBreve, avisoVenc, ordenarPorUrgencia } from "../regras.js";
 
 let clientes = [];
 let filtro = "";
@@ -32,27 +30,29 @@ export async function renderAdmin(root) {
         el("h1", { class: "page-title" }, "Painel do Admin"),
         el("p", { class: "page-sub" }, "Clientes do Monetta e controle de assinatura")
       ),
-      el("div", {},
+      el("div", { class: "page-head__acoes" },
         el("button", { class: "btn btn--ghost", onclick: () => renderAdminPermissoes(root, renderAdmin) }, "Equipe: Permissões"),
         el("button", { class: "btn btn--ghost", onclick: exportarCSV,
           "data-tip": "Baixar a lista de clientes em planilha" }, "↓ Exportar clientes")
       )
     ),
-    el("section", { id: "admin-resumo", class: "stats admin-resumo" }),
+    el("section", { id: "admin-resumo", class: "metrics metrics--admin" }),
+    // O gráfico fica junto da placa de MRR: os dois falam de receita, e no fim
+    // da página, depois da lista, ninguém relacionava um com o outro.
     el("section", { class: "card" },
-      el("div", { class: "card__head" },
-        el("h2", { class: "card__title" }, "Clientes"),
-        buscaInput()
-      ),
-      el("div", { id: "admin-filtros", class: "admin-filtros" }),
-      el("div", { id: "admin-lista" }, skeletonList(5))
-    ),
-    el("section", { class: "card chart-card" },
       el("div", { class: "card__head" },
         el("h2", { class: "card__title" }, "Receita — últimos 6 meses"),
         el("span", { class: "card__hint", id: "rec-comp" }, "Soma das mensalidades recebidas por mês")
       ),
       el("div", { class: "chart-wrap" }, el("canvas", { id: "chart-receita" }))
+    ),
+    el("section", { class: "card" },
+      el("div", { class: "card__head" },
+        el("h2", { class: "card__title" }, "Clientes"),
+        el("span", { class: "card__hint", id: "admin-conta-lista" }),
+        buscaInput()
+      ),
+      el("div", { id: "admin-lista" }, skeletonList(5))
     ),
     secaoConta()
   );
@@ -157,7 +157,7 @@ async function carregar() {
   box.append(skeletonList(5));
 
   try {
-    clientes = await listarClientesAdmin();
+    clientes = ordenarPorUrgencia(await listarClientesAdmin());
   } catch (err) {
     console.error(err);
     box.innerHTML = "";
@@ -173,7 +173,6 @@ async function carregar() {
     receitaMes = 0;
   }
   desenharResumo();
-  desenharFiltros();
   desenharLista();
 
   // Gráfico de receita dos últimos meses (não-fatal).
@@ -280,36 +279,21 @@ function desenharResumo() {
   // MRR = soma das mensalidades dos clientes ativos (receita recorrente prevista).
   const mrr = clientes.reduce((s, c) => s + (c.active ? (c.plan_value_cents || 0) : 0), 0);
   box.innerHTML = "";
+  // Seis números do mesmo tamanho diziam que os seis valem o mesmo. O MRR é o
+  // que se abre esta tela pra ver — vira placa, e as contagens viram a letra
+  // miúda embaixo.
   box.append(
-    resumoCard("Clientes", total),
-    resumoCard("Ativos", ativos, "entrada"),
-    resumoCard(`Vencendo (${AVISO_DIAS}d)`, vencendo, vencendo > 0 ? "alerta" : ""),
-    resumoCard("Bloqueados / vencidos", inativos, inativos > 0 ? "saida" : ""),
-    resumoCard("Receita do mês", formatBRL(receitaMes), "entrada"),
-    resumoCard("MRR (recorrente)", formatBRL(mrr))
+    numCard("MRR (recorrente)", formatBRL(mrr), "", {
+      placa: true, foot: `Recebido neste mês: ${formatBRL(receitaMes)}`,
+    }),
+    filtroCard("Clientes", total, "", "todos"),
+    filtroCard("Ativos", ativos, "entrada", "ativos"),
+    filtroCard(`Vencendo (${AVISO_DIAS}d)`, vencendo, vencendo > 0 ? "alerta" : "", "vencendo"),
+    filtroCard("Bloqueados / vencidos", inativos, inativos > 0 ? "saida" : "", "inativos")
   );
 }
 
 // ---- filtro por status ------------------------------------------------------
-
-function desenharFiltros() {
-  const box = $("#admin-filtros");
-  if (!box) return;
-  const opcoes = [
-    ["todos", "Todos"],
-    ["ativos", "Ativos"],
-    ["vencendo", "Vencendo"],
-    ["inativos", "Bloqueados / vencidos"],
-  ];
-  box.innerHTML = "";
-  for (const [id, label] of opcoes) {
-    const chip = el("button", {
-      class: `chip ${filtroStatus === id ? "chip--on" : ""}`,
-      onclick: () => { filtroStatus = id; desenharFiltros(); desenharLista(); },
-    }, label);
-    box.append(chip);
-  }
-}
 
 // Aplica o filtro de status escolhido na lista.
 function passaStatus(c) {
@@ -317,28 +301,6 @@ function passaStatus(c) {
   if (filtroStatus === "inativos") return !c.active;
   if (filtroStatus === "vencendo") return venceEmBreve(c);
   return true;
-}
-
-// True se o cliente está ativo e a mensalidade vence dentro da janela de aviso.
-function venceEmBreve(c) {
-  if (!c.active || !c.plan_until) return false;
-  const d = diasAte(c.plan_until);
-  return d !== null && d >= 0 && d <= AVISO_DIAS;
-}
-
-// Texto do aviso de vencimento ("Vence hoje" / "Vence amanhã" / "Vence em Xd").
-function avisoVenc(c) {
-  const d = diasAte(c.plan_until);
-  if (d === 0) return "Vence hoje";
-  if (d === 1) return "Vence amanhã";
-  return `Vence em ${d}d`;
-}
-
-// Dias entre hoje e uma data ISO (negativo = no passado).
-function diasAte(iso) {
-  if (!iso) return null;
-  const ms = new Date(iso + "T00:00:00") - new Date(todayISO() + "T00:00:00");
-  return Math.round(ms / 86400000);
 }
 
 // Soma 1 mês a uma data ISO (YYYY-MM-DD), devolvendo ISO.
@@ -378,11 +340,13 @@ function exportarCSV() {
   URL.revokeObjectURL(url);
 }
 
-function resumoCard(label, valor, tipo = "") {
-  return el("div", { class: `card stat ${tipo ? "stat--" + tipo : ""}` },
-    el("div", { class: "stat__header" }, el("span", { class: "stat__label" }, label)),
-    el("span", { class: "stat__value num" }, String(valor))
-  );
+// O card É o filtro. Antes ele contava "3 vencendo" e o dono tinha que descer
+// e clicar num chip escrito a mesma coisa — dois controles pro mesmo comando.
+function filtroCard(label, valor, tipo, filtro) {
+  return numCard(label, valor, tipo, {
+    ativo: filtroStatus === filtro,
+    onClick: () => { filtroStatus = filtro; desenharResumo(); desenharLista(); },
+  });
 }
 
 // ---- lista de clientes ------------------------------------------------------
@@ -398,6 +362,14 @@ function desenharLista() {
     return (c.name || "").toLowerCase().includes(termo) ||
            (c.owner_email || "").toLowerCase().includes(termo);
   });
+
+  // Sem isso, filtrar por um card some com clientes da lista sem dizer por quê.
+  const conta = $("#admin-conta-lista");
+  if (conta) {
+    conta.textContent = itens.length === clientes.length
+      ? `${clientes.length} no total`
+      : `${itens.length} de ${clientes.length}`;
+  }
 
   box.innerHTML = "";
   if (itens.length === 0) {
@@ -418,12 +390,14 @@ function desenharLista() {
             venceEmBreve(c) ? el("span", { class: "badge badge--alerta" }, avisoVenc(c)) : null
           ),
           el("div", { class: "admin-cli__email" }, c.owner_email || "—"),
-          el("div", { class: "admin-cli__meta" },
-            metaItem("Mensalidade", c.plan_value_cents != null ? formatBRL(c.plan_value_cents) : "—"),
-            metaItem("Vencimento", c.plan_until ? formatDate(c.plan_until) : "sem data"),
+          // metaItem devolve null sem valor: campo vazio não vira coluna de
+          // travessão, que era ruído com aparência de dado.
+          el("div", { class: "meta-grid" },
+            metaItem("Mensalidade", c.plan_value_cents != null ? formatBRL(c.plan_value_cents) : null),
+            metaItem("Vencimento", c.plan_until ? formatDate(c.plan_until) : null),
             metaItem("Lançamentos", String(c.tx_count ?? 0)),
-            metaItem("Última atividade", c.last_activity ? formatDate(c.last_activity) : "—"),
-            metaItem("Cadastro", c.created_at ? formatDate(c.created_at.slice(0, 10)) : "—")
+            metaItem("Última atividade", c.last_activity ? formatDate(c.last_activity) : null),
+            metaItem("Cadastro", c.created_at ? formatDate(c.created_at.slice(0, 10)) : null)
           )
         ),
         el("div", { class: "admin-cli__actions" },
@@ -433,13 +407,6 @@ function desenharLista() {
     );
   }
   box.append(lista);
-}
-
-function metaItem(label, valor) {
-  return el("span", { class: "admin-cli__metaitem" },
-    el("span", { class: "admin-cli__metalabel" }, label),
-    el("span", { class: "admin-cli__metavalue" }, valor)
-  );
 }
 
 // status: 'blocked' manual; ou 'active' mas com plan_until vencido = "Vencido".
@@ -467,28 +434,6 @@ function gerenciar(c) {
 
   const dataInput = el("input", { class: "input", type: "date", value: c.plan_until || "" });
 
-  const btnSalvar = el("button", { class: "btn btn--primary" }, "Salvar");
-
-  async function salvar() {
-    btnSalvar.disabled = true;
-    btnSalvar.textContent = "Salvando...";
-    try {
-      const atualizada = await definirStatusCliente(c.id, status, dataInput.value || null);
-      aplicarNaMemoria(atualizada.status, atualizada.plan_until);
-      toast("Acesso atualizado", "ok");
-      desenharResumo();
-      desenharLista();
-    } catch (err) {
-      console.error(err);
-      toast("Não foi possível salvar", "erro");
-    } finally {
-      btnSalvar.disabled = false;
-      btnSalvar.textContent = "Salvar acesso";
-    }
-  }
-  btnSalvar.textContent = "Salvar acesso";
-  btnSalvar.addEventListener("click", salvar);
-
   // Reflete mudanças no objeto em memória + nos campos do modal.
   function aplicarNaMemoria(novoStatus, novoVenc) {
     Object.assign(c, {
@@ -512,29 +457,48 @@ function gerenciar(c) {
     el("option", { value: "empresarial" }, "Empresarial")
   );
   planoSel.value = c.plan || "trial";
-  const btnDados = el("button", { class: "btn btn--primary" }, "Salvar plano e anotações");
-  async function salvarDados() {
-    const cents = parseToCents(planValorInput.value); // null se vazio
-    btnDados.disabled = true; btnDados.textContent = "Salvando...";
+
+  // UM salvar pro cadastro inteiro. Eram três botões — acesso, plano,
+  // anotações — no mesmo scroll, e nenhum dizia o que exatamente ia gravar.
+  // São RPCs separadas por causa do banco, não porque sejam decisões
+  // diferentes: cada uma só é chamada se o que ela cuida mudou.
+  const btnSalvar = el("button", { class: "btn btn--primary" }, "Salvar alterações");
+  async function salvar() {
+    btnSalvar.disabled = true;
+    btnSalvar.textContent = "Salvando...";
     try {
-      const at = await atualizarDadosCliente(c.id, cents, notasInput.value.trim());
-      // Plano/tier (libera módulos no app do cliente) — RPC própria.
+      let mudou = false;
+      const venc = dataInput.value || null;
+      const statusAtual = c.status === "blocked" ? "blocked" : "active";
+      if (status !== statusAtual || venc !== (c.plan_until || null)) {
+        const at = await definirStatusCliente(c.id, status, venc);
+        aplicarNaMemoria(at.status, at.plan_until);
+        mudou = true;
+      }
+      const cents = parseToCents(planValorInput.value); // null se vazio
+      const notas = notasInput.value.trim();
+      if (cents !== (c.plan_value_cents ?? null) || notas !== (c.notes || "")) {
+        const at = await atualizarDadosCliente(c.id, cents, notas);
+        Object.assign(c, { plan_value_cents: at.plan_value_cents, notes: at.notes });
+        mudou = true;
+      }
       if (planoSel.value !== (c.plan || "trial")) {
         await definirPlanoEmpresa(c.id, planoSel.value);
         c.plan = planoSel.value;
+        mudou = true;
       }
-      Object.assign(c, { plan_value_cents: at.plan_value_cents, notes: at.notes });
-      toast("Dados atualizados", "ok");
+      toast(mudou ? "Cliente atualizado" : "Nenhuma alteração", mudou ? "ok" : "info");
       desenharResumo();
       desenharLista();
     } catch (err) {
       console.error(err);
       toast("Não foi possível salvar", "erro");
     } finally {
-      btnDados.disabled = false; btnDados.textContent = "Salvar plano e anotações";
+      btnSalvar.disabled = false;
+      btnSalvar.textContent = "Salvar alterações";
     }
   }
-  btnDados.addEventListener("click", salvarDados);
+  btnSalvar.addEventListener("click", salvar);
 
   // ---- pagamentos ----
   const baseVenc = (c.plan_until && c.plan_until >= todayISO()) ? c.plan_until : todayISO();
@@ -607,6 +571,7 @@ function gerenciar(c) {
         el("div", { class: "admin-cli__email" }, c.owner_email || "—")
       ),
 
+      el("h3", { class: "admin-pay__titulo" }, "Acesso e plano"),
       el("label", { class: "field" },
         el("span", { class: "field__label" }, "Acesso"),
         el("div", { class: "seg-group", style: "margin-bottom:0" }, segAtivo, segBloq)
@@ -615,21 +580,18 @@ function gerenciar(c) {
         el("span", { class: "field__label" }, "Mensalidade vence em (opcional)"),
         dataInput
       ),
-      el("div", { class: "form__actions" }, btnSalvar),
-
-      el("hr", { class: "admin-conta__sep" }),
-
-      el("h3", { class: "admin-pay__titulo" }, "Plano e anotações"),
       el("label", { class: "field" },
         el("span", { class: "field__label" }, "Plano (libera módulos)"), planoSel),
       el("label", { class: "field" },
         el("span", { class: "field__label" }, "Valor da mensalidade"), planValorInput),
       el("label", { class: "field" },
         el("span", { class: "field__label" }, "Anotações"), notasInput),
-      el("div", { class: "form__actions" }, btnDados),
+      el("div", { class: "form__actions" }, btnSalvar),
 
       el("hr", { class: "admin-conta__sep" }),
 
+      // Pagamento continua com botão próprio: não é um ajuste de cadastro, é
+      // um registro novo — e desfazer um é bem mais caro.
       el("h3", { class: "admin-pay__titulo" }, "Registrar pagamento"),
       el("div", { class: "admin-pay__row" },
         el("label", { class: "field" }, el("span", { class: "field__label" }, "Valor"), valorInput),

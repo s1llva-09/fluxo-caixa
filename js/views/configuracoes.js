@@ -7,11 +7,11 @@ import { state } from "../state.js";
 import {
   atualizarEmpresa,
   convidar, enviarEmailConvite, listarConvites, revogarConvite, listarMembros, removerMembro,
-  setMemberRole,
+  setMemberRole, listarMemberRoleAudit, exportMemberRoleAuditCSV,
   meusConvites, aceitarConvite,
   criarAssinatura,
 } from "../api.js";
-import { updateEmail, updatePassword, signOut } from "../auth.js";
+import { updateEmail, updatePassword, signOut, salvarPreferencias } from "../auth.js";
 import { getTheme, setTheme } from "../theme.js";
 import { MOEDAS_LISTA, getMoeda, setMoeda } from "../money.js";
 import { planoDe, nomePlano } from "../planos.js";
@@ -23,14 +23,20 @@ export function renderConfiguracoes(root) {
       el("h1", { class: "page-title" }, "Configurações"),
       el("p", { class: "page-sub" }, "Empresa, conta e preferências")
     ),
-    secaoPlano(),
-    secaoAparencia(),
-    secaoMoeda(),
-    secaoEmpresa(),
-    secaoEquipe(),
-    secaoEmail(),
-    secaoSenha(),
-    secaoSair()
+    // Duas colunas no desktop: as seções são independentes entre si e não há
+    // motivo pra empilhar oito placas num corredor de 560px.
+    el("div", { class: "config-grid" },
+      secaoPlano(),
+      // Seis seções curtas em três linhas limpas; equipe e sessão, que crescem
+      // sem limite, viram faixas de largura cheia embaixo.
+      secaoAparencia(),
+      secaoMoeda(),
+      secaoEmpresa(),
+      secaoEmail(),
+      secaoSenha(),
+      secaoEquipe(),
+      secaoSair()
+    )
   );
 }
 
@@ -44,11 +50,15 @@ function secaoMoeda() {
   sel.addEventListener("change", () => {
     setMoeda(sel.value);
     toast("Moeda atualizada", "ok");
-    location.reload(); // re-renderiza tudo com o novo formato
+    // Sem reload: formatBRL lê a moeda a cada chamada, e a casca do app não
+    // mostra valor nenhum — a próxima tela já desenha no formato novo.
+    // Guardar na conta é o que faz a escolha atravessar pro outro aparelho;
+    // se falhar (offline), a troca local já valeu e não vale interromper.
+    salvarPreferencias({ moeda: sel.value }).catch(console.error);
   });
   return secao("Moeda",
     el("p", { class: "config__hint" },
-      "Símbolo e formato dos valores no app. A preferência fica salva neste dispositivo."),
+      "Símbolo e formato dos valores no app. A escolha vale em qualquer aparelho onde você entrar."),
     el("label", { class: "field" },
       el("span", { class: "field__label" }, "Moeda"), sel)
   );
@@ -62,20 +72,29 @@ function secaoEquipe() {
 
   async function carregar() {
     box.innerHTML = "";
-    let membros = [], convites = [];
-    try {
-      membros = await listarMembros(state.company.id);
-      if (ehDono) convites = await listarConvites(state.company.id);
-    } catch (err) {
-      console.error(err);
+
+    // As quatro consultas são independentes: em série a seção levava quatro
+    // idas ao banco uma depois da outra. allSettled porque três delas são
+    // opcionais — convite e histórico podem não existir ainda.
+    const [rMembros, rConvites, rRecebidos, rAudit] = await Promise.allSettled([
+      listarMembros(state.company.id),
+      ehDono ? listarConvites(state.company.id) : Promise.resolve([]),
+      meusConvites(),
+      listarMemberRoleAudit(state.company.id, 50),
+    ]);
+
+    if (rMembros.status === "rejected") {
+      console.error(rMembros.reason);
       box.append(el("p", { class: "admin-pay__vazio" }, "Não foi possível carregar a equipe."));
       return;
     }
+    const membros = rMembros.value;
+    const convites = rConvites.status === "fulfilled" ? rConvites.value : [];
+    const audit = rAudit.status === "fulfilled" ? (rAudit.value || []) : [];
 
     // Convites que EU recebi (de outras empresas) — sempre visível.
-    let recebidos = [];
-    try { recebidos = await meusConvites(); } catch (e) { /* migração pode não ter rodado */ }
-    recebidos = recebidos.filter((r) => r.company_id !== state.company.id);
+    const recebidos = (rRecebidos.status === "fulfilled" ? rRecebidos.value : [])
+      .filter((r) => r.company_id !== state.company.id);
     if (recebidos.length) {
       const ulr = el("ul", { class: "rec-list" });
       for (const r of recebidos) {
@@ -145,31 +164,27 @@ function secaoEquipe() {
     box.append(el("h3", { class: "admin-pay__titulo" }, "Membros"), ul);
 
     // Histórico de alterações de papéis
-    try {
-      const api = await import('../api.js');
-      const audit = await api.listarMemberRoleAudit(state.company.id, 50);
-      if (audit && audit.length) {
-        const ulh = el('ul', { class: 'rec-list' });
-        for (const a of audit) {
-          ulh.append(el('li', { class: 'rec' },
-            el('div', { class: 'rec__main' },
-              el('span', { class: 'rec__desc' }, a.user_email || a.user_id),
-              el('span', { class: 'rec__meta' }, `${a.old_role || '-'} → ${a.new_role || '-'}`)
-            ),
-            el('div', { class: 'rec__right' }, new Date(a.changed_at).toLocaleString())
-          ));
-        }
-        const btnExport = el('button', { class: 'btn btn--ghost', onclick: async () => {
-          try {
-            const csv = await api.exportMemberRoleAuditCSV(state.company.id);
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = `company_${state.company.id}_members_audit.csv`; a.click(); URL.revokeObjectURL(url);
-          } catch (e) { console.error(e); toast('Erro ao exportar CSV','erro'); }
-        } }, 'Exportar CSV');
-        box.append(el('h3', { class: 'admin-pay__titulo', style: 'margin-top:18px' }, 'Histórico de papéis'), btnExport, ulh);
+    if (audit.length) {
+      const ulh = el('ul', { class: 'rec-list' });
+      for (const a of audit) {
+        ulh.append(el('li', { class: 'rec' },
+          el('div', { class: 'rec__main' },
+            el('span', { class: 'rec__desc' }, a.user_email || a.user_id),
+            el('span', { class: 'rec__meta' }, `${a.old_role || '-'} → ${a.new_role || '-'}`)
+          ),
+          el('div', { class: 'rec__right' }, new Date(a.changed_at).toLocaleString())
+        ));
       }
-    } catch (e) { console.error('hist role fetch', e); }
+      const btnExport = el('button', { class: 'btn btn--ghost', onclick: async () => {
+        try {
+          const csv = await exportMemberRoleAuditCSV(state.company.id);
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a'); a.href = url; a.download = `company_${state.company.id}_members_audit.csv`; a.click(); URL.revokeObjectURL(url);
+        } catch (e) { console.error(e); toast('Erro ao exportar CSV','erro'); }
+      } }, 'Exportar CSV');
+      box.append(el('h3', { class: 'admin-pay__titulo', style: 'margin-top:18px' }, 'Histórico de papéis'), btnExport, ulh);
+    }
 
     // Convites pendentes (só o dono)
     if (ehDono && convites.length) {
@@ -249,7 +264,9 @@ function secaoEquipe() {
     );
   }
 
+  // Cresce com membros, convites e histórico: largura cheia, embaixo das colunas.
   const card = secao("Equipe", ...filhos);
+  card.classList.add("config-secao--full");
   carregar();
   return card;
 }
@@ -290,6 +307,7 @@ function secaoAparencia() {
     btn.addEventListener("click", () => {
       setTheme(op.id);
       marcar(op.id);
+      salvarPreferencias({ theme: op.id }).catch(console.error);
     });
     grupo.append(btn);
   }
@@ -297,7 +315,7 @@ function secaoAparencia() {
   marcar(getTheme());
 
   return secao("Aparência",
-    el("p", { class: "config__hint" }, "Escolha como o aplicativo aparece para você. A preferência fica salva neste dispositivo."),
+    el("p", { class: "config__hint" }, "Escolha como o aplicativo aparece para você. A escolha vale em qualquer aparelho onde você entrar."),
     grupo
   );
 }
@@ -469,11 +487,13 @@ function secaoSair() {
     }
   });
 
-  return secao("Sessão",
+  const sec = secao("Sessão",
     el("p", { class: "config__hint" }, `Conectado como ${state.user?.email ?? "—"}`),
     el("p", { class: "config__note" }, "Ao sair, você precisará entrar novamente com seu email e senha."),
     btn
   );
+  sec.classList.add("config-secao--full");
+  return sec;
 }
 
 // ── Utilitários ──────────────────────────────────────────────────────────────
@@ -489,9 +509,9 @@ function secaoPlano() {
     pro: "Financeiro, Vendas, Estoque e Clientes.",
     empresarial: "Tudo do Pro + Funcionários e múltiplas empresas.",
   };
-  return secao("Seu plano",
-    el("div", { style: "display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px" },
-      el("span", { style: "font-family:var(--font-display);font-weight:700;font-size:22px;color:var(--c-ink)" }, nome),
+  const sec = secao("Seu plano",
+    el("div", { class: "plano__head" },
+      el("span", { class: "plano__nome" }, nome),
       el("span", { class: badgeClass }, plano === "trial" ? "Acesso total" : "Ativo")
     ),
     el("p", { class: "config__hint" }, modulos[plano] || modulos.trial),
@@ -501,6 +521,9 @@ function secaoPlano() {
       el("a", { class: "btn btn--ghost", href: "mailto:monetta.erp@gmail.com?subject=Planos%20Monetta" }, "Falar com a gente")
     )
   );
+  // O plano é o cabeçalho da tela: ocupa a largura toda, acima das duas colunas.
+  sec.classList.add("config-secao--full");
+  return sec;
 }
 
 // Modal de assinatura: coleta os dados e abre o link de pagamento do Asaas.

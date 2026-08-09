@@ -5,7 +5,7 @@
 //  automaticamente; cancelar a venda estorna essa entrada.
 // ============================================================================
 
-import { el, $, toast, openModal, closeModal, confirmar, emptyState, errorState, skeletonList } from "../ui.js";
+import { el, $, toast, openModal, closeModal, confirmar, emptyState, errorState, skeletonList, numCard } from "../ui.js";
 import { state } from "../state.js";
 import { listarVendas, criarVenda, cancelarVenda, listarClientes, listarCategorias, listarProdutos } from "../api.js";
 import { formatBRL, formatDate, parseToCents, todayISO } from "../money.js";
@@ -38,7 +38,7 @@ export async function renderVendas(root) {
       ),
       el("button", { class: "btn btn--primary", onclick: () => abrirForm() }, "+ Nova venda")
     ),
-    el("section", { id: "vendas-resumo", class: "stats admin-resumo" }),
+    el("section", { id: "vendas-resumo", class: "metrics metrics--dash" }),
     el("div", { id: "vendas-filtros", class: "admin-filtros" }),
     el("div", { id: "vendas-lista", class: "card" }, skeletonList(5))
   );
@@ -70,17 +70,11 @@ function desenharResumo() {
   const mes = new Date().toISOString().slice(0, 7);
   const totalMes = ativas.filter((v) => (v.occurred_on || "").startsWith(mes)).reduce((s, v) => s + v.amount_cents, 0);
   box.innerHTML = "";
+  // O mês corrente é o que se acompanha todo dia; o acumulado é referência.
   box.append(
-    card("Vendas (total)", formatBRL(total), "entrada"),
-    card("Este mês", formatBRL(totalMes), "entrada"),
-    card("Nº de vendas", String(ativas.length))
-  );
-}
-
-function card(label, valor, tipo = "") {
-  return el("div", { class: `card stat ${tipo ? "stat--" + tipo : ""}` },
-    el("div", { class: "stat__header" }, el("span", { class: "stat__label" }, label)),
-    el("span", { class: "stat__value num" }, String(valor))
+    numCard("Vendido este mês", formatBRL(totalMes), "entrada", { placa: true }),
+    numCard("Vendas (total)", formatBRL(total), "entrada"),
+    numCard("Nº de vendas", String(ativas.length))
   );
 }
 

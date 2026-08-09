@@ -5,7 +5,7 @@
 //  Venda dará baixa automática aqui.
 // ============================================================================
 
-import { el, $, toast, openModal, closeModal, confirmar, emptyState, errorState, skeletonList } from "../ui.js";
+import { el, $, toast, openModal, closeModal, confirmar, emptyState, errorState, skeletonList, numCard } from "../ui.js";
 import { state } from "../state.js";
 import { listarProdutos, criarProduto, atualizarProduto, apagarProduto } from "../api.js";
 import { formatBRL, parseToCents } from "../money.js";
@@ -37,7 +37,7 @@ export async function renderEstoque(root) {
       ),
       el("button", { class: "btn btn--primary", onclick: () => abrirForm() }, "+ Novo produto")
     ),
-    el("section", { id: "estoque-resumo", class: "stats admin-resumo" }),
+    el("section", { id: "estoque-resumo", class: "metrics metrics--dash" }),
     el("div", { id: "estoque-filtros", class: "admin-filtros" }),
     el("div", { id: "estoque-lista", class: "card" }, skeletonList(5))
   );
@@ -67,17 +67,11 @@ function desenharResumo() {
   const valor = produtos.reduce((s, p) => s + p.price_cents * Number(p.stock_qty), 0);
   const nBaixo = produtos.filter(baixo).length;
   box.innerHTML = "";
+  // Estoque é dinheiro parado: o valor total é o número da tela.
   box.append(
-    card("Produtos", String(produtos.length)),
-    card("Valor em estoque", formatBRL(Math.round(valor))),
-    card("Abaixo do mínimo", String(nBaixo), nBaixo > 0 ? "alerta" : "")
-  );
-}
-
-function card(label, valor, tipo = "") {
-  return el("div", { class: `card stat ${tipo ? "stat--" + tipo : ""}` },
-    el("div", { class: "stat__header" }, el("span", { class: "stat__label" }, label)),
-    el("span", { class: "stat__value num" }, String(valor))
+    numCard("Valor em estoque", formatBRL(Math.round(valor)), "", { placa: true }),
+    numCard("Produtos", String(produtos.length)),
+    numCard("Abaixo do mínimo", String(nBaixo), nBaixo > 0 ? "alerta" : "")
   );
 }
 

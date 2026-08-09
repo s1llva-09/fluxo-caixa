@@ -49,20 +49,34 @@ export function toast(message, tipo = "info") {
 // O que estava focado antes de abrir, pra devolver o foco no fim.
 let focoAnterior = null;
 
+// Modais empilhados. Abrir um diálogo com outro já aberto (confirmar um apagar
+// de dentro de um formulário) guardava o formulário no lixo: o corpo era
+// substituído e não voltava. Agora o conteúdo anterior fica aqui — são os
+// MESMOS nós, então valor digitado e listener sobrevivem — e closeModal()
+// devolve em vez de fechar. closeModal(true) fecha tudo de uma vez.
+const pilha = [];
+
 // Tudo que não é o modal. Vira inert enquanto ele está aberto.
 const fundo = () => [$("#app-shell"), $("#auth-root")].filter(Boolean);
 
 // Abre o modal com um título e um conteúdo (elemento HTML).
 export function openModal(title, contentEl) {
   const overlay = $("#modal-overlay");
-  $("#modal-title").textContent = title;
   const body = $("#modal-body");
+  const jaAberto = overlay.classList.contains("is-open");
+
+  // Empilha o que estava aberto em vez de descartar.
+  if (jaAberto) {
+    pilha.push({ titulo: $("#modal-title").textContent, filhos: Array.from(body.childNodes) });
+  }
+
+  $("#modal-title").textContent = title;
   body.innerHTML = "";
   body.append(contentEl);
   // Só guarda o foco se não havia modal aberto. Um confirmar() disparado de
   // dentro de um formulário reusa este mesmo overlay: sem a guarda, o foco a
   // devolver viraria um botão do modal anterior, que acabou de ser destruído.
-  if (!overlay.classList.contains("is-open")) focoAnterior = document.activeElement;
+  if (!jaAberto) focoAnterior = document.activeElement;
   overlay.classList.add("is-open");
 
   fundo().forEach((n) => (n.inert = true));
@@ -75,9 +89,27 @@ export function openModal(title, contentEl) {
   (alvo || $("#modal-close"))?.focus();
 }
 
-export function closeModal() {
+// tudo=true fecha a pilha inteira: quem salvou e terminou não quer voltar pro
+// diálogo de trás, que já está desatualizado.
+export function closeModal(tudo = false) {
   const overlay = $("#modal-overlay");
   if (!overlay || !overlay.classList.contains("is-open")) return;
+
+  // === true e não só truthy: closeModal é passado direto como onclick em
+  // vários lugares, e o Event que chega no lugar de `tudo` fecharia a pilha
+  // toda sem querer.
+  if (tudo === true) pilha.length = 0;
+
+  // Havia um diálogo por baixo: devolve em vez de fechar.
+  if (pilha.length) {
+    const anterior = pilha.pop();
+    const body = $("#modal-body");
+    $("#modal-title").textContent = anterior.titulo;
+    body.innerHTML = "";
+    body.append(...anterior.filhos);
+    body.querySelector("input:not([type=hidden]), select, textarea, button")?.focus();
+    return;
+  }
 
   // Sai do inert ANTES de devolver o foco: elemento dentro de subárvore inert
   // não aceita focus() e a chamada seria silenciosamente ignorada.
@@ -167,6 +199,46 @@ export function skeletonList(rows = 5) {
     );
   }
   return lista;
+}
+
+// ---- Card de número -----------------------------------------------------
+
+// O card de indicador que todas as telas de lista usam. Estava copiado igual
+// em cinco views; a única diferença real era qual número manda.
+//
+//   placa   promove ao elemento-assinatura: número grande, linha inteira.
+//           UM por tela — é o número que a tela existe pra mostrar.
+//   onClick transforma em <button>: o card vira o filtro da lista embaixo.
+export function numCard(label, valor, tipo = "", { placa = false, foot = null, onClick = null, ativo = false } = {}) {
+  const classes = ["card", "metric"];
+  if (tipo) classes.push(`metric--${tipo}`);
+  if (placa) classes.push("metric--placa");
+  if (onClick) classes.push("metric--filtro");
+  if (ativo) classes.push("is-on");
+
+  const attrs = { class: classes.join(" ") };
+  if (onClick) {
+    attrs.type = "button";
+    attrs.onclick = onClick;
+    attrs["aria-pressed"] = ativo ? "true" : "false";
+  }
+  return el(onClick ? "button" : "div", attrs,
+    el("div", { class: "metric__head" }, el("span", { class: "metric__label" }, label)),
+    el("span", { class: "metric__value num" }, String(valor)),
+    foot ? el("p", { class: "metric__foot" }, foot) : null
+  );
+}
+
+// ---- Célula de dado (rótulo miúdo sobre o valor) ------------------------
+
+// A célula que a lista de clientes e a ficha do funcionário usam. Devolve null
+// quando não há valor: campo vazio não vira coluna de travessão.
+export function metaItem(label, valor) {
+  if (valor == null || valor === "") return null;
+  return el("span", { class: "meta-item" },
+    el("span", { class: "meta-label" }, label),
+    el("span", { class: "meta-value" }, String(valor))
+  );
 }
 
 // ---- Estado vazio com ícone --------------------------------------------

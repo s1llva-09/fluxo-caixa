@@ -8,12 +8,12 @@
 
 import { $, $$, el, toast, openModal, closeModal } from "./ui.js";
 import { moduloLiberado, planoDe, MODULOS_GATED } from "./planos.js";
-import { setTheme } from "./theme.js";
+import { setTheme, THEMES } from "./theme.js";
 
 const SUN_SVG = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`;
 const MOON_SVG = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
 import { state, empresaAtiva } from "./state.js";
-import { formatDate, todayISO } from "./money.js";
+import { formatDate, todayISO, setMoeda } from "./money.js";
 import { initTheme } from "./theme.js";
 
 // Janela (dias) para avisar o cliente que a mensalidade está perto de vencer.
@@ -63,6 +63,10 @@ async function iniciar() {
       return;
     }
 
+    // Tema e moeda da CONTA mandam sobre o que este aparelho tinha guardado:
+    // quem trocou o tema no celular espera achar o app assim no computador.
+    aplicarPreferencias(state.user.user_metadata);
+
     // Descobre se é o admin (não-fatal: se falhar, segue como cliente comum).
     try {
       state.isAdmin = await souAdmin();
@@ -108,6 +112,14 @@ async function iniciar() {
     console.error("Erro ao iniciar:", err);
     mostrarAuth();
   }
+}
+
+// Aplica as preferências salvas na conta. setTheme/setMoeda também gravam no
+// localStorage, então o cache local do aparelho fica em dia de brinde.
+function aplicarPreferencias(meta) {
+  if (!meta) return;
+  if (THEMES.includes(meta.theme)) setTheme(meta.theme);
+  if (meta.moeda) setMoeda(meta.moeda);
 }
 
 function mostrarAuth() {

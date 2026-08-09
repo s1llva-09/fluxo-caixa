@@ -57,6 +57,16 @@ export async function updatePassword(password) {
   return data;
 }
 
+// Preferências que seguem a PESSOA, não o aparelho (tema, moeda). Vão no
+// user_metadata do Supabase: um saco de JSON por usuário que já existe na
+// conta — sem tabela nova, sem RLS nova, sem migração pra rodar à mão.
+// O localStorage continua sendo o cache local, que é o que evita o piscar do
+// tema no boot; isto aqui é só o que atravessa de um aparelho pro outro.
+export async function salvarPreferencias(prefs) {
+  const { error } = await supabase.auth.updateUser({ data: prefs });
+  if (error) throw error;
+}
+
 // Envia um email com link para redefinir a senha.
 // O link traz a pessoa de volta ao app já autenticada num modo "recovery",
 // e aí o app pede a nova senha. redirectTo precisa estar liberado no Supabase
