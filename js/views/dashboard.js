@@ -128,7 +128,7 @@ export async function renderDashboard(root) {
 
     // ---- gráfico + composição ----
     el("section", { class: "dash-grid" },
-      el("div", { class: "card chart-card" },
+      el("div", { class: "card" },
         el("div", { class: "card__head" },
           el("h2", { class: "card__title" }, "Fluxo de caixa"),
           el("span", { class: "card__hint" }, `6 meses até ${mesAno}`)

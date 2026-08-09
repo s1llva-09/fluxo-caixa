@@ -2,6 +2,10 @@
 //  ui.js — Pequenos ajudantes de interface
 // ============================================================================
 
+// Única dependência daqui: a separação cifra/número da placa. money.js não
+// importa ninguém, então não há ciclo.
+import { splitValorFormatado } from "./money.js";
+
 export const $ = (selector, root = document) => root.querySelector(selector);
 export const $$ = (selector, root = document) =>
   Array.from(root.querySelectorAll(selector));
@@ -222,9 +226,18 @@ export function numCard(label, valor, tipo = "", { placa = false, foot = null, o
     attrs.onclick = onClick;
     attrs["aria-pressed"] = ativo ? "true" : "false";
   }
+  // Na placa a cifra é a UNIDADE: pequena e erguida ao lado do número, do jeito
+  // que preço é escrito numa banca. Fora dela fica junto — em corpo pequeno,
+  // separar só abriria um buraco no meio do valor.
+  const { cifra, valor: numero } = placa ? splitValorFormatado(valor) : { cifra: "", valor: String(valor) };
+
   return el(onClick ? "button" : "div", attrs,
     el("div", { class: "metric__head" }, el("span", { class: "metric__label" }, label)),
-    el("span", { class: "metric__value num" }, String(valor)),
+    cifra
+      ? el("span", { class: "metric__value num" },
+          el("span", { class: "metric__cifra" }, cifra),
+          el("span", {}, numero))
+      : el("span", { class: "metric__value num" }, numero),
     foot ? el("p", { class: "metric__foot" }, foot) : null
   );
 }

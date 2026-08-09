@@ -7,7 +7,7 @@
 // ============================================================================
 
 import assert from "node:assert/strict";
-import { splitMoeda, setMoeda, formatBRL } from "../js/money.js";
+import { splitMoeda, splitValorFormatado, setMoeda, formatBRL } from "../js/money.js";
 
 // A soma das duas partes tem que reconstruir o que formatBRL devolve — é essa
 // invariante que garante que nenhum dígito se perde no corte.
@@ -44,5 +44,18 @@ for (const moeda of ["BRL", "USD", "EUR", "PYG"]) {
 
 setMoeda("BRL");
 assert.deepEqual(splitMoeda(4823015), { cifra: "R$", valor: "48.230,15" });
+
+// ---- splitValorFormatado: a porta que os cards de placa usam ----------------
+// Eles recebem texto já pronto, e nem sempre é dinheiro.
+assert.deepEqual(splitValorFormatado("R$ 1.250,00"), { cifra: "R$", valor: "1.250,00" });
+assert.deepEqual(splitValorFormatado("-R$ 80,00"),   { cifra: "R$", valor: "-80,00" },
+  "o sinal vai com o número, não com a cifra");
+assert.deepEqual(splitValorFormatado("$1,234.56"),   { cifra: "$", valor: "1,234.56" });
+// Sem cifra à esquerda (uma contagem) o texto sai inteiro e a placa não quebra.
+assert.deepEqual(splitValorFormatado("9"),   { cifra: "", valor: "9" });
+assert.deepEqual(splitValorFormatado(""),    { cifra: "", valor: "" });
+assert.deepEqual(splitValorFormatado("—"),   { cifra: "", valor: "—" });
+// splitMoeda passou a ser um atalho pra ela: os dois têm que concordar.
+assert.deepEqual(splitMoeda(4823015), splitValorFormatado(formatBRL(4823015)));
 
 console.log("moeda: todos os casos passaram");

@@ -46,14 +46,20 @@ export function formatBRL(cents) {
 // en-US. O sinal negativo vai junto do número — ele é parte do valor, não da
 // moeda, e sozinho na cifra pequena passaria despercebido.
 export function splitMoeda(cents) {
-  const s = formatBRL(cents);
-  const i = s.search(/\d/);
-  if (i <= 0) return { cifra: "", valor: s };
-  const cifra = s.slice(0, i);
+  return splitValorFormatado(formatBRL(cents));
+}
+
+// A mesma separação, a partir de um valor JÁ formatado. Os cards de placa
+// recebem texto pronto (às vezes nem é dinheiro), então precisam desta porta:
+// sem cifra à esquerda — uma contagem, por exemplo — devolve o texto inteiro.
+export function splitValorFormatado(s) {
+  const i = String(s).search(/\d/);
+  if (i <= 0) return { cifra: "", valor: String(s) };
+  const cifra = String(s).slice(0, i);
   const neg = cifra.includes("-");
   return {
     cifra: cifra.replace("-", "").trim(),
-    valor: (neg ? "-" : "") + s.slice(i),
+    valor: (neg ? "-" : "") + String(s).slice(i),
   };
 }
 

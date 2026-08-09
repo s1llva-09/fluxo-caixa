@@ -28,7 +28,7 @@ export async function renderRelatorios(root) {
         el("button", { class: "btn btn--ghost", onclick: exportar, "data-tip": "Baixar planilha com os lançamentos do período" }, "↓ Exportar planilha")
       )
     ),
-    el("section", { class: "filtros filtros--relatorio" },
+    el("section", { class: "filtros" },
       el("label", { class: "filtro-grupo" }, el("span", { class: "filtro-grupo__label" }, "De"), de),
       el("label", { class: "filtro-grupo" }, el("span", { class: "filtro-grupo__label" }, "Até"), ate)
     ),
