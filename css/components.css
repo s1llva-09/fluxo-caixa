@@ -1159,6 +1159,16 @@ select.input {
   overflow-wrap: anywhere;
 }
 .admin-cli__actions { flex-shrink: 0; }
+/* Controle e ação lado a lado, alinhados à direita da linha. */
+.admin-cli__actions--linha { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* Navegação de páginas do histórico. */
+.admin-pay__pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap; margin-top: 12px;
+  padding-top: 10px; border-top: 1px solid var(--c-line);
+}
+.admin-pay__page { font-size: var(--fs-xs); color: var(--c-muted); font-variant-numeric: tabular-nums; }
 .admin-modal__id { margin-bottom: 16px; }
 .admin-conta__sep { border: none; border-top: 1px solid var(--c-line); margin: 18px 0; }
 

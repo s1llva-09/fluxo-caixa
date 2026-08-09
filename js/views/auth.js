@@ -97,6 +97,7 @@ function authShell(...cardChildren) {
 export function renderAuth(root, onSuccess) {
   // Abre direto no cadastro quando vem dos CTAs da landing (/app?signup=1).
   let modo = "login"; // "login" ou "cadastro"
+  let emailDigitado = "";
   try {
     const sp = new URLSearchParams(location.search);
     if (sp.get("signup") === "1" || sp.get("cadastro") === "1" || location.hash === "#criar") {
@@ -114,6 +115,7 @@ export function renderAuth(root, onSuccess) {
       placeholder: "seu@email.com",
       autocomplete: "email",
       autofocus: "",
+      value: emailDigitado,
     });
     const { wrap: senhaWrap, input: senha } = senhaInput({
       placeholder: modo === "login" ? "Sua senha" : "Mínimo 6 caracteres",
@@ -219,6 +221,7 @@ export function renderAuth(root, onSuccess) {
         type: "button",
         class: "btn btn--ghost btn--block",
         onclick: () => {
+          emailDigitado = email.value;
           modo = modo === "login" ? "cadastro" : "login";
           root.innerHTML = "";
           root.append(tela());
@@ -228,11 +231,11 @@ export function renderAuth(root, onSuccess) {
 
     return authShell(
       marca(),
+      el("h1", { class: "auth__title" }, titulo),
       el("p", { class: "auth__sub" },
         modo === "login"
           ? "Bem-vindo de volta. Acesse sua conta."
           : "Crie sua conta e comece a controlar seu caixa."),
-      el("h2", { class: "auth__title", style: "margin-bottom:22px" }, titulo),
       form
     );
   }
