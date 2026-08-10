@@ -205,6 +205,29 @@ export function skeletonList(rows = 5) {
   return lista;
 }
 
+// ---- Máscara de campo ---------------------------------------------------
+
+// Formata enquanto a pessoa digita (CPF, CNPJ, telefone).
+//
+// O cuidado que parece exagero e não é: reescrever input.value joga o cursor
+// pro FIM do campo. Quem corrige um dígito no meio de um CPF via o cursor
+// pular a cada tecla e digitava o resto no lugar errado. Por isso contamos
+// quantos DÍGITOS existiam antes do cursor e o recolocamos depois do mesmo
+// tanto de dígitos, já com a máscara nova aplicada.
+export function mascara(input, formatar) {
+  input.addEventListener("input", () => {
+    const digitosAntes = (input.value.slice(0, input.selectionStart ?? 0).match(/\d/g) || []).length;
+    input.value = formatar(input.value);
+    let pos = 0, vistos = 0;
+    while (pos < input.value.length && vistos < digitosAntes) {
+      if (/\d/.test(input.value[pos])) vistos += 1;
+      pos += 1;
+    }
+    input.setSelectionRange(pos, pos);
+  });
+  return input;
+}
+
 // ---- Card de número -----------------------------------------------------
 
 // O card de indicador que todas as telas de lista usam. Estava copiado igual

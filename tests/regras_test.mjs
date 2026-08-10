@@ -6,6 +6,7 @@ import {
   AVISO_DIAS, diasAte, venceEmBreve, avisoVenc, ordenarPorUrgencia,
   formatCPFValue, formatPhoneValue, validarCPF,
   mesesEntre, resumoMensal, variacaoPercentual, rotuloMes,
+  formatCNPJValue, formatDocumento, soDigitos,
 } from "../js/regras.js";
 import { limiteUsuarios, cabeMaisUsuario } from "../js/planos.js";
 
@@ -125,5 +126,27 @@ assert.equal(variacaoPercentual(0, 0), null);
 
 assert.equal(rotuloMes("2026-08"), "ago/26");
 assert.equal(rotuloMes("2025-12"), "dez/25");
+
+// ---- CNPJ, documento e dígitos ---------------------------------------------
+assert.equal(formatCNPJValue("12345678000190"), "12.345.678/0001-90");
+assert.equal(formatCNPJValue("12345"), "12.345", "máscara progressiva, sem travar o campo");
+assert.equal(formatCNPJValue("12.345.678/0001-90"), "12.345.678/0001-90", "reformatar não duplica");
+assert.equal(formatCNPJValue("123456780001901234"), "12.345.678/0001-90", "corta em 14 dígitos");
+
+// O campo aceita os dois e decide pelo tamanho, porque quem digita não avisa.
+assert.equal(formatDocumento("12345678901"), "123.456.789-01", "11 dígitos é CPF");
+assert.equal(formatDocumento("123456780001"), "12.345.678/0001", "passou de 11, vira CNPJ");
+assert.equal(formatDocumento(""), "");
+
+// Texto com letra sai intacto: é o que impede a máscara de mastigar o que já
+// estava salvo (documento estrangeiro, "a combinar", ramal por extenso).
+assert.equal(formatDocumento("a combinar"), "a combinar");
+assert.equal(formatCPFValue("ID 4453-X"), "ID 4453-X");
+assert.equal(formatPhoneValue("ramal 22"), "ramal 22");
+
+// O que vai pro banco é só dígito: guardar a máscara quebra busca e integração.
+assert.equal(soDigitos("123.456.789-01"), "12345678901");
+assert.equal(soDigitos("(11) 98765-4321"), "11987654321");
+assert.equal(soDigitos(null), "");
 
 console.log("regras: todos os casos passaram");

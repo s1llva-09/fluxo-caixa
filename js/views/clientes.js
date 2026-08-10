@@ -4,7 +4,8 @@
 //  Cadastro dos contatos do negócio. Base pro módulo de Vendas mais pra frente.
 // ============================================================================
 
-import { el, $, toast, openModal, closeModal, confirmar, emptyState, errorState, skeletonList } from "../ui.js";
+import { el, $, toast, openModal, closeModal, confirmar, emptyState, errorState, skeletonList, mascara } from "../ui.js";
+import { formatDocumento, formatPhoneValue, soDigitos } from "../regras.js";
 import { state } from "../state.js";
 import { listarClientes, criarCliente, atualizarCliente, apagarCliente } from "../api.js";
 
@@ -128,8 +129,13 @@ function abrirForm(contato = null) {
   }
 
   const nome = el("input", { class: "input", placeholder: "Nome ou razão social", value: contato ? contato.name : "" });
-  const doc = el("input", { class: "input", placeholder: "CPF ou CNPJ (opcional)", value: contato?.doc || "" });
-  const phone = el("input", { class: "input", placeholder: "Telefone (opcional)", value: contato?.phone || "" });
+  // Máscara na tela; no banco vai só o dígito (ver salvar()).
+  const doc = mascara(
+    el("input", { class: "input", inputmode: "numeric", placeholder: "000.000.000-00 ou 00.000.000/0000-00", value: formatDocumento(contato?.doc || "") }),
+    formatDocumento);
+  const phone = mascara(
+    el("input", { class: "input", inputmode: "tel", placeholder: "(11) 99999-9999", value: formatPhoneValue(contato?.phone || "") }),
+    formatPhoneValue);
   const email = el("input", { class: "input", type: "email", placeholder: "Email (opcional)", value: contato?.email || "" });
   const notes = el("input", { class: "input", placeholder: "Observações (opcional)", value: contato?.notes || "" });
   const btn = el("button", { class: "btn btn--primary" }, "Salvar");
@@ -139,8 +145,10 @@ function abrirForm(contato = null) {
     btn.disabled = true; btn.textContent = "Salvando...";
     const dados = {
       name: nome.value.trim(), kind,
-      doc: doc.value.trim() || null,
-      phone: phone.value.trim() || null,
+      // soDigitos e não o texto da tela: guardar "123.456.789-01" quebra
+      // busca, comparação e qualquer integração depois.
+      doc: soDigitos(doc.value) || null,
+      phone: soDigitos(phone.value) || null,
       email: email.value.trim() || null,
       notes: notes.value.trim() || null,
     };

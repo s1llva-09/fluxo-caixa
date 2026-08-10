@@ -5,11 +5,11 @@
 //  carteira de trabalho, registro, contatos, status e observações.
 // ============================================================================
 
-import { el, $, toast, openModal, closeModal, confirmar, emptyState, errorState, skeletonList, metaItem, numCard } from "../ui.js";
+import { el, $, toast, openModal, closeModal, confirmar, emptyState, errorState, skeletonList, metaItem, numCard, mascara } from "../ui.js";
 import { state } from "../state.js";
 import { listarFuncionarios, criarFuncionario, atualizarFuncionario, apagarFuncionario, uploadEmployeeAttachment, listarEmployeeAttachments, urlComprovante, deleteAttachment, listarEmployeeAudit } from "../api.js";
 import { formatBRL, formatDate, parseToCents } from "../money.js";
-import { formatCPFValue, formatPhoneValue, validarCPF } from "../regras.js";
+import { formatCPFValue, formatPhoneValue, validarCPF, soDigitos } from "../regras.js";
 
 const ICON_ID = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="8" cy="10" r="2"/><path d="M5 16a3 3 0 0 1 6 0"/><line x1="14" y1="9" x2="19" y2="9"/><line x1="14" y1="13" x2="19" y2="13"/></svg>`;
 
@@ -389,7 +389,9 @@ function item(f) {
 function abrirForm(func = null) {
   const editando = !!func;
   const nome = el("input", { class: "input", placeholder: "Nome completo", value: func?.full_name || "" });
-  const cpf = el("input", { class: "input", placeholder: "000.000.000-00", value: func?.cpf ? formatCPFValue(func.cpf) : "", oninput: (event) => { cpf.value = formatCPFValue(event.target.value); } });
+  const cpf = mascara(
+    el("input", { class: "input", inputmode: "numeric", placeholder: "000.000.000-00", value: formatCPFValue(func?.cpf || "") }),
+    formatCPFValue);
   const cargo = el("input", { class: "input", placeholder: "Ex.: Vendedor, Caixa, Gerente", value: func?.role || "" });
   const setor = el("input", { class: "input", placeholder: "Ex.: Vendas, Cozinha, Administrativo", value: func?.sector || "" });
   const salario = el("input", { class: "input", placeholder: "0,00", inputmode: "decimal",
@@ -398,7 +400,9 @@ function abrirForm(func = null) {
   const carteira = el("input", { class: "input", placeholder: "Nº da CTPS (opcional)", value: func?.work_card || "" });
   const registro = el("input", { class: "input", placeholder: "Registro / matrícula (opcional)", value: func?.registration || "" });
   const email = el("input", { class: "input", type: "email", placeholder: "email@empresa.com", value: func?.email || "" });
-  const phone = el("input", { class: "input", placeholder: "(11) 99999-9999", value: func?.phone ? formatPhoneValue(func.phone) : "", oninput: (event) => { phone.value = formatPhoneValue(event.target.value); } });
+  const phone = mascara(
+    el("input", { class: "input", inputmode: "tel", placeholder: "(11) 99999-9999", value: formatPhoneValue(func?.phone || "") }),
+    formatPhoneValue);
   const status = el("select", { class: "input" },
     el("option", { value: "active" }, "Ativo"),
     el("option", { value: "inactive" }, "Inativo"),
@@ -413,7 +417,7 @@ function abrirForm(func = null) {
 
   async function salvar() {
     if (!nome.value.trim()) { toast("Digite o nome completo", "erro"); return; }
-    const cpfDigits = cpf.value.replace(/\D/g, "");
+    const cpfDigits = soDigitos(cpf.value);
     if (cpfDigits && cpfDigits.length !== 11) { toast("CPF deve ter 11 dígitos", "erro"); return; }
     if (cpfDigits && !validarCPF(cpfDigits)) { toast("CPF inválido", "erro"); return; }
     btn.disabled = true; btn.textContent = "Salvando...";
@@ -428,7 +432,7 @@ function abrirForm(func = null) {
       work_card: carteira.value.trim() || null,
       registration: registro.value.trim() || null,
       email: email.value.trim() || null,
-      phone: phone.value.replace(/\D/g, "") || null,
+      phone: soDigitos(phone.value) || null,
       status: statusValue,
       active: statusValue === "active",
       terminated_on: statusValue === "terminated" ? demissao.value || null : null,

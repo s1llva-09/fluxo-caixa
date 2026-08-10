@@ -2,7 +2,8 @@
 //  views/configuracoes.js — Configurações da empresa e da conta
 // ============================================================================
 
-import { el, $, toast, senhaInput, confirmar, openModal, closeModal } from "../ui.js";
+import { el, $, toast, senhaInput, confirmar, openModal, closeModal, mascara } from "../ui.js";
+import { formatDocumento, soDigitos } from "../regras.js";
 import { state } from "../state.js";
 import {
   atualizarEmpresa,
@@ -570,11 +571,15 @@ function abrirAssinatura() {
   planoSel.value = planoDe(state.company) === "empresarial" ? "empresarial" : "pro";
   const nome = el("input", { class: "input", value: state.company?.name || "", placeholder: "Nome ou razão social" });
   const email = el("input", { class: "input", type: "email", value: state.user?.email || "", placeholder: "Email de cobrança" });
-  const doc = el("input", { class: "input", placeholder: "CPF ou CNPJ" });
+  const doc = mascara(
+    el("input", { class: "input", inputmode: "numeric", placeholder: "000.000.000-00 ou 00.000.000/0000-00" }),
+    formatDocumento);
   const btn = el("button", { class: "btn btn--primary" }, "Ir para o pagamento");
 
   async function pagar() {
-    if (!doc.value.trim()) { toast("Informe o CPF ou CNPJ", "erro"); return; }
+    // Confere os DÍGITOS, não o texto: só pontuação passaria no trim e
+    // chegaria vazio no Asaas.
+    if (!soDigitos(doc.value)) { toast("Informe o CPF ou CNPJ", "erro"); return; }
     btn.disabled = true; btn.textContent = "Gerando...";
     try {
       const r = await criarAssinatura({
@@ -582,7 +587,8 @@ function abrirAssinatura() {
         plan: planoSel.value,
         name: nome.value.trim(),
         email: email.value.trim(),
-        cpfCnpj: doc.value.trim(),
+        // O Asaas espera só dígitos: mandar a máscara faz a cobrança falhar.
+        cpfCnpj: soDigitos(doc.value),
       });
       closeModal();
       if (r?.invoiceUrl) { window.open(r.invoiceUrl, "_blank", "noopener"); toast("Abrindo o pagamento…", "ok"); }
