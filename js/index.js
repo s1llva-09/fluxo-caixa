@@ -22,9 +22,10 @@ import { getUser, signOut, onAuthChange, onPasswordRecovery } from "./auth.js";
 import {
   getMinhaEmpresa, souAdmin, processarRecorrencias, meusConvites, aceitarConvite,
   setEmpresaAtiva, minhasEmpresas, listarCategorias, listarContas, listarMembros,
+  criarEmpresa, criarCategoria,
 } from "./api.js";
 
-import { renderAuth, renderOnboarding, renderBloqueado, renderRedefinir, renderConvites } from "./views/auth.js";
+import { renderAuth, renderOnboarding, renderBloqueado, renderRedefinir, renderConvites, CATEGORIAS_PADRAO } from "./views/auth.js";
 import { renderDashboard } from "./views/dashboard.js";
 import { renderLancamentos } from "./views/lancamentos.js";
 import { renderContas } from "./views/contas.js";
@@ -348,7 +349,68 @@ function abrirTrocaEmpresa(empresas) {
     }, el("span", {}, e.name), el("span", { class: "troca-empresa__papel" }, atual ? "atual" : (e.role === "owner" ? "dono" : "membro")));
     lista.append(item);
   }
+
+  // Criar uma segunda empresa é do plano Empresarial. Até agora não havia
+  // caminho nenhum: criarEmpresa só era chamada no onboarding, que só roda pra
+  // quem ainda não tem empresa — o site vendia algo que ninguém alcançava.
+  const podeCriar = planoDe(state.company) === "empresarial";
+  lista.append(
+    el("hr", { class: "admin-conta__sep" }),
+    podeCriar
+      ? el("button", {
+          class: "btn btn--primary btn--block",
+          style: "margin:0",
+          onclick: () => abrirNovaEmpresa(),
+        }, "+ Nova empresa")
+      : el("p", { class: "config__note", style: "margin:0" },
+          "Ter mais de uma empresa faz parte do plano Empresarial.")
+  );
+
   openModal("Trocar de empresa", lista);
+}
+
+// Formulário de empresa nova. Abre por cima da troca de empresa — o modal
+// empilha, então cancelar aqui devolve a lista de trás.
+function abrirNovaEmpresa() {
+  const nome = el("input", { class: "input", placeholder: "Nome da empresa" });
+  const btn = el("button", { class: "btn btn--primary" }, "Criar empresa");
+
+  async function criar() {
+    const v = nome.value.trim();
+    if (!v) { toast("Digite o nome da empresa", "erro"); return; }
+    btn.disabled = true;
+    btn.textContent = "Criando...";
+    try {
+      const empresa = await criarEmpresa(v, null);
+      // Categorias padrão (não-fatal): empresa nova nasce igual à primeira.
+      try {
+        await Promise.all(CATEGORIAS_PADRAO.map(([n, k]) => criarCategoria(empresa.id, n, k)));
+      } catch (e) { console.error(e); }
+      setEmpresaAtiva(empresa.id);
+      closeModal(true); // fecha a pilha: a lista de trás já está velha
+      toast("Empresa criada! Você já está nela.", "ok");
+      await iniciar();
+    } catch (err) {
+      console.error(err);
+      toast("Não foi possível criar a empresa", "erro");
+      btn.disabled = false;
+      btn.textContent = "Criar empresa";
+    }
+  }
+  btn.addEventListener("click", criar);
+  nome.addEventListener("keydown", (e) => { if (e.key === "Enter") criar(); });
+
+  openModal("Nova empresa",
+    el("div", {},
+      el("p", { class: "config__note", style: "margin-top:0" },
+        "Ela nasce vazia, com as categorias mais usadas já criadas. Você continua tendo acesso às outras."),
+      el("label", { class: "field" },
+        el("span", { class: "field__label" }, "Nome da empresa"), nome),
+      el("div", { class: "form__actions" },
+        el("button", { class: "btn btn--ghost", onclick: closeModal }, "Cancelar"),
+        btn)
+    )
+  );
 }
 
 // Banner de "mensalidade vencendo" no topo do app (só pro cliente, não pro admin).

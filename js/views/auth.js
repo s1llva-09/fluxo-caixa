@@ -7,7 +7,7 @@ import { signIn, signUp, resetPassword, updatePassword } from "../auth.js";
 import { criarEmpresa, criarCategoria } from "../api.js";
 
 // Categorias que já vêm prontas quando a empresa é criada (pra não nascer vazia).
-const CATEGORIAS_PADRAO = [
+export const CATEGORIAS_PADRAO = [
   ["Vendas", "entrada"],
   ["Serviços", "entrada"],
   ["Fornecedores", "saida"],

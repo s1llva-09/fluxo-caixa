@@ -46,6 +46,41 @@
       /* a curva do tile: rx 116 em 512 = 23% do lado */
       --r-sm:8px; --r:12px; --r-lg:18px; --r-xl:24px;
       --ease:cubic-bezier(.22,1,.36,1);
+
+      /* Violeta sobre superfície BRANCA fixa (etiqueta, botão claro): não
+         acompanha o tema, porque o fundo dele não acompanha. */
+      --violeta-sobre-branco:#5B1FAB;
+
+      /* Sem isto o navegador assume que a página só sabe ser clara e força a
+         própria inversão em quem usa tema escuro — foi o que aconteceu no
+         Opera GX: seções claras viraram cinza-chumbo e os cards brancos,
+         cinza. O que se via não era este design, era o palpite do navegador. */
+      color-scheme: light dark;
+    }
+
+    /* ── ESCURO ──────────────────────────────────────────────────────────────
+       Os mesmos tokens do tema escuro do app (css/base.css): chão no navy do
+       tile e superfícies subindo a partir dele. O hero e o rodapé descem um
+       degrau abaixo do fundo, senão as faixas se fundem e a página perde o
+       ritmo que tem no claro. */
+    @media (prefers-color-scheme: dark) {
+      :root{
+        --n0:#131726; --n50:#0B0E1A; --n100:#1B2032;
+        --n200:rgba(237,238,244,.13); --n300:rgba(237,238,244,.26);
+        --n400:#969AB0; --n500:#969AB0; --n600:#CFD1DE;
+        --n700:#B9BCCC; --n800:#0F1220; --n900:#07090F;
+        --bg:#0B0E1A; --surface:#131726; --ink:#EDEEF4; --ink-2:#CFD1DE;
+        --muted:#969AB0; --border:rgba(237,238,244,.13);
+        /* Sobre fundo escuro quem lê é o violeta CLARO do gradiente (8.4:1). */
+        --violeta-texto:#C68BFF;
+        --green:#4ED598; --rose:#FF8A75;
+        --sh-sm:0 1px 2px rgba(0,0,0,.42), 0 2px 6px -1px rgba(0,0,0,.40);
+        --sh-md:0 2px 4px -1px rgba(0,0,0,.46), 0 8px 20px -4px rgba(0,0,0,.52);
+        --sh-lg:0 8px 16px -6px rgba(0,0,0,.56), 0 24px 48px -12px rgba(0,0,0,.66);
+      }
+      /* O mock já é escuro por natureza: no tema escuro ele ganha um fio pra
+         não encostar no fundo. */
+      .mock{border-color:rgba(237,238,244,.16)}
     }
     *{box-sizing:border-box;margin:0;padding:0}
     html{scroll-behavior:smooth}
@@ -71,11 +106,11 @@
     .btn:active{transform:translateY(0) scale(.985)}
     .btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(198,139,255,.55)}
     .btn--primary{background:var(--violeta);color:#fff;box-shadow:var(--sh-violeta)}
-    .btn--primary:hover{transform:translateY(-2px);box-shadow:0 16px 38px -10px rgba(122,40,221,.6)}
+    @media (hover:hover) and (pointer:fine){.btn--primary:hover{transform:translateY(-2px);box-shadow:0 16px 38px -10px rgba(122,40,221,.6)}}
     .btn--ghost{background:rgba(255,255,255,.06);color:#fff;--b:rgba(255,255,255,.18);backdrop-filter:blur(6px)}
     .btn--ghost:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.32)}
-    .btn--light{background:#fff;color:var(--violeta-texto);box-shadow:0 10px 30px -8px rgba(11,14,20,.35)}
-    .btn--light:hover{transform:translateY(-2px);box-shadow:0 18px 42px -10px rgba(11,14,20,.45)}
+    .btn--light{background:#fff;color:var(--violeta-sobre-branco);box-shadow:0 10px 30px -8px rgba(11,14,20,.35)}
+    @media (hover:hover) and (pointer:fine){.btn--light:hover{transform:translateY(-2px);box-shadow:0 18px 42px -10px rgba(11,14,20,.45)}}
     .btn--lg{padding:16px 28px;font-size:16px;border-radius:var(--r-lg)}
     .arrow{transition:transform .25s var(--ease)}
     .btn:hover .arrow{transform:translateX(3px)}
@@ -94,6 +129,12 @@
     .nav .btn{padding:10px 18px;font-size:14px}
     .nav__enter{color:rgba(255,255,255,.85);font-weight:600;font-size:14px;padding:10px 14px;border-radius:var(--r-sm);transition:color .2s,background .2s}
     .nav__enter:hover{color:#fff;background:rgba(255,255,255,.08)}
+
+    /* ---- entrada do hero --------------------------------------------------- */
+    .hero__col{animation:sobe .6s var(--ease) both}
+    .hero__col--mock{animation-delay:.09s}
+    /* Só translate e opacity: os dois pulam layout e paint e rodam na GPU. */
+    @keyframes sobe{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 
     /* ---- hero ------------------------------------------------------------- */
     .hero{position:relative;background:var(--n900);color:#fff;overflow:hidden;padding:148px 0 110px}
@@ -159,8 +200,13 @@
     .sub{color:var(--muted);font-size:17px;max-width:560px;margin:0 auto}
 
     .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;box-shadow:var(--sh-sm);transition:transform .28s var(--ease),box-shadow .28s var(--ease),border-color .28s var(--ease)}
-    .card:hover{transform:translateY(-4px);box-shadow:var(--sh-md);border-color:var(--n300)}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;box-shadow:var(--sh-sm);transition:transform .2s var(--ease),box-shadow .2s var(--ease),border-color .2s var(--ease)}
+    .card__ic{transition:transform .2s var(--ease)}
+    @media (hover:hover) and (pointer:fine){
+      .card:hover{transform:translateY(-4px);box-shadow:var(--sh-md);border-color:var(--n300)}
+      /* O ícone sobe um pouco mais que a placa: dá profundidade sem mexer em layout. */
+      .card:hover .card__ic{transform:translateY(-2px)}
+    }
     .card__ic{width:48px;height:48px;border-radius:var(--r);background:linear-gradient(145deg,rgba(154,63,240,.16),rgba(122,40,221,.08));color:var(--violeta);display:flex;align-items:center;justify-content:center;margin-bottom:18px;box-shadow:inset 0 0 0 1px rgba(122,40,221,.12)}
     .card h3{font-size:18px;font-weight:700;margin-bottom:7px;letter-spacing:-.02em}
     .card p{color:var(--muted);font-size:14.5px;line-height:1.6}
@@ -185,11 +231,21 @@
     .faq details[open] summary .chev{transform:rotate(45deg);color:var(--violeta-texto)}
     .faq summary:focus-visible{outline:none;box-shadow:inset 0 0 0 2px rgba(198,139,255,.6)}
     .faq .ans{padding:0 22px 20px;color:var(--muted);font-size:15px;line-height:1.7}
+    /* Altura é a única exceção ao "só transform e opacity": num acordeão não
+       existe equivalente em transform. Progressivo — sem suporte, abre seco. */
+    @supports (interpolate-size: allow-keywords){
+      :root{interpolate-size:allow-keywords}
+      .faq details::details-content{
+        block-size:0;overflow:hidden;opacity:0;
+        transition:block-size .24s var(--ease),content-visibility .24s allow-discrete,opacity .24s var(--ease);
+      }
+      .faq details[open]::details-content{block-size:auto;opacity:1}
+    }
 
     /* ---- planos / preços -------------------------------------------------- */
     .planos{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;align-items:start;max-width:780px;margin:0 auto}
     .plano{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:32px 28px;box-shadow:var(--sh-sm);display:flex;flex-direction:column;transition:transform .28s var(--ease),box-shadow .28s var(--ease),border-color .28s var(--ease)}
-    .plano:hover{transform:translateY(-4px);box-shadow:var(--sh-md);border-color:var(--n300)}
+    @media (hover:hover) and (pointer:fine){.plano:hover{transform:translateY(-4px);box-shadow:var(--sh-md);border-color:var(--n300)}}
     .plano__nome{font-family:'Archivo';font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
     .plano__preco{font-family:'Archivo';font-weight:800;font-size:52px;font-stretch:68%;line-height:1;letter-spacing:-.015em;color:var(--ink);margin:8px 0 4px;font-variant-numeric:tabular-nums}
     .plano__cifra{font-size:22px;font-weight:700;color:var(--muted);margin-right:3px;vertical-align:12px}
@@ -201,16 +257,16 @@
     .plano__lista li::before{content:"✓";position:absolute;left:0;top:0;color:var(--violeta-texto);font-weight:800}
     .plano__lista li b{color:var(--ink);font-weight:700}
     .btn--ghost-dark{background:var(--surface);color:var(--ink);border:1px solid var(--border);box-shadow:var(--sh-sm)}
-    .btn--ghost-dark:hover{transform:translateY(-2px);border-color:var(--violeta);color:var(--violeta-texto)}
+    @media (hover:hover) and (pointer:fine){.btn--ghost-dark:hover{transform:translateY(-2px);border-color:var(--violeta);color:var(--violeta-texto)}}
     /* card em destaque (Pro) */
     .plano--destaque{background:linear-gradient(160deg,var(--violeta) 0%,var(--violeta-2) 100%);border-color:transparent;color:#fff;box-shadow:var(--sh-lg);transform:scale(1.03)}
-    .plano--destaque:hover{transform:scale(1.03) translateY(-4px);box-shadow:var(--sh-lg)}
+    @media (hover:hover) and (pointer:fine){.plano--destaque:hover{transform:scale(1.03) translateY(-4px);box-shadow:var(--sh-lg)}}
     .plano--destaque .plano__nome{color:rgba(255,255,255,.82)}
     .plano--destaque .plano__preco,.plano--destaque .plano__lista li b{color:#fff}
     .plano--destaque .plano__cifra,.plano--destaque .plano__mes,.plano--destaque .plano__desc{color:rgba(255,255,255,.9)}
     .plano--destaque .plano__lista li{color:rgba(255,255,255,.96)}
     .plano--destaque .plano__lista li::before{color:#fff}
-    .plano__tag{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:#fff;color:var(--violeta-texto);font-size:12px;font-weight:700;padding:5px 15px;border-radius:999px;box-shadow:var(--sh-md);white-space:nowrap}
+    .plano__tag{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:#fff;color:var(--violeta-sobre-branco);font-size:12px;font-weight:700;padding:5px 15px;border-radius:999px;box-shadow:var(--sh-md);white-space:nowrap}
     .planos__nota{text-align:center;color:var(--muted);font-size:14px;margin-top:28px}
     @media (max-width:860px){
       .planos{grid-template-columns:1fr;max-width:420px;margin:0 auto}
@@ -243,11 +299,11 @@
     .foot__bottom{padding-top:28px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;font-size:13.5px;color:var(--n500)}
 
     /* ---- scroll reveal (só esconde quando há JS, p/ não sumir sem JS) ------ */
-    .has-js .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+    .has-js .reveal{opacity:0;transform:translateY(18px);transition:opacity .55s var(--ease),transform .55s var(--ease)}
     .reveal.in{opacity:1;transform:none}
-    .reveal[data-d="1"]{transition-delay:.07s}.reveal[data-d="2"]{transition-delay:.14s}
-    .reveal[data-d="3"]{transition-delay:.21s}.reveal[data-d="4"]{transition-delay:.28s}
-    .reveal[data-d="5"]{transition-delay:.35s}
+    .reveal[data-d="1"]{transition-delay:.06s}.reveal[data-d="2"]{transition-delay:.12s}
+    .reveal[data-d="3"]{transition-delay:.18s}.reveal[data-d="4"]{transition-delay:.24s}
+    .reveal[data-d="5"]{transition-delay:.30s}
 
     /* ---- responsive ------------------------------------------------------- */
     @media (max-width:920px){
@@ -278,9 +334,16 @@
       .mock__saldo{font-size:34px}
     }
     @media (prefers-reduced-motion:reduce){
-      *{animation:none!important;scroll-behavior:auto}
-      .reveal{opacity:1;transform:none;transition:none}
-      .mock__bars i{transform:none}
+      html{scroll-behavior:auto}
+      /* Sai o deslocamento; fica o esmaecer, que ainda dá o ritmo da página. */
+      .hero__col{animation:aparece .3s var(--ease) both}
+      @keyframes aparece{from{opacity:0}to{opacity:1}}
+      .has-js .reveal{transform:none;transition:opacity .3s var(--ease)}
+      .reveal.in{opacity:1}
+      .mock__bars i{animation:none;transform:none}
+      .card:hover,.plano:hover,.plano--destaque:hover,.btn--primary:hover,
+      .btn--light:hover,.btn--ghost-dark:hover,.card:hover .card__ic{transform:none}
+      .faq details::details-content{transition:none}
     }
   </style>
 </head>
@@ -300,7 +363,7 @@
   </div></nav>
 
   <header class="hero" id="top"><div class="wrap hero__in">
-    <div class="reveal in">
+    <div class="hero__col">
       <span class="pill"><span class="dot"></span> Sistema de gestão para pequenos negócios</span>
       <h1>Saiba <span class="hl">quanto entra e quanto sai</span> do seu caixa.</h1>
       <p class="lead">Registre entradas e saídas, controle contas a pagar e a receber, acompanhe o saldo projetado e gere relatórios — simples, rápido e direto no celular.</p>
@@ -315,7 +378,7 @@
       </div>
     </div>
 
-    <div class="mock-shell reveal in" data-d="2" aria-hidden="true">
+    <div class="mock-shell hero__col hero__col--mock" aria-hidden="true">
       <div class="mock">
         <div class="mock__bar"><i></i><i></i><i></i><span class="mock__url">app · Monetta</span></div>
         <div class="mock__body">
@@ -428,7 +491,7 @@
         <a class="btn btn--ghost-dark plano__cta" href="mailto:monetta.erp@gmail.com?subject=Plano%20Empresarial">Falar com a gente</a>
         <ul class="plano__lista">
           <li><b>Tudo do Pro, mais:</b></li>
-          <li>Múltiplas empresas (em breve)</li>
+          <li>Múltiplas empresas</li>
           <li>Funcionários</li>
           <li>Nota fiscal (em breve)</li>
           <li>Usuários ilimitados</li>
