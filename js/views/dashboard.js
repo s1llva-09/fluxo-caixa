@@ -11,6 +11,7 @@ import { el, $, emptyState, errorState, ICONS } from "../ui.js";
 import { state, periodoDoMes, mesAnterior, mesChaveAtual } from "../state.js";
 import { listarLancamentos, listarContas } from "../api.js";
 import { formatBRL, formatDate, splitMoeda } from "../money.js";
+import { variacaoPercentual } from "../regras.js";
 
 let chartRef = null;
 // Últimos lançamentos desenhados, pra poder repintar o gráfico numa troca de
@@ -64,6 +65,15 @@ export async function renderDashboard(root) {
     console.error(err);
     root.innerHTML = "";
     root.append(errorState("Não foi possível carregar o painel.", () => renderDashboard(root)));
+    return;
+  }
+
+  // Conta nova: cinco indicadores zerados, um gráfico vazio e um "nenhuma
+  // saída registrada" não ensinam nada e parecem defeito. Enquanto não houver
+  // NENHUM lançamento, a tela tem um assunto só: o primeiro passo.
+  if (todos.length === 0) {
+    root.innerHTML = "";
+    root.append(primeiroDia());
     return;
   }
 
@@ -172,6 +182,47 @@ export async function renderDashboard(root) {
   desenharGrafico(todos);
 }
 
+// ---- primeiro dia -----------------------------------------------------------
+
+function irPara(tela) {
+  document.querySelector(`[data-tela="${tela}"]`)?.click();
+}
+
+function primeiroDia() {
+  const passo = (n, titulo, texto, acao) =>
+    el("li", { class: "primeiro__passo" },
+      el("span", { class: "primeiro__n num" }, n),
+      el("div", {},
+        el("h3", { class: "primeiro__titulo" }, titulo),
+        el("p", { class: "primeiro__texto" }, texto),
+        acao || null
+      )
+    );
+
+  return el("div", {},
+    el("header", { class: "page-head" },
+      el("h1", { class: "page-title" }, `${saudacao()}, tudo pronto`),
+      el("p", { class: "page-sub" },
+        `${state.company?.name || "Sua empresa"} está criada e as categorias mais usadas já vieram junto.`)
+    ),
+    el("section", { class: "card" },
+      el("h2", { class: "card__title" }, "Comece por aqui"),
+      el("ol", { class: "primeiro" },
+        passo("1", "Registre o que entrou ou saiu hoje",
+          "Um lançamento basta pra tela ganhar vida. Valor, data e pronto.",
+          el("button", { class: "btn btn--primary", style: "margin-top:10px",
+            onclick: () => irPara("lancamentos") }, "+ Novo lançamento")),
+        passo("2", "Cadastre o que ainda vai vencer",
+          "Contas a pagar e a receber não entram no saldo de hoje, mas entram no projetado: é ele que responde se o mês fecha no azul.",
+          el("button", { class: "btn btn--ghost", style: "margin-top:10px",
+            onclick: () => irPara("contas") }, "Ir para Contas")),
+        passo("3", "Volte aqui no fim do dia",
+          "Com lançamentos na mão, esta tela passa a mostrar saldo, entradas e saídas do mês e a comparação com o mês passado.")
+      )
+    )
+  );
+}
+
 // ---- skeleton de carregamento ----------------------------------------------
 
 function dashSkeleton() {
@@ -180,8 +231,13 @@ function dashSkeleton() {
     el("div", { class: "sk sk--block", style: "height:28px;width:65%;margin-top:6px;" }),
     el("div", { class: "sk sk--line sk--w24", style: "margin-top:6px;" })
   );
+  const placa = () => el("div", { class: "card metric metric--placa" },
+    el("div", { class: "sk sk--line sk--w24" }),
+    el("div", { class: "sk sk--block", style: "height:58px;width:52%;margin-top:14px;" }),
+    el("div", { class: "sk sk--line sk--w40", style: "margin-top:12px;" })
+  );
   return el("div", { class: "dash-skeleton", "aria-hidden": "true" },
-    el("section", { class: "metrics" }, metric(), metric(), metric()),
+    el("section", { class: "metrics metrics--dash" }, placa(), metric(), metric()),
     el("section", { class: "dash-grid" },
       el("div", { class: "card" },
         el("div", { class: "sk sk--line sk--w24", style: "margin-bottom:20px;" }),
@@ -205,12 +261,6 @@ function saudacao() {
 }
 
 // ---- cards de resumo (metric) ----------------------------------------------
-
-// Ícones circulares dos lançamentos (↗ entrada / ↙ saída), estilo referência.
-const TX_ICONS = {
-  entrada: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>`,
-  saida:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>`,
-};
 
 const METRIC_ICONS = {
   saldo:   `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>`,
@@ -259,11 +309,11 @@ function trendFoot(atual, anterior, tipo) {
     return el("span", { class: "metric__foot metric__foot--muted" },
       atual ? "Sem base do mês passado" : "Sem movimento");
   }
-  const pct = ((atual - anterior) / anterior) * 100;
+  const pct = variacaoPercentual(atual, anterior);
   const subiu = pct >= 0;
   const bom = tipo === "entrada" ? subiu : !subiu; // entrada subir = bom; saída subir = ruim
   return el("span", { class: `metric__foot ${bom ? "is-up" : "is-down"}` },
-    `${subiu ? "▲" : "▼"} ${Math.abs(pct).toFixed(1).replace(".", ",")}% vs mês passado`);
+    `${subiu ? "▲" : "▼"} ${Math.abs(pct)}% vs mês passado`);
 }
 
 // ---- composição de despesas ------------------------------------------------
@@ -318,7 +368,6 @@ function listaRecentes(itens) {
     const cat = t.categories?.name;
     lista.append(
       el("li", { class: `tx tx--${t.kind} ${t.is_reversed ? "is-reversed" : ""}` },
-        el("span", { class: `tx__ic tx__ic--${t.kind}`, html: TX_ICONS[t.kind] }),
         el("div", { class: "tx__main" },
           el("span", { class: "tx__desc" }, el("span", {}, t.description || "(sem descrição)")),
           el("span", { class: "tx__meta" },

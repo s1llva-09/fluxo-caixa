@@ -12,6 +12,44 @@
   <meta property="og:type" content="website" />
   <meta name="theme-color" content="#F0EFF4" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0B0E1A" media="(prefers-color-scheme: dark)" />
+  <!-- Dados estruturados: fazem o Google mostrar plano e preço direto no
+       resultado da busca, e as perguntas como sanfona.
+       Sem aggregateRating de propósito: nota inventada é dado falso, e o
+       Google pune review sem origem real. Entra quando houver avaliação. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "Monetta",
+        "applicationCategory": "FinanceApplication",
+        "operatingSystem": "Web, iOS, Android",
+        "description": "Sistema de gestão para pequenos negócios: caixa, contas a pagar e receber, saldo projetado e relatórios.",
+        "inLanguage": "pt-BR",
+        "offers": [
+          { "@type": "Offer", "name": "Pro", "price": "49", "priceCurrency": "BRL",
+            "description": "Caixa, contas, vendas com baixa de estoque, clientes, relatórios e equipe de até 3 usuários." },
+          { "@type": "Offer", "name": "Empresarial", "price": "99", "priceCurrency": "BRL",
+            "description": "Tudo do Pro, mais múltiplas empresas, funcionários e usuários ilimitados." }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          { "@type": "Question", "name": "Preciso entender de finanças para usar?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Não. O Monetta foi feito para dono de negócio, não para contador. Você lança o que entra e o que sai, e o sistema cuida das contas, do saldo e dos relatórios." } },
+          { "@type": "Question", "name": "Funciona no celular?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Sim. Abre no navegador do celular, tablet ou computador. Dá para adicionar à tela inicial e usar como aplicativo, sem ocupar espaço com instalação." } },
+          { "@type": "Question", "name": "Meus dados ficam seguros?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Cada empresa só enxerga os próprios dados, com acesso protegido por login. Você decide quem entra convidando sócio ou contador pela área de equipe." } },
+          { "@type": "Question", "name": "Consigo dividir o acesso com meu contador?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Sim. Em Configurações, na área de Equipe, você envia um convite por email. A pessoa acessa a mesma empresa, e dá para exportar tudo em CSV ou PDF quando precisar." } }
+        ]
+      }
+    ]
+  }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet" />

@@ -6,13 +6,13 @@
 //  fontes do Google e módulos do esm.sh passam direto pra rede.
 // ============================================================================
 
-// v14: landing redesenhada (bento, trilho de passos, alternador de tema).
+// v15: primeiro dia no dashboard, Enter salva o lançamento, JSON-LD.
 // Sem bumpar a versão, quem já tem o PWA instalado continuaria servindo o
 // css/index.css e os módulos antigos do cache.
 //
 // REGRA: todo deploy que muda CSS ou JS bumpa este número. É ele que apaga o
 // cache velho no 'activate'.
-const CACHE = "fluxo-caixa-v14";
+const CACHE = "fluxo-caixa-v15";
 
 // Arquivos essenciais pra casca abrir offline.
 // Obs.: usamos URLs "limpas" (/ e /app) porque o Vercel está com cleanUrls,

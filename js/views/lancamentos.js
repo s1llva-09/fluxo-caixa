@@ -383,6 +383,13 @@ function abrirFormulario() {
   }
 
   btnSalvar.addEventListener("click", salvar);
+  // Enter salva. É o formulário mais repetido do app e só dava pra concluir
+  // tocando no botão, que no celular fica embaixo do teclado. Só nos campos de
+  // texto: em <select> o Enter é do próprio controle, e em <input type=file>
+  // ele abre o seletor de arquivo.
+  for (const campo of [valor, desc, data]) {
+    campo.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); salvar(); } });
+  }
 
   openModal("Novo lançamento",
     el("div", { class: "form" },

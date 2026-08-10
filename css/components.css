@@ -750,6 +750,23 @@ select.input {
 .theme-option__titulo { font-size: var(--fs-md); font-weight: 700; font-stretch: 88%; color: var(--c-ink); }
 .theme-option__desc   { font-size: var(--fs-xs); color: var(--c-muted); line-height: 1.4; }
 
+/* ── Primeiro dia (conta sem nenhum lançamento) ───────────────────────────── */
+.primeiro { list-style: none; display: flex; flex-direction: column; }
+.primeiro__passo {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 16px 0; border-top: 1px solid var(--c-line);
+}
+.primeiro__passo:first-child { border-top: none; padding-top: 4px; }
+.primeiro__n {
+  flex: 0 0 auto; width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--c-accent-soft); color: var(--c-accent-text);
+  font-size: var(--fs-xs); font-weight: 700;
+}
+.primeiro__titulo { font-size: var(--fs-md); font-weight: 700; font-stretch: 88%; margin-bottom: 3px; }
+.primeiro__texto { font-size: var(--fs-sm); color: var(--c-muted); line-height: 1.5; max-width: 56ch; }
+
 /* ── Vazio e carregando ───────────────────────────────────────────────────── */
 .empty, .loading {
   color: var(--c-muted);
