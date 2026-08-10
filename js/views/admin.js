@@ -224,11 +224,18 @@ function desenharTabelaReceita(serie) {
   const total = linhas.reduce((s, p) => s + (p.total || 0), 0);
   const meses = linhas.length || 1;
 
+  // A contagem veio numa mudança posterior da RPC (supabase/receita-mensal-
+  // contagem.sql). Enquanto esse SQL não rodar o campo não existe, e a coluna
+  // some inteira em vez de virar uma fileira de "0" mentirosos.
+  const temContagem = linhas.some((p) => p.pagamentos != null);
+  const totalPagamentos = linhas.reduce((s, p) => s + (p.pagamentos || 0), 0);
+
   const tabela = el("table", { class: "tabela" },
     el("thead", {},
       el("tr", {},
         el("th", {}, "Mês"),
         el("th", { class: "ta-right" }, "Recebido"),
+        temContagem ? el("th", { class: "ta-right" }, "Pagamentos") : null,
         el("th", { class: "ta-right" }, "vs. anterior")
       )
     ),
@@ -236,9 +243,20 @@ function desenharTabelaReceita(serie) {
       ...linhas.map((p, i) => {
         const atual = p.total || 0;
         const pct = variacaoPercentual(atual, linhas[i + 1]?.total || 0);
+        // Pagamento sem valor entra na contagem e não no total: é o caso que
+        // a coluna existe pra denunciar.
+        const semValor = temContagem && p.pagamentos > 0 && atual === 0;
         return el("tr", {},
           el("td", {}, rotuloMes(String(p.mes).slice(0, 7))),
           el("td", { class: "ta-right num" }, formatBRL(atual)),
+          temContagem
+            ? el("td", { class: "ta-right num" },
+                String(p.pagamentos || 0),
+                semValor
+                  ? el("span", { class: "badge badge--alerta", style: "margin-left:6px",
+                      "data-tip": "Pagamento registrado sem valor" }, "sem valor")
+                  : null)
+            : null,
           el("td", { class: `ta-right num ${pct == null ? "" : pct >= 0 ? "c-entrada" : "c-saida"}` },
             pct == null ? "—" : `${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct)}%`)
         );
@@ -248,6 +266,7 @@ function desenharTabelaReceita(serie) {
       el("tr", {},
         el("td", {}, `Total ${meses}m`),
         el("td", { class: "ta-right num" }, formatBRL(total)),
+        temContagem ? el("td", { class: "ta-right num" }, String(totalPagamentos)) : null,
         el("td", { class: "ta-right num" }, `média ${formatBRL(Math.round(total / meses))}`)
       )
     )

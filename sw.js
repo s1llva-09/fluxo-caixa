@@ -6,13 +6,13 @@
 //  fontes do Google e módulos do esm.sh passam direto pra rede.
 // ============================================================================
 
-// v11: receita mês a mês no Admin e relatório mês a mês pro cliente.
+// v12: coluna de nº de pagamentos na receita mês a mês.
 // Sem bumpar a versão, quem já tem o PWA instalado continuaria servindo o
 // css/index.css e os módulos antigos do cache.
 //
 // REGRA: todo deploy que muda CSS ou JS bumpa este número. É ele que apaga o
 // cache velho no 'activate'.
-const CACHE = "fluxo-caixa-v11";
+const CACHE = "fluxo-caixa-v12";
 
 // Arquivos essenciais pra casca abrir offline.
 // Obs.: usamos URLs "limpas" (/ e /app) porque o Vercel está com cleanUrls,
