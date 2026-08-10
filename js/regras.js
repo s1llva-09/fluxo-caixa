@@ -48,6 +48,60 @@ export function ordenarPorUrgencia(lista, hoje = todayISO()) {
   );
 }
 
+// ---- Mês a mês -------------------------------------------------------------
+
+// Todas as chaves "YYYY-MM" entre duas datas ISO, inclusive as pontas.
+// Aritmética de calendário em texto, sem Date: mês tem 28 a 31 dias e somar
+// milissegundos erra a virada. Devolve do mais RECENTE pro mais antigo, que é
+// a ordem em que se lê um extrato.
+export function mesesEntre(de, ate) {
+  if (!de || !ate) return [];
+  let [ano, mes] = de.slice(0, 7).split("-").map(Number);
+  const [anoF, mesF] = ate.slice(0, 7).split("-").map(Number);
+  if (anoF * 12 + mesF < ano * 12 + mes) return [];
+
+  const out = [];
+  while (ano * 12 + mes <= anoF * 12 + mesF) {
+    out.push(`${ano}-${String(mes).padStart(2, "0")}`);
+    mes += 1;
+    if (mes > 12) { mes = 1; ano += 1; }
+  }
+  return out.reverse();
+}
+
+// Entradas, saídas e saldo de cada mês do período. Mês sem movimento entra
+// zerado em vez de sumir: um buraco no meio da série é informação — foi um mês
+// parado —, e some se a linha não existir.
+export function resumoMensal(itens, de, ate) {
+  const linhas = new Map(
+    mesesEntre(de, ate).map((mes) => [mes, { mes, entradas: 0, saidas: 0, saldo: 0 }])
+  );
+  for (const t of itens || []) {
+    const linha = linhas.get(String(t.occurred_on || "").slice(0, 7));
+    if (!linha) continue; // fora do período pedido
+    if (t.kind === "entrada") linha.entradas += t.amount_cents || 0;
+    else linha.saidas += t.amount_cents || 0;
+    linha.saldo = linha.entradas - linha.saidas;
+  }
+  return [...linhas.values()];
+}
+
+// Variação percentual entre dois valores. null quando não há base de comparação
+// — crescer "infinito%" partindo de zero não diz nada a ninguém.
+export function variacaoPercentual(atual, anterior) {
+  if (!anterior) return null;
+  return Math.round(((atual - anterior) / anterior) * 100);
+}
+
+// "2026-08" → "ago/26". Rótulo curto porque ele vive numa coluna de tabela.
+export function rotuloMes(chave) {
+  const [ano, mes] = String(chave).split("-").map(Number);
+  const nome = new Date(ano, (mes || 1) - 1, 1)
+    .toLocaleDateString("pt-BR", { month: "short" })
+    .replace(".", "");
+  return `${nome}/${String(ano).slice(2)}`;
+}
+
 // ---- CPF e telefone --------------------------------------------------------
 
 // Máscara progressiva: formata enquanto a pessoa digita, sem travar o campo.

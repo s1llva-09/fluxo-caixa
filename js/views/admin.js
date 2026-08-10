@@ -14,13 +14,14 @@ import { updateEmail, updatePassword } from "../auth.js";
 import { state, mesAtual } from "../state.js";
 import { renderAdminPermissoes } from "./admin_permissoes.js";
 import { formatDate, formatBRL, parseToCents, todayISO } from "../money.js";
-import { AVISO_DIAS, venceEmBreve, avisoVenc, ordenarPorUrgencia } from "../regras.js";
+import { AVISO_DIAS, venceEmBreve, avisoVenc, ordenarPorUrgencia, variacaoPercentual, rotuloMes } from "../regras.js";
 
 let clientes = [];
 let filtro = "";
 let filtroStatus = "todos"; // todos | ativos | vencendo | inativos
 let receitaMes = 0;
 let chartRef = null;
+let mesesReceita = 6; // janela do gráfico e da tabela de receita
 
 export async function renderAdmin(root) {
   root.innerHTML = "";
@@ -41,10 +42,12 @@ export async function renderAdmin(root) {
     // da página, depois da lista, ninguém relacionava um com o outro.
     el("section", { class: "card" },
       el("div", { class: "card__head" },
-        el("h2", { class: "card__title" }, "Receita — últimos 6 meses"),
+        el("h2", { class: "card__title" }, "Receita mês a mês"),
         el("span", { class: "card__hint", id: "rec-comp" }, "Soma das mensalidades recebidas por mês")
       ),
-      el("div", { class: "chart-wrap" }, el("canvas", { id: "chart-receita" }))
+      el("div", { id: "rec-periodo", class: "admin-filtros" }),
+      el("div", { class: "chart-wrap" }, el("canvas", { id: "chart-receita" })),
+      el("div", { id: "rec-tabela" })
     ),
     el("section", { class: "card" },
       el("div", { class: "card__head" },
@@ -174,14 +177,84 @@ async function carregar() {
   }
   desenharResumo();
   desenharLista();
+  desenharPeriodoReceita();
+  carregarReceita();
+}
 
-  // Gráfico de receita dos últimos meses (não-fatal).
+// Receita mês a mês (não-fatal: se falhar, a tela do admin continua servindo).
+async function carregarReceita() {
+  const tabela = $("#rec-tabela");
+  if (tabela) { tabela.innerHTML = ""; tabela.append(skeletonList(3)); }
   try {
-    const serie = await receitaMensal(6);
+    const serie = await receitaMensal(mesesReceita);
     desenharGraficoReceita(serie);
+    desenharTabelaReceita(serie);
   } catch (err) {
     console.error(err);
+    if (tabela) {
+      tabela.innerHTML = "";
+      tabela.append(errorState("Não foi possível carregar a receita.", carregarReceita));
+    }
   }
+}
+
+// Janela: 6, 12 ou 24 meses. A RPC já aceita o número, era só oferecer.
+function desenharPeriodoReceita() {
+  const box = $("#rec-periodo");
+  if (!box) return;
+  box.innerHTML = "";
+  for (const n of [6, 12, 24]) {
+    box.append(el("button", {
+      class: `chip ${mesesReceita === n ? "chip--on" : ""}`,
+      "aria-pressed": mesesReceita === n ? "true" : "false",
+      onclick: () => { mesesReceita = n; desenharPeriodoReceita(); carregarReceita(); },
+    }, `${n} meses`));
+  }
+}
+
+// O gráfico dá a forma; a tabela dá o número. Quem cobra mensalidade precisa
+// do valor exato do mês, não da altura da barra.
+function desenharTabelaReceita(serie) {
+  const box = $("#rec-tabela");
+  if (!box) return;
+  box.innerHTML = "";
+
+  // A RPC devolve do mais antigo pro mais novo; a leitura é ao contrário.
+  const linhas = [...serie].reverse();
+  const total = linhas.reduce((s, p) => s + (p.total || 0), 0);
+  const meses = linhas.length || 1;
+
+  const tabela = el("table", { class: "tabela" },
+    el("thead", {},
+      el("tr", {},
+        el("th", {}, "Mês"),
+        el("th", { class: "ta-right" }, "Recebido"),
+        el("th", { class: "ta-right" }, "vs. anterior")
+      )
+    ),
+    el("tbody", {},
+      ...linhas.map((p, i) => {
+        const atual = p.total || 0;
+        const pct = variacaoPercentual(atual, linhas[i + 1]?.total || 0);
+        return el("tr", {},
+          el("td", {}, rotuloMes(String(p.mes).slice(0, 7))),
+          el("td", { class: "ta-right num" }, formatBRL(atual)),
+          el("td", { class: `ta-right num ${pct == null ? "" : pct >= 0 ? "c-entrada" : "c-saida"}` },
+            pct == null ? "—" : `${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct)}%`)
+        );
+      })
+    ),
+    el("tfoot", {},
+      el("tr", {},
+        el("td", {}, `Total ${meses}m`),
+        el("td", { class: "ta-right num" }, formatBRL(total)),
+        el("td", { class: "ta-right num" }, `média ${formatBRL(Math.round(total / meses))}`)
+      )
+    )
+  );
+  const wrap = el("div", { class: "tabela-wrap" });
+  wrap.append(tabela);
+  box.append(wrap);
 }
 
 // ---- gráfico de receita -----------------------------------------------------
@@ -201,8 +274,8 @@ function desenharGraficoReceita(serie) {
     const atual = serie[serie.length - 1].total || 0;
     const anterior = serie.length > 1 ? (serie[serie.length - 2].total || 0) : 0;
     let txt = `Este mês: ${formatBRL(atual)}`;
-    if (anterior > 0) {
-      const pct = Math.round(((atual - anterior) / anterior) * 100);
+    const pct = variacaoPercentual(atual, anterior);
+    if (pct != null) {
       txt += ` · ${pct >= 0 ? "+" : "−"}${Math.abs(pct)}% vs mês passado (${formatBRL(anterior)})`;
     } else {
       txt += ` · mês passado: ${formatBRL(anterior)}`;

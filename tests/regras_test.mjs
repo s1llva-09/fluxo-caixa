@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import {
   AVISO_DIAS, diasAte, venceEmBreve, avisoVenc, ordenarPorUrgencia,
   formatCPFValue, formatPhoneValue, validarCPF,
+  mesesEntre, resumoMensal, variacaoPercentual, rotuloMes,
 } from "../js/regras.js";
 import { limiteUsuarios, cabeMaisUsuario } from "../js/planos.js";
 
@@ -89,5 +90,40 @@ assert.equal(cabeMaisUsuario("pro", 2), true);
 assert.equal(cabeMaisUsuario("pro", 3), false, "na borda o convite é recusado");
 assert.equal(cabeMaisUsuario("pro", 9), false, "quem já passou do limite não ganha vaga");
 assert.equal(cabeMaisUsuario("empresarial", 500), true);
+
+// ---- mês a mês --------------------------------------------------------------
+assert.deepEqual(mesesEntre("2026-08-01", "2026-08-31"), ["2026-08"], "um mês só");
+assert.deepEqual(mesesEntre("2026-06-15", "2026-08-09"), ["2026-08", "2026-07", "2026-06"],
+  "mais recente primeiro, e a ponta parcial conta");
+assert.deepEqual(mesesEntre("2025-11-01", "2026-02-01"),
+  ["2026-02", "2026-01", "2025-12", "2025-11"], "atravessa a virada do ano");
+assert.deepEqual(mesesEntre("2026-08-01", "2026-07-01"), [], "período invertido não inventa mês");
+assert.deepEqual(mesesEntre(null, "2026-08-01"), []);
+assert.equal(mesesEntre("2025-01-01", "2025-12-31").length, 12);
+
+const lancs = [
+  { occurred_on: "2026-08-03", kind: "entrada", amount_cents: 10000 },
+  { occurred_on: "2026-08-20", kind: "saida",   amount_cents: 4000 },
+  { occurred_on: "2026-06-10", kind: "entrada", amount_cents: 5000 },
+  { occurred_on: "2026-01-10", kind: "entrada", amount_cents: 99999 }, // fora
+];
+const resumo = resumoMensal(lancs, "2026-06-01", "2026-08-31");
+assert.deepEqual(resumo.map((l) => l.mes), ["2026-08", "2026-07", "2026-06"]);
+assert.deepEqual(resumo[0], { mes: "2026-08", entradas: 10000, saidas: 4000, saldo: 6000 });
+assert.deepEqual(resumo[1], { mes: "2026-07", entradas: 0, saidas: 0, saldo: 0 },
+  "mês parado entra zerado, não some");
+assert.equal(resumo[2].entradas, 5000);
+// Nada de fora do período vaza pra dentro.
+assert.equal(resumo.reduce((s, l) => s + l.entradas, 0), 15000);
+assert.deepEqual(resumoMensal([], "2026-08-01", "2026-08-31"),
+  [{ mes: "2026-08", entradas: 0, saidas: 0, saldo: 0 }]);
+
+assert.equal(variacaoPercentual(110, 100), 10);
+assert.equal(variacaoPercentual(90, 100), -10);
+assert.equal(variacaoPercentual(100, 0), null, "sem base não há percentual");
+assert.equal(variacaoPercentual(0, 0), null);
+
+assert.equal(rotuloMes("2026-08"), "ago/26");
+assert.equal(rotuloMes("2025-12"), "dez/25");
 
 console.log("regras: todos os casos passaram");
