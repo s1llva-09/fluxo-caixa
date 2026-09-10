@@ -5,13 +5,18 @@
 // ============================================================================
 
 import { el, $, toast, openModal, closeModal, confirmar, emptyState, errorState, skeletonList, mascara } from "../ui.js";
-import { formatDocumento, formatPhoneValue, soDigitos } from "../regras.js";
+import { formatDocumento, formatPhoneValue, soDigitos, abertoPorContato } from "../regras.js";
+import { formatBRL } from "../money.js";
 import { state } from "../state.js";
-import { listarClientes, criarCliente, atualizarCliente, apagarCliente } from "../api.js";
+import { listarClientes, criarCliente, atualizarCliente, apagarCliente, listarContas } from "../api.js";
 
 const ICON_USERS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;
 
 let clientes = [];
+// O que está em aberto com cada contato: { party_id: { receber, pagar } }.
+// Sem isto o cadastro de fornecedor era um caderno de telefones — guardava o
+// nome e não respondia "quanto eu devo pro fulano?".
+let aberto = {};
 let filtro = "todos"; // todos | cliente | fornecedor
 
 export async function renderClientes(root) {
@@ -35,7 +40,14 @@ async function carregar() {
   if (!box) return;
   box.innerHTML = ""; box.append(skeletonList(5));
   try {
-    clientes = await listarClientes(state.company.id);
+    // As contas vêm junto: são elas que dizem o que está em aberto com cada
+    // contato. Falha nelas não derruba o cadastro — o saldo some, os nomes ficam.
+    const [cts, contas] = await Promise.all([
+      listarClientes(state.company.id),
+      listarContas(state.company.id, "pending").catch(() => []),
+    ]);
+    clientes = cts;
+    aberto = abertoPorContato(contas);
   } catch (err) {
     console.error(err);
     box.innerHTML = "";
@@ -91,9 +103,28 @@ function rotulo(kind) {
   return ["Cliente e fornecedor", "badge badge--muted"];
 }
 
+// Valores em aberto do contato, já com a cor que o app usa em todo lugar:
+// verde é o que entra, vermelho é o que sai.
+function saldoPartes(c) {
+  const s = aberto[c.id];
+  if (!s) return [];
+  const out = [];
+  if (s.receber) out.push(el("span", { class: "c-entrada" }, `a receber ${formatBRL(s.receber)}`));
+  if (s.pagar) out.push(el("span", { class: "c-saida" }, `a pagar ${formatBRL(s.pagar)}`));
+  return out;
+}
+
 function item(c) {
   const [txt, badgeClass] = rotulo(c.kind);
   const detalhes = [c.doc, c.phone, c.email].filter(Boolean).join(" · ");
+  // Documento, contato e saldo na mesma linha, separados por ponto — é a fita
+  // de metadados que o resto do app já usa; o saldo só entra quando existe.
+  const meta = el("span", { class: "rec__meta" });
+  const partes = [detalhes || null, ...saldoPartes(c)].filter(Boolean);
+  partes.forEach((parte, i) => {
+    if (i) meta.append(" · ");
+    meta.append(parte);
+  });
   const acoes = el("div", { class: "rec__actions" },
     el("button", { class: "btn btn--tiny btn--ghost", onclick: () => abrirForm(c) }, "Editar"),
     el("button", { class: "btn btn--tiny btn--ghost", onclick: () => confirmarApagar(c) }, "Apagar")
@@ -102,7 +133,7 @@ function item(c) {
     el("span", { class: `cat__dot ${c.kind === "fornecedor" ? "cat__dot--saida" : c.kind === "cliente" ? "cat__dot--entrada" : "cat__dot--ambos"}` }),
     el("div", { class: "rec__main" },
       el("span", { class: "rec__desc" }, c.name),
-      detalhes ? el("span", { class: "rec__meta" }, detalhes) : null
+      partes.length ? meta : null
     ),
     el("div", { class: "rec__right" },
       el("span", { class: badgeClass }, txt),

@@ -86,6 +86,21 @@ export function resumoMensal(itens, de, ate) {
   return [...linhas.values()];
 }
 
+// O que está em ABERTO com cada contato, a partir das contas agendadas.
+// Devolve { [party_id]: { receber, pagar } } em centavos — só contas 'pending',
+// porque conta paga já virou lançamento e não é mais cobrança nem dívida.
+// Contas sem contato ficam de fora: elas existem, mas não são de ninguém.
+export function abertoPorContato(contas) {
+  const mapa = {};
+  for (const c of contas || []) {
+    if (c.status !== "pending" || !c.party_id) continue;
+    const linha = (mapa[c.party_id] ||= { receber: 0, pagar: 0 });
+    if (c.kind === "entrada") linha.receber += c.amount_cents || 0;
+    else linha.pagar += c.amount_cents || 0;
+  }
+  return mapa;
+}
+
 // Variação percentual entre dois valores. null quando não há base de comparação
 // — crescer "infinito%" partindo de zero não diz nada a ninguém.
 export function variacaoPercentual(atual, anterior) {

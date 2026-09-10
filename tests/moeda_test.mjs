@@ -3,7 +3,8 @@
 //  Rodar: node tests/moeda_test.mjs
 // ----------------------------------------------------------------------------
 //  splitMoeda separa a cifra do número pra tipografia da placa de saldo.
-//  Roda no node: money.js só toca no localStorage dentro de try/catch.
+//  Roda no node: money.js não toca em storage nenhum — a moeda vem da
+//  empresa e o boot chama setMoeda().
 // ============================================================================
 
 import assert from "node:assert/strict";

@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import {
   AVISO_DIAS, diasAte, venceEmBreve, avisoVenc, ordenarPorUrgencia,
   formatCPFValue, formatPhoneValue, validarCPF,
-  mesesEntre, resumoMensal, variacaoPercentual, rotuloMes,
+  mesesEntre, resumoMensal, variacaoPercentual, rotuloMes, abertoPorContato,
   formatCNPJValue, formatDocumento, soDigitos,
 } from "../js/regras.js";
 import { limiteUsuarios, cabeMaisUsuario } from "../js/planos.js";
@@ -148,5 +148,25 @@ assert.equal(formatPhoneValue("ramal 22"), "ramal 22");
 assert.equal(soDigitos("123.456.789-01"), "12345678901");
 assert.equal(soDigitos("(11) 98765-4321"), "11987654321");
 assert.equal(soDigitos(null), "");
+
+// ---- abertoPorContato ----
+// O número que a tela Clientes mostra é dinheiro: se a soma erra, alguém cobra
+// o valor errado do fornecedor.
+const CONTAS = [
+  { status: "pending",  party_id: "a", kind: "entrada", amount_cents: 100_00 },
+  { status: "pending",  party_id: "a", kind: "entrada", amount_cents:  50_00 },
+  { status: "pending",  party_id: "a", kind: "saida",   amount_cents:  30_00 },
+  { status: "pending",  party_id: "b", kind: "saida",   amount_cents: 200_00 },
+  { status: "paid",     party_id: "b", kind: "saida",   amount_cents: 999_00 },
+  { status: "canceled", party_id: "b", kind: "saida",   amount_cents: 888_00 },
+  { status: "pending",  party_id: null, kind: "saida",  amount_cents: 777_00 },
+];
+const ab = abertoPorContato(CONTAS);
+assert.deepEqual(ab.a, { receber: 150_00, pagar: 30_00 }, "soma os dois lados do mesmo contato");
+assert.deepEqual(ab.b, { receber: 0, pagar: 200_00 }, "paga e cancelada não são dívida aberta");
+assert.equal(Object.keys(ab).length, 2, "conta sem contato não cria linha");
+assert.deepEqual(abertoPorContato(null), {}, "sem contas, mapa vazio");
+assert.deepEqual(abertoPorContato([{ status: "pending", party_id: "c", kind: "saida" }]).c,
+  { receber: 0, pagar: 0 }, "valor ausente vira zero, não NaN");
 
 console.log("regras: todos os casos passaram");

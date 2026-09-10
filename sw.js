@@ -9,12 +9,13 @@
 // v18: comprovante de venda, CNPJ e moeda por empresa; saíram o painel de
 // permissões, a auditoria de papéis e o import de CSV de funcionários.
 // v19: conta a pagar/receber vinculada a cliente/fornecedor.
+// v20: saldo em aberto por contato na tela Clientes.
 // Sem bumpar a versão, quem já tem o PWA instalado continuaria servindo o
 // css/index.css e os módulos antigos do cache.
 //
 // REGRA: todo deploy que muda CSS ou JS bumpa este número. É ele que apaga o
 // cache velho no 'activate'.
-const CACHE = "fluxo-caixa-v19";
+const CACHE = "fluxo-caixa-v20";
 
 // Arquivos essenciais pra casca abrir offline.
 // Obs.: usamos URLs "limpas" (/ e /app) porque o Vercel está com cleanUrls,
