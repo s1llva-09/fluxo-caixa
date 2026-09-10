@@ -6,13 +6,14 @@
 //  fontes do Google e módulos do esm.sh passam direto pra rede.
 // ============================================================================
 
-// v16: máscara de CPF, CNPJ e telefone nos campos que faltavam.
+// v18: comprovante de venda, CNPJ e moeda por empresa; saíram o painel de
+// permissões, a auditoria de papéis e o import de CSV de funcionários.
 // Sem bumpar a versão, quem já tem o PWA instalado continuaria servindo o
 // css/index.css e os módulos antigos do cache.
 //
 // REGRA: todo deploy que muda CSS ou JS bumpa este número. É ele que apaga o
 // cache velho no 'activate'.
-const CACHE = "fluxo-caixa-v16";
+const CACHE = "fluxo-caixa-v18";
 
 // Arquivos essenciais pra casca abrir offline.
 // Obs.: usamos URLs "limpas" (/ e /app) porque o Vercel está com cleanUrls,

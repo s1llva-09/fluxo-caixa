@@ -102,39 +102,6 @@ export async function listarMembros(companyId) {
   return data || [];
 }
 
-export async function listarMembrosEmpresa(companyId) {
-  // alias para compatibilidade com o painel de permissões
-  return listarMembros(companyId);
-}
-
-export async function setMemberRole(companyId, userId, role) {
-  const { data, error } = await supabase.rpc('set_member_role', { p_company_id: companyId, p_user_id: userId, p_role: role });
-  if (error) throw error;
-  return data;
-}
-
-export async function listarMemberRoleAudit(companyId, limit = 50, offset = 0, userId = null) {
-  const { data, error } = await supabase.rpc('company_members_audit_with_emails', {
-    p_company_id: companyId,
-    p_user_id: userId,
-    p_limit: limit,
-    p_offset: offset,
-  });
-  if (error) throw error;
-  return data || [];
-}
-
-export async function exportMemberRoleAuditCSV(companyId, userId = null, limit = 1000, offset = 0) {
-  const rows = await listarMemberRoleAudit(companyId, limit, offset, userId);
-  const cols = ['changed_at','user_email','user_id','old_role','new_role','changed_by_email','changed_by','company_id'];
-  const csv = [cols.join(',')];
-  for (const r of rows) {
-    const line = cols.map(c => `"${String(r[c] ?? '').replace(/"/g,'""')}"`).join(',');
-    csv.push(line);
-  }
-  return csv.join('\n');
-}
-
 export async function removerMembro(companyId, userId) {
   const { error } = await supabase.rpc("remover_membro", { p_company_id: companyId, p_user_id: userId });
   if (error) throw error;
@@ -171,10 +138,13 @@ export async function criarEmpresa(nome, sector) {
 }
 
 // Atualiza o nome da empresa.
-export async function atualizarEmpresa(companyId, nome) {
+// `dados` = { name?, doc? }. Aceitava só o nome; o comprovante precisa do
+// CNPJ, e um segundo parâmetro posicional só pra isso envelhece mal.
+export async function atualizarEmpresa(companyId, dados) {
+  const patch = typeof dados === "string" ? { name: dados } : dados;
   const { data, error } = await supabase
     .from("companies")
-    .update({ name: nome })
+    .update(patch)
     .eq("id", companyId)
     .select()
     .single();
@@ -548,7 +518,7 @@ export async function apagarCliente(id) {
 export async function listarVendas(companyId) {
   const { data, error } = await supabase
     .from("sales")
-    .select("*, parties(name)")
+    .select("*, parties(name, doc)")  // doc sai no comprovante
     .eq("company_id", companyId)
     .order("occurred_on", { ascending: false })
     .order("created_at", { ascending: false });
@@ -648,6 +618,18 @@ export async function cancelarVenda(venda) {
     .update({ status: "cancelada" })
     .eq("id", venda.id);
   if (error) throw error;
+}
+
+// Itens de uma venda — usado pelo comprovante. Venda sem itens (valor manual)
+// devolve lista vazia.
+export async function listarItensVenda(saleId) {
+  const { data, error } = await supabase
+    .from("sale_items")
+    .select("product_name, qty, unit_price_cents")
+    .eq("sale_id", saleId)
+    .order("created_at");
+  if (error) throw error;
+  return data || [];
 }
 
 // -------- ESTOQUE / PRODUTOS (módulo ERP) --------

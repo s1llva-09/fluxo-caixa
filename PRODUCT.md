@@ -20,10 +20,12 @@ por: PWA instalável em modo `standalone`/`portrait` com ícones 180/192/512
 e o vocabulário de tela ser operacional (lançamento, conta a pagar, comprovante), não
 contábil (sem plano de contas, sem DRE, sem conciliação).
 
-**Secundário — funcionário com papel limitado.** `company_members` com papéis, convite
-por email, RPC `set_member_role` restrita ao owner e auditoria com email resolvido no
-servidor (`company_members_audit_with_emails`). O módulo `funcionarios` só existe no
-plano Empresarial (`js/planos.js:16`). **[código]**
+**Secundário — pessoa convidada pelo dono.** `company_members` com convite por email
+e remoção pelo dono. Só existem dois estados que valem: **dono** e **membro** — a
+coluna `role` ainda aceita 'admin'/'manager', mas nada no app nem no RLS consulta
+esse valor, então a interface não oferece a troca. Permissão de verdade é política no
+banco; enquanto não existir, o app não promete o que não cumpre. O módulo
+`funcionarios` só existe no plano Empresarial (`js/planos.js:16`). **[código]**
 
 **Terceiro — o operador do próprio Monetta.** Painel admin visível só para um email
 (`supabase/admin.sql`), com lista de clientes, pagamentos, receita mensal/por período e
@@ -58,8 +60,8 @@ com concorrente neste repositório.
 - Sessões curtas e repetidas ao longo do dia (lançar) e uma sessão mais longa
   ocasional (relatório, fechar o mês, conferir contas). **[inferido]**
 - Documentos que entram no fluxo: comprovante anexado por lançamento (Supabase Storage),
-  exportação CSV de relatório e de auditoria, importação CSV de funcionários com preview
-  obrigatório. **[código]**
+  exportação CSV de relatório, comprovante de venda impresso (`js/recibo.js`).
+  **[código]**
 - Rituais de cobrança: aviso de vencimento da mensalidade no topo do app dentro de N dias
   (`#sub-banner`, dispensável por sessão), regularização por PIX/manual e assinatura via
   Asaas. **[código: js/index.js:341-373]**
@@ -69,8 +71,9 @@ com concorrente neste repositório.
 **Funcionalidade confirmada:** autenticação e multi-empresa por usuário; lançamentos com
 data, categoria, descrição e comprovante; estorno; recorrências; contas a pagar/receber
 com baixa; categorias; clientes; estoque; vendas; funcionários com anexos e log; relatório
-por categoria com CSV; dashboard com saldo, totais do mês e gráfico de 6 meses; convites e
-papéis; painel admin de assinatura; tema claro/escuro; seletor de moeda.
+por categoria com CSV; comprovante de venda pra imprimir; dashboard com saldo, totais do
+mês e gráfico de 6 meses; convites de equipe; painel admin de assinatura; tema
+claro/escuro; seletor de moeda.
 
 **Restrições técnicas duráveis:**
 - **Sem build e sem framework.** HTML + CSS + JS puro com ES modules nativos, servido
@@ -84,12 +87,16 @@ papéis; painel admin de assinatura; tema claro/escuro; seletor de moeda.
 - Landing em `index.html` (`/`), app em `app.html` (`/app`), mesma origem.
 
 **Idioma e moeda:** interface só em pt-BR (`lang: "pt-BR"` no manifest, toda a copy em
-português). Não há infraestrutura de i18n. A moeda é configurável por dispositivo entre
-7 opções (BRL, USD, EUR, GBP, ARS, PYG, CLP) com BRL como padrão — a moeda muda a
-exibição, nunca o armazenamento. **[código]**
+português). Não há infraestrutura de i18n. A moeda é atributo da **empresa**
+(`companies.currency`, 7 opções: BRL, USD, EUR, GBP, ARS, PYG, CLP; padrão BRL),
+trocada em Configurações → Empresa e aplicada no boot. Ela muda o símbolo e o
+formato, nunca o armazenamento — **não há conversão de câmbio**, e é por isso que
+não pode ser preferência de usuário: dois membros da mesma empresa veriam os mesmos
+centavos rotulados de formas diferentes. **[código: js/money.js, js/index.js]**
 
 **Explicitamente indefinido:** NF-e/fiscal aparece como direção futura, não como
-capacidade; exportação em PDF e integração PIX/boleto estão listadas como ideias em
+capacidade — o comprovante impresso diz, no rodapé, que não substitui nota fiscal.
+Exportação em PDF e integração PIX/boleto estão listadas como ideias em
 `README.md:122-129`, não implementadas.
 
 ## Brand Commitments

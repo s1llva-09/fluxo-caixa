@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Teste — Comprovante</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <!-- CSS de verdade: o comprovante só existe dentro do @media print. -->
+  <link rel="stylesheet" href="../css/index.css">
+  <style>
+    body { padding: 24px; font-family: system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <h1>Comprovante</h1>
+  <p>Clique em Imprimir: a pré-visualização do navegador é o teste. No papel só
+     o comprovante pode aparecer — sem esta página, sem o botão.</p>
+  <button id="print">Imprimir</button>
+
+  <script type="module">
+    import { imprimirRecibo } from "../js/recibo.js";
+
+    const exemplo = {
+      numero: "1A2B3C4D",
+      data: "2026-09-10",
+      empresa: "Padaria do Bairro Ltda",
+      empresaDoc: "12345678000199",
+      cliente: "Carolina Souza",
+      clienteDoc: "12345678901",
+      descricao: "Encomenda de aniversário",
+      totalCents: 18750,
+      itens: [
+        { product_name: "Bolo de chocolate 2kg", qty: 1, unit_price_cents: 12000 },
+        { product_name: "Salgado assado (cento)", qty: 0.5, unit_price_cents: 13500 },
+      ],
+    };
+
+    // Confere a conta antes de olhar o papel: a soma dos itens tem que bater
+    // com o total gravado na venda.
+    const soma = exemplo.itens.reduce((s, it) => s + Math.round(it.qty * it.unit_price_cents), 0);
+    if (soma !== exemplo.totalCents) {
+      document.body.insertAdjacentHTML("afterbegin",
+        `<pre style="background:#a00;color:#fff;padding:10px">FAIL: itens somam ${soma}, total diz ${exemplo.totalCents}</pre>`);
+    }
+
+    document.getElementById("print").onclick = () => imprimirRecibo(exemplo);
+  </script>
+</body>
+</html>

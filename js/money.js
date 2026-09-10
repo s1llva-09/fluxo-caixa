@@ -7,8 +7,11 @@
 // ============================================================================
 
 // ── Moeda configurável ───────────────────────────────────────────────────────
-// Os valores SEMPRE são guardados em centavos; a moeda só muda como é exibido.
-// Preferência por dispositivo (localStorage). Trocada em Configurações.
+// Os valores SEMPRE são guardados em centavos; a moeda só muda como é exibido —
+// nada aqui converte câmbio. Por isso ela é da EMPRESA, não do usuário nem do
+// aparelho: o livro-caixa de um negócio tem uma moeda só, e dois membros não
+// podem ver os mesmos centavos rotulados de formas diferentes. O boot lê
+// companies.currency e chama setMoeda(); Configurações → Empresa troca.
 const MOEDAS = {
   BRL: { locale: "pt-BR", nome: "Real brasileiro (R$)" },
   USD: { locale: "en-US", nome: "Dólar americano ($)" },
@@ -21,16 +24,10 @@ const MOEDAS = {
 export const MOEDAS_LISTA = Object.entries(MOEDAS).map(([code, m]) => ({ code, nome: m.nome }));
 
 let _moeda = "BRL";
-try {
-  const m = localStorage.getItem("fc-moeda");
-  if (m && MOEDAS[m]) _moeda = m;
-} catch (e) { /* ignore */ }
 
 export function getMoeda() { return _moeda; }
 export function setMoeda(code) {
-  if (!MOEDAS[code]) return;
-  _moeda = code;
-  try { localStorage.setItem("fc-moeda", code); } catch (e) { /* ignore */ }
+  _moeda = MOEDAS[code] ? code : "BRL";
 }
 
 // Formata centavos na moeda escolhida. Ex.: 123456 -> "R$ 1.234,56" / "$1,234.56"

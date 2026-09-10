@@ -2,12 +2,12 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Full Check - Funcionários & Equipe</title>
+  <title>Full Check - Funcionários</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>body{font-family:Inter,system-ui,Arial;margin:18px} pre{background:#111;color:#fff;padding:12px;border-radius:6px;overflow:auto}</style>
 </head>
 <body>
-  <h1>Full Check - Funcionários & Equipe</h1>
+  <h1>Full Check - Funcionários</h1>
   <div id="out"></div>
   <script type="module">
     import * as api from '../js/api.js';
@@ -56,51 +56,18 @@
         out('Anexos listados: ' + anexos.length);
       } catch (e) { fail('Listar anexos: '+e.message); }
 
-      // 5) trocar papel de um membro (se houver mais de 1 membro)
-      let membros = [];
-      try { membros = await api.listarMembros(company.id); out('Membros: '+membros.length); } catch (e) { fail('Listar membros: '+e.message); }
-      let changedRole = false;
-      if (membros.length > 1) {
-        const target = membros.find(m => m.user_id !== user.id);
-        if (target) {
-          try {
-            await api.setMemberRole(company.id, target.user_id, target.role === 'member' ? 'manager' : 'member');
-            out('Papel alterado para user ' + target.email);
-            changedRole = true;
-          } catch (e) { fail('Set member role: '+e.message); }
-        }
-      } else {
-        out('Não há outros membros para trocar papel. Pulei este teste.');
-      }
+      // Papéis, audit e export CSV saíram do produto: 'admin'/'manager' não
+      // travavam nada, então não havia o que testar.
+      try { const membros = await api.listarMembros(company.id); out('Membros: '+membros.length); }
+      catch (e) { fail('Listar membros: '+e.message); }
 
-      // 6) listar audit de roles
-      try {
-        const logs = await api.listarMemberRoleAudit(company.id, 20);
-        out('Logs de papéis: ' + logs.length);
-      } catch (e) { fail('Listar audit papéis: '+e.message); }
-
-      // 7) export CSV
-      try {
-        const csv = await api.exportMemberRoleAuditCSV(company.id);
-        out('CSV gerado, ' + (csv.split('\n').length) + ' linhas.');
-      } catch (e) { fail('Export CSV: '+e.message); }
-
-      // Cleanup: apagar anexos, desativar funcionário, reverter role
+      // Cleanup: apagar anexos e desativar o funcionário de teste
       try {
         const anexos = await api.listarEmployeeAttachments(company.id, emp.id);
         for (const a of anexos) { try { await api.deleteAttachment(a.id, a.path); out('Anexo removido: '+(a.filename||a.path)); } catch (e) { console.warn('remover anexo', e); } }
       } catch (e) { console.warn('cleanup anexos', e); }
 
       try { await api.apagarFuncionario(emp.id); out('Funcionario desativado'); } catch (e) { console.warn('apagar funcionario', e); }
-
-      if (changedRole) {
-        try {
-          // reverter: pega último log e reverte
-          const logs = await api.listarMemberRoleAudit(company.id, 5);
-          const last = logs.find(l => l.new_role && l.old_role);
-          if (last) { await api.setMemberRole(company.id, last.user_id, last.old_role); out('Reverti papel de '+(last.user_email||last.user_id)); }
-        } catch (e) { console.warn('reverter role', e); }
-      }
 
       out('Full check finalizado. Verifique logs acima e console do navegador.');
     }

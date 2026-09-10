@@ -8,7 +8,6 @@ import { state } from "../state.js";
 import {
   atualizarEmpresa,
   convidar, enviarEmailConvite, listarConvites, revogarConvite, listarMembros, removerMembro,
-  setMemberRole, listarMemberRoleAudit, exportMemberRoleAuditCSV,
   meusConvites, aceitarConvite,
   criarAssinatura,
 } from "../api.js";
@@ -31,37 +30,12 @@ export function renderConfiguracoes(root) {
       // Seis seções curtas em três linhas limpas; equipe e sessão, que crescem
       // sem limite, viram faixas de largura cheia embaixo.
       secaoAparencia(),
-      secaoMoeda(),
       secaoEmpresa(),
       secaoEmail(),
       secaoSenha(),
       secaoEquipe(),
       secaoSair()
     )
-  );
-}
-
-// ── Seção: Moeda ──────────────────────────────────────────────────────────────
-
-function secaoMoeda() {
-  const sel = el("select", { class: "input" },
-    ...MOEDAS_LISTA.map((m) => el("option", { value: m.code }, m.nome))
-  );
-  sel.value = getMoeda();
-  sel.addEventListener("change", () => {
-    setMoeda(sel.value);
-    toast("Moeda atualizada", "ok");
-    // Sem reload: formatBRL lê a moeda a cada chamada, e a casca do app não
-    // mostra valor nenhum — a próxima tela já desenha no formato novo.
-    // Guardar na conta é o que faz a escolha atravessar pro outro aparelho;
-    // se falhar (offline), a troca local já valeu e não vale interromper.
-    salvarPreferencias({ moeda: sel.value }).catch(console.error);
-  });
-  return secao("Moeda",
-    el("p", { class: "config__hint" },
-      "Símbolo e formato dos valores no app. A escolha vale em qualquer aparelho onde você entrar."),
-    el("label", { class: "field" },
-      el("span", { class: "field__label" }, "Moeda"), sel)
   );
 }
 
@@ -86,14 +60,13 @@ function secaoEquipe() {
   async function carregar() {
     box.innerHTML = "";
 
-    // As quatro consultas são independentes: em série a seção levava quatro
-    // idas ao banco uma depois da outra. allSettled porque três delas são
-    // opcionais — convite e histórico podem não existir ainda.
-    const [rMembros, rConvites, rRecebidos, rAudit] = await Promise.allSettled([
+    // As três consultas são independentes: em série a seção levava três idas
+    // ao banco uma depois da outra. allSettled porque duas delas são opcionais
+    // — convite pode não existir ainda.
+    const [rMembros, rConvites, rRecebidos] = await Promise.allSettled([
       listarMembros(state.company.id),
       ehDono ? listarConvites(state.company.id) : Promise.resolve([]),
       meusConvites(),
-      listarMemberRoleAudit(state.company.id, 50),
     ]);
 
     if (rMembros.status === "rejected") {
@@ -103,7 +76,6 @@ function secaoEquipe() {
     }
     const membros = rMembros.value;
     const convites = rConvites.status === "fulfilled" ? rConvites.value : [];
-    const audit = rAudit.status === "fulfilled" ? (rAudit.value || []) : [];
 
     // Convites que EU recebi (de outras empresas) — sempre visível.
     const recebidos = (rRecebidos.status === "fulfilled" ? rRecebidos.value : [])
@@ -138,24 +110,12 @@ function secaoEquipe() {
     const ul = el("ul", { class: "rec-list" });
     for (const m of membros) {
       const acoes = el("div", { class: "rec__actions" });
+      // Sem seletor de papel: 'admin'/'manager'/'member' não travavam nada —
+      // nem no front nem no RLS, que só pergunta se a pessoa é membro. Oferecer
+      // a troca era prometer um controle de acesso que não existe. Quem não é
+      // dono ou é dono: só isso vale hoje. Papel de verdade = política no
+      // banco, e aí o seletor volta.
       if (ehDono && m.user_id !== state.user.id && m.role !== "owner") {
-        // select para alterar papel
-        const sel = el('select', { class: 'input input--tiny' },
-          el('option', { value: 'member' }, 'Membro'),
-          el('option', { value: 'manager' }, 'Manager'),
-          el('option', { value: 'admin' }, 'Admin')
-        );
-        sel.value = m.role || 'member';
-        sel.addEventListener('change', async () => {
-          try {
-            sel.disabled = true;
-            await setMemberRole(state.company.id, m.user_id, sel.value);
-            toast('Papel atualizado', 'ok');
-            carregar();
-          } catch (e) { console.error(e); toast('Não foi possível alterar o papel', 'erro'); sel.disabled = false; }
-        });
-        acoes.append(sel);
-
         const bRem = el("button", { class: "btn btn--tiny btn--ghost" }, "Remover");
         bRem.addEventListener("click", () => {
           confirmar({
@@ -184,29 +144,6 @@ function secaoEquipe() {
       ul
     );
     atualizarBotaoConvite(usados, limite);
-
-    // Histórico de alterações de papéis
-    if (audit.length) {
-      const ulh = el('ul', { class: 'rec-list' });
-      for (const a of audit) {
-        ulh.append(el('li', { class: 'rec' },
-          el('div', { class: 'rec__main' },
-            el('span', { class: 'rec__desc' }, a.user_email || a.user_id),
-            el('span', { class: 'rec__meta' }, `${a.old_role || '-'} → ${a.new_role || '-'}`)
-          ),
-          el('div', { class: 'rec__right' }, new Date(a.changed_at).toLocaleString())
-        ));
-      }
-      const btnExport = el('button', { class: 'btn btn--ghost', onclick: async () => {
-        try {
-          const csv = await exportMemberRoleAuditCSV(state.company.id);
-          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a'); a.href = url; a.download = `company_${state.company.id}_members_audit.csv`; a.click(); URL.revokeObjectURL(url);
-        } catch (e) { console.error(e); toast('Erro ao exportar CSV','erro'); }
-      } }, 'Exportar CSV');
-      box.append(el('h3', { class: 'admin-pay__titulo', style: 'margin-top:18px' }, 'Histórico de papéis'), btnExport, ulh);
-    }
 
     // Convites pendentes (só o dono)
     if (ehDono && convites.length) {
@@ -365,25 +302,47 @@ function secaoEmpresa() {
     value: state.company.name,
     placeholder: "Nome da empresa",
   });
+  // CNPJ/CPF: sai no comprovante que o cliente leva. Sem ele o recibo continua
+  // válido, só fica sem identificar quem emitiu.
+  const docInput = mascara(
+    el("input", { class: "input", type: "text", inputmode: "numeric",
+      value: formatDocumento(state.company.doc || ""),
+      placeholder: "00.000.000/0000-00" }),
+    formatDocumento);
+  // Moeda vive aqui, junto do nome e do CNPJ, porque é um dado da EMPRESA —
+  // era preferência de usuário, e aí dois membros viam os mesmos centavos com
+  // símbolos diferentes. Nada é convertido: trocar a moeda só troca o rótulo,
+  // então trocar depois de lançar reescreve a leitura do histórico inteiro.
+  const moedaSel = el("select", { class: "input" },
+    ...MOEDAS_LISTA.map((m) => el("option", { value: m.code }, m.nome)));
+  moedaSel.value = getMoeda();
   const btn = el("button", { class: "btn btn--primary" }, "Salvar");
 
   async function salvar() {
     const nome = nomeInput.value.trim();
     if (!nome) { toast("Digite o nome da empresa", "erro"); return; }
-    if (nome === state.company.name) { toast("Nenhuma alteração", "info"); return; }
+    const doc = soDigitos(docInput.value) || null;
+    if (doc && doc.length !== 11 && doc.length !== 14) { toast("CPF (11) ou CNPJ (14) dígitos", "erro"); return; }
+    const currency = moedaSel.value;
+    if (nome === state.company.name && doc === (state.company.doc || null) && currency === getMoeda()) {
+      toast("Nenhuma alteração", "info"); return;
+    }
 
     btn.disabled = true;
     btn.textContent = "Salvando...";
     try {
-      const atualizada = await atualizarEmpresa(state.company.id, nome);
+      const atualizada = await atualizarEmpresa(state.company.id, { name: nome, doc, currency });
       state.company = atualizada;
+      // Sem reload: formatBRL lê a moeda a cada chamada, e Configurações não
+      // mostra valor nenhum — a próxima tela já desenha no formato novo.
+      setMoeda(atualizada.currency);
       // Atualiza o badge do topbar
       const badge = $("#empresa-nome");
       if (badge) {
         badge.textContent = atualizada.name;
         badge.setAttribute("title", atualizada.name);
       }
-      toast("Nome atualizado!", "ok");
+      toast("Empresa atualizada!", "ok");
     } catch (err) {
       toast("Não foi possível salvar", "erro");
       console.error(err);
@@ -397,11 +356,21 @@ function secaoEmpresa() {
   nomeInput.addEventListener("keydown", (e) => { if (e.key === "Enter") salvar(); });
 
   return secao("Empresa",
-    el("p", { class: "config__hint" }, "Este nome aparece no topo de cada tela e nos relatórios exportados."),
+    el("p", { class: "config__hint" }, "Aparece no topo de cada tela, nos relatórios exportados e no comprovante de venda."),
     el("label", { class: "field" },
       el("span", { class: "field__label" }, "Nome da empresa"),
       nomeInput
     ),
+    el("label", { class: "field" },
+      el("span", { class: "field__label" }, "CNPJ ou CPF"),
+      docInput
+    ),
+    el("label", { class: "field" },
+      el("span", { class: "field__label" }, "Moeda"),
+      moedaSel
+    ),
+    el("p", { class: "config__note" },
+      "A moeda vale pra empresa toda e só muda o símbolo — nenhum valor é convertido."),
     el("div", { class: "form__actions" }, btn)
   );
 }

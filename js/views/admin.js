@@ -12,7 +12,6 @@ import { listarClientesAdmin, definirStatusCliente, atualizarDadosCliente, defin
 import { nomePlano } from "../planos.js";
 import { updateEmail, updatePassword } from "../auth.js";
 import { state, mesAtual } from "../state.js";
-import { renderAdminPermissoes } from "./admin_permissoes.js";
 import { formatDate, formatBRL, parseToCents, todayISO } from "../money.js";
 import { AVISO_DIAS, venceEmBreve, avisoVenc, ordenarPorUrgencia, variacaoPercentual, rotuloMes } from "../regras.js";
 
@@ -32,7 +31,6 @@ export async function renderAdmin(root) {
         el("p", { class: "page-sub" }, "Clientes do Monetta e controle de assinatura")
       ),
       el("div", { class: "page-head__acoes" },
-        el("button", { class: "btn btn--ghost", onclick: () => renderAdminPermissoes(root, renderAdmin) }, "Equipe: Permissões"),
         el("button", { class: "btn btn--ghost", onclick: exportarCSV,
           "data-tip": "Baixar a lista de clientes em planilha" }, "↓ Exportar clientes")
       )
@@ -489,7 +487,8 @@ function desenharLista() {
             metaItem("Vencimento", c.plan_until ? formatDate(c.plan_until) : null),
             metaItem("Lançamentos", String(c.tx_count ?? 0)),
             metaItem("Última atividade", c.last_activity ? formatDate(c.last_activity) : null),
-            metaItem("Cadastro", c.created_at ? formatDate(c.created_at.slice(0, 10)) : null)
+            metaItem("Cadastro", c.created_at ? formatDate(c.created_at.slice(0, 10)) : null),
+            metaItem("Ramo", c.sector)
           )
         ),
         el("div", { class: "admin-cli__actions" },

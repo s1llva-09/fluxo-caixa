@@ -188,59 +188,6 @@ function getFuncionariosVisiveis() {
 
 
 
-// --- CSV import helper ----------------------------------------------------
-function splitCSVLine(line) {
-  const out = [];
-  let cur = "";
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') {
-      if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
-      else inQuotes = !inQuotes;
-      continue;
-    }
-    if (ch === ',' && !inQuotes) { out.push(cur); cur = ''; continue; }
-    cur += ch;
-  }
-  out.push(cur);
-  return out.map((s) => s.trim());
-}
-
-async function handleCSVImport(file) {
-  const text = await file.text();
-  const lines = text.split(/\r?\n/).filter(Boolean);
-  if (lines.length < 2) { toast('CSV vazio ou sem cabeçalho', 'erro'); return; }
-  const headers = splitCSVLine(lines[0]).map(h => h.toLowerCase());
-  const rows = lines.slice(1);
-  let success = 0, fail = 0;
-  for (const row of rows) {
-    const cols = splitCSVLine(row);
-    const obj = {};
-    for (let i = 0; i < headers.length; i++) obj[headers[i]] = cols[i] ?? '';
-    const dados = {
-      full_name: (obj['full_name'] || obj['nome'] || obj['name'] || '').trim(),
-      cpf: (obj['cpf'] || '').replace(/\D/g, '') || null,
-      role: (obj['role'] || obj['cargo'] || '').trim() || null,
-      sector: (obj['sector'] || obj['setor'] || '').trim() || null,
-      salary_cents: parseToCents(obj['salary'] || obj['salario'] || '') || 0,
-      hired_on: (obj['hired_on'] || obj['admissao'] || '').trim() || null,
-      email: (obj['email'] || '').trim() || null,
-      phone: (obj['phone'] || obj['telefone'] || '').replace(/\D/g, '') || null,
-      notes: (obj['notes'] || obj['observacoes'] || obj['obs'] || '').trim() || null,
-    };
-    try {
-      await criarFuncionario(state.company.id, dados);
-      success++;
-    } catch (e) {
-      console.error('CSV import error', e, row);
-      fail++;
-    }
-  }
-  toast(`Importação finalizada: ${success} adicionados, ${fail} falhas`, 'ok');
-  await carregar();
-}
-
 export async function renderFuncionarios(root) {
   filtros = { query: "", status: "all" };
   root.innerHTML = "";
@@ -250,14 +197,7 @@ export async function renderFuncionarios(root) {
         el("h1", { class: "page-title" }, "Funcionários"),
         el("p", { class: "page-sub" }, "Equipe, cargos e folha salarial")
       ),
-      el("div", { class: "page-head__acoes" },
-        // O input do CSV é buscado na hora do clique: aqui ele ainda não está
-        // no documento.
-        el("button", { class: "btn btn--ghost", onclick: () => $("#csv-file-input")?.click() }, "Importar CSV"),
-        el("button", { class: "btn btn--primary", onclick: () => abrirForm() }, "+ Novo funcionário")
-      ),
-      // input invisível pra CSV
-      el("input", { type: "file", id: "csv-file-input", style: "display:none", accept: ".csv" })
+      el("button", { class: "btn btn--primary", onclick: () => abrirForm() }, "+ Novo funcionário")
     ),
     el("section", { id: "func-resumo", class: "metrics" }),
     // Filtro na fita padrão do app (mesma de Lançamentos), não numa placa
@@ -297,8 +237,6 @@ export async function renderFuncionarios(root) {
     el("div", { id: "func-lista", class: "card" }, skeletonList(5))
   );
   await carregar();
-  const csvInput = $("#csv-file-input");
-  if (csvInput) csvInput.addEventListener('change', async (ev) => { if (ev.target.files?.length) { await previewCSVImport(ev.target.files[0]); ev.target.value = ''; } });
 }
 
 async function carregar() {
@@ -550,52 +488,6 @@ function abrirForm(func = null) {
 }
 
 // ---------------- CSV preview antes de importar ---------------------------
-async function previewCSVImport(file) {
-  const text = await file.text();
-  const lines = text.split(/\r?\n/).filter(Boolean);
-  if (lines.length < 2) { toast('CSV vazio ou sem cabeçalho', 'erro'); return; }
-  const headers = splitCSVLine(lines[0]).map(h => h.trim());
-  const sample = lines.slice(1, 11).map(l => splitCSVLine(l));
-
-  const table = el('table', { class: 'csv-preview' });
-  table.append(el('thead', {}, el('tr', {}, ...headers.map(h => el('th', {}, h)))));
-  const tbody = el('tbody', {});
-  for (const row of sample) tbody.append(el('tr', {}, ...row.map(c => el('td', {}, c))));
-  table.append(tbody);
-
-  let importing = false;
-  const modalBody = el('div', {}, el('p', {}, `Cabeçalhos detectados: ${headers.join(', ')}`), table);
-  openModal('Pré-visualização CSV', modalBody, {
-    actions: [
-      { label: 'Cancelar', kind: 'ghost', onClick: closeModal },
-      { label: 'Importar', kind: 'primary', onClick: async () => {
-        if (importing) return; importing = true;
-        let added = 0, failed = 0;
-        for (let i = 1; i < lines.length; i++) {
-          const cols = splitCSVLine(lines[i]);
-          const obj = {};
-          for (let j = 0; j < headers.length; j++) obj[headers[j].toLowerCase()] = cols[j] ?? '';
-          const dados = {
-            full_name: (obj['full_name'] || obj['nome'] || obj['name'] || '').trim(),
-            cpf: (obj['cpf'] || '').replace(/\D/g, '') || null,
-            role: (obj['role'] || obj['cargo'] || '').trim() || null,
-            sector: (obj['sector'] || obj['setor'] || '').trim() || null,
-            salary_cents: parseToCents(obj['salary'] || obj['salario'] || '') || 0,
-            hired_on: (obj['hired_on'] || obj['admissao'] || '').trim() || null,
-            email: (obj['email'] || '').trim() || null,
-            phone: (obj['phone'] || obj['telefone'] || '').replace(/\D/g, '') || null,
-            notes: (obj['notes'] || obj['observacoes'] || obj['obs'] || '').trim() || null,
-          };
-          try { await criarFuncionario(state.company.id, dados); added++; } catch (e) { failed++; }
-        }
-        closeModal(true);
-        toast(`Importação: ${added} adicionados, ${failed} falhas`, 'ok');
-        await carregar();
-      } }
-    ]
-  });
-}
-
 async function alternarStatus(f) {
   const novoStatus = f.status === "active" ? "inactive" : "active";
   try {

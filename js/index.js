@@ -85,6 +85,10 @@ async function iniciar() {
       return;
     }
 
+    // A moeda da empresa manda em tudo que for formatado daqui pra frente —
+    // inclusive na troca de empresa, que chama iniciar() de novo.
+    setMoeda(state.company.currency);
+
     // Cliente com mensalidade vencida ou bloqueado perde o acesso ao app.
     // O admin nunca é bloqueado (precisa entrar pra gerenciar).
     if (!state.isAdmin && !empresaAtiva(state.company)) {
@@ -115,12 +119,12 @@ async function iniciar() {
   }
 }
 
-// Aplica as preferências salvas na conta. setTheme/setMoeda também gravam no
-// localStorage, então o cache local do aparelho fica em dia de brinde.
+// Aplica as preferências salvas na conta. setTheme também grava no localStorage,
+// então o cache local do aparelho fica em dia de brinde. Moeda não entra aqui:
+// ela é da empresa, e a empresa só é conhecida mais adiante no boot.
 function aplicarPreferencias(meta) {
   if (!meta) return;
   if (THEMES.includes(meta.theme)) setTheme(meta.theme);
-  if (meta.moeda) setMoeda(meta.moeda);
 }
 
 function mostrarAuth() {
