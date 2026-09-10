@@ -10,12 +10,15 @@ import { el, $, toast, openModal, closeModal, confirmar, errorState, skeletonLis
 import { state } from "../state.js";
 import {
   listarContas, criarConta, atualizarConta, pagarConta, cancelarConta, apagarConta,
-  listarLancamentos, listarCategorias,
+  listarLancamentos, listarCategorias, listarClientes,
 } from "../api.js";
 import { formatBRL, formatDate, parseToCents, todayISO } from "../money.js";
 
 let contas = [];
 let saldoAtual = 0;
+// Clientes/fornecedores (pra vincular na conta) — carregados junto da lista
+// pra que abrir o formulário não espere uma ida ao banco.
+let contatos = [];
 let filtroTipo = "abertas"; // abertas | pagar | receber | pagas
 
 export async function renderContas(root) {
@@ -45,12 +48,14 @@ async function carregar() {
   box.innerHTML = ""; box.append(skeletonList(5));
 
   try {
-    const [todos, lista] = await Promise.all([
+    const [todos, lista, cts] = await Promise.all([
       listarLancamentos({ companyId: state.company.id }),
       listarContas(state.company.id),
+      listarClientes(state.company.id).catch(() => []),
     ]);
     saldoAtual = todos.reduce((s, t) => s + (t.kind === "entrada" ? t.amount_cents : -t.amount_cents), 0);
     contas = lista;
+    contatos = cts;
   } catch (err) {
     console.error(err);
     box.innerHTML = "";
@@ -152,6 +157,7 @@ function contaItem(c) {
       el("span", { class: "rec__desc" }, c.description || "(sem descrição)"),
       el("span", { class: "rec__meta" },
         `${c.kind === "entrada" ? "A receber" : "A pagar"}` +
+        `${c.parties?.name ? " · " + c.parties.name : ""}` +
         `${c.categories?.name ? " · " + c.categories.name : ""}` +
         `${c.status === "paid" ? " · pago" : c.status === "canceled" ? " · cancelada" : ""}`),
       venc.badge
@@ -197,6 +203,15 @@ function abrirForm(conta = null) {
     ...state.categorias.map((c) => el("option", { value: c.id }, c.name))
   );
   if (conta && conta.category_id) cat.value = conta.category_id;
+  // Um contato só, sem filtrar por a-pagar/a-receber: o mesmo cadastro serve
+  // aos dois lados (quem te vende também pode te comprar), e o rótulo já diz
+  // qual é qual. Mesmo select de Lançamentos.
+  const contato = el("select", { class: "input" },
+    el("option", { value: "" }, "Sem cliente/fornecedor"),
+    ...contatos.map((p) => el("option", { value: p.id },
+      p.name + (p.kind === "cliente" ? " (cliente)" : p.kind === "fornecedor" ? " (fornecedor)" : "")))
+  );
+  if (conta && conta.party_id) contato.value = conta.party_id;
   const btn = el("button", { class: "btn btn--primary" }, "Salvar");
 
   async function salvar() {
@@ -204,7 +219,7 @@ function abrirForm(conta = null) {
     if (!cents || cents <= 0) { toast("Digite um valor válido", "erro"); return; }
     if (!venc.value) { toast("Escolha o vencimento", "erro"); return; }
     btn.disabled = true; btn.textContent = "Salvando...";
-    const dados = { kind, amount_cents: cents, description: desc.value.trim(), category_id: cat.value || null, due_on: venc.value };
+    const dados = { kind, amount_cents: cents, description: desc.value.trim(), category_id: cat.value || null, due_on: venc.value, party_id: contato.value || null };
     try {
       if (editando) await atualizarConta(conta.id, dados);
       else await criarConta(state.company.id, dados);
@@ -227,7 +242,10 @@ function abrirForm(conta = null) {
         el("label", { class: "field" }, el("span", { class: "field__label" }, "Vencimento"), venc)
       ),
       el("label", { class: "field" }, el("span", { class: "field__label" }, "Descrição"), desc),
-      el("label", { class: "field" }, el("span", { class: "field__label" }, "Categoria"), cat),
+      el("div", { class: "admin-pay__row" },
+        el("label", { class: "field" }, el("span", { class: "field__label" }, "Categoria"), cat),
+        el("label", { class: "field" }, el("span", { class: "field__label" }, "Cliente / fornecedor"), contato)
+      ),
       el("div", { class: "form__actions" },
         el("button", { class: "btn btn--ghost", onclick: closeModal }, "Cancelar"), btn)
     )
@@ -258,8 +276,11 @@ function abrirPagar(c) {
   openModal(c.kind === "entrada" ? "Registrar recebimento" : "Registrar pagamento",
     el("div", { class: "form" },
       el("div", { class: "tx-preview" },
-        `${c.kind === "entrada" ? "A receber" : "A pagar"} de ${formatBRL(c.amount_cents)} — ${c.description || "(sem descrição)"}`),
-      el("p", { class: "config__note" }, "Isso cria um lançamento real no caixa, na data abaixo."),
+        `${c.kind === "entrada" ? "A receber" : "A pagar"} de ${formatBRL(c.amount_cents)} — ${c.description || "(sem descrição)"}` +
+        (c.parties?.name ? ` · ${c.parties.name}` : "")),
+      el("p", { class: "config__note" },
+        "Isso cria um lançamento real no caixa, na data abaixo" +
+        (c.parties?.name ? `, já vinculado a ${c.parties.name}.` : ".")),
       el("label", { class: "field" }, el("span", { class: "field__label" }, "Data"), data),
       el("div", { class: "form__actions" },
         el("button", { class: "btn btn--ghost", onclick: closeModal }, "Cancelar"), btn)

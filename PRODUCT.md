@@ -70,7 +70,8 @@ com concorrente neste repositório.
 
 **Funcionalidade confirmada:** autenticação e multi-empresa por usuário; lançamentos com
 data, categoria, descrição e comprovante; estorno; recorrências; contas a pagar/receber
-com baixa; categorias; clientes; estoque; vendas; funcionários com anexos e log; relatório
+com baixa e contato vinculado (o fornecedor viaja da conta pro lançamento na
+baixa); categorias; clientes; estoque; vendas; funcionários com anexos e log; relatório
 por categoria com CSV; comprovante de venda pra imprimir; dashboard com saldo, totais do
 mês e gráfico de 6 meses; convites de equipe; painel admin de assinatura; tema
 claro/escuro; seletor de moeda.

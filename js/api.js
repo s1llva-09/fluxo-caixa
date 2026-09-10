@@ -205,7 +205,7 @@ export async function processarRecorrencias(companyId) {
 export async function listarContas(companyId, status) {
   let q = supabase
     .from("scheduled")
-    .select("*, categories(name)")
+    .select("*, categories(name), parties(name)")
     .eq("company_id", companyId)
     .order("due_on", { ascending: true });
   if (status) q = q.eq("status", status);
